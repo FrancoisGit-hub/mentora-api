@@ -1,0 +1,26 @@
+using Microsoft.EntityFrameworkCore;
+using Mentora.Core.Entities;
+
+namespace Mentora.Infrastructure.Persistence;
+
+public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbContext(options)
+{
+    public DbSet<HealthCheck> HealthChecks => Set<HealthCheck>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<HealthCheck>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(500);
+
+            // Seed data — prouve que l'API lit vraiment la BDD
+            entity.HasData(new HealthCheck
+            {
+                Id = 1,
+                Message = "Mentora API is live and connected to PostgreSQL!",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            });
+        });
+    }
+}
