@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet ef:*)",
+      "Bash(ASPNETCORE_ENVIRONMENT=Development dotnet ef database update --project Mentora.Infrastructure --startup-project Mentora.API)",
+      "Bash(ASPNETCORE_ENVIRONMENT=Development dotnet ef migrations remove --project Mentora.Infrastructure --startup-project Mentora.API)",
+      "Bash(ASPNETCORE_ENVIRONMENT=Development dotnet ef database update InitialCreate --project Mentora.Infrastructure --startup-project Mentora.API)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}

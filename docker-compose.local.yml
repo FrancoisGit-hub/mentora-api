@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: mentora-postgres-local
+    environment:
+      POSTGRES_USER: mentora_user
+      POSTGRES_PASSWORD: mentora_pass
+      POSTGRES_DB: mentora_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - mentora_local_data:/var/lib/postgresql/data
+
+volumes:
+  mentora_local_data:

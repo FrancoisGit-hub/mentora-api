@@ -6,6 +6,13 @@ namespace Mentora.Infrastructure.Persistence;
 public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbContext(options)
 {
     public DbSet<HealthCheck> HealthChecks => Set<HealthCheck>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Coach> Coaches => Set<Coach>();
+    public DbSet<Member> Members => Set<Member>();
+    public DbSet<MemberCoach> MemberCoaches => Set<MemberCoach>();
+    public DbSet<AuthOtp> AuthOtps => Set<AuthOtp>();
+    public DbSet<AuthRefreshToken> AuthRefreshTokens => Set<AuthRefreshToken>();
+    public DbSet<AgentToken> AgentTokens => Set<AgentToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,5 +29,7 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
         });
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MentoraDbContext).Assembly);
     }
 }
