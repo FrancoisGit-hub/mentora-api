@@ -16,4 +16,7 @@ public class User
     public Member? Member { get; set; }
     public ICollection<AuthOtp> AuthOtps { get; set; } = [];
     public ICollection<AuthRefreshToken> AuthRefreshTokens { get; set; } = [];
+    public ICollection<Session> Sessions { get; set; } = [];
+    public ICollection<CreditBalance> CreditBalances { get; set; } = [];
+    public ICollection<CreditTransaction> CreditTransactions { get; set; } = [];
 }

@@ -13,6 +13,11 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<AuthOtp> AuthOtps => Set<AuthOtp>();
     public DbSet<AuthRefreshToken> AuthRefreshTokens => Set<AuthRefreshToken>();
     public DbSet<AgentToken> AgentTokens => Set<AgentToken>();
+    public DbSet<CoachParameter> CoachParameters => Set<CoachParameter>();
+    public DbSet<SessionSlot> SessionSlots => Set<SessionSlot>();
+    public DbSet<Session> Sessions => Set<Session>();
+    public DbSet<CreditBalance> CreditBalances => Set<CreditBalance>();
+    public DbSet<CreditTransaction> CreditTransactions => Set<CreditTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

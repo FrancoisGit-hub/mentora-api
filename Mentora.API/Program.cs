@@ -66,6 +66,10 @@ builder.Services
 builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ISessionSlotService, SessionSlotService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<ICreditService, CreditService>();
+builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
 
 builder.Services.AddControllers();
 

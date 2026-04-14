@@ -14,4 +14,9 @@ public class Coach
 
     public ICollection<MemberCoach> MemberCoaches { get; set; } = [];
     public AgentToken? AgentToken { get; set; }
+    public CoachParameter? CoachParameter { get; set; }
+    public ICollection<SessionSlot> SessionSlots { get; set; } = [];
+    public ICollection<Session> Sessions { get; set; } = [];
+    public ICollection<CreditBalance> CreditBalances { get; set; } = [];
+    public ICollection<CreditTransaction> CreditTransactions { get; set; } = [];
 }
