@@ -69,6 +69,22 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MentoraCorsPolicy", policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:4200",
+            "http://localhost:8100",
+            "http://localhost",
+            "capacitor://localhost"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 // Auto-migrate at startup
@@ -81,6 +97,7 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseCors("MentoraCorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
