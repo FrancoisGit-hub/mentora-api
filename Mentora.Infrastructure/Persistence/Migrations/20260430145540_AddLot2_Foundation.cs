@@ -11,14 +11,13 @@ namespace Mentora.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Drop any legacy CREDIT_* columns that may exist from earlier drafts.
-            // ALTER TABLE IF EXISTS is safe when the table does not yet exist.
+            // Drop legacy tables that may exist from earlier drafts on local dev DB.
+            // All three were confirmed present; CASCADE removes stale FKs and indexes.
             migrationBuilder.Sql(
                 """
-                ALTER TABLE IF EXISTS "COACH_PARAMETERS"
-                    DROP COLUMN IF EXISTS "COACH_CREDIT_VALUE_EUROS",
-                    DROP COLUMN IF EXISTS "COACH_CREDIT_BALANCE",
-                    DROP COLUMN IF EXISTS "COACH_CREDIT_RATE";
+                DROP TABLE IF EXISTS "SESSION_SLOTS"    CASCADE;
+                DROP TABLE IF EXISTS "OFFER_PROGRAMS"   CASCADE;
+                DROP TABLE IF EXISTS "COACH_PARAMETERS" CASCADE;
                 """);
 
             migrationBuilder.CreateTable(
