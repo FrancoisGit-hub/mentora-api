@@ -16,6 +16,9 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<CoachParameter> CoachParameters => Set<CoachParameter>();
     public DbSet<OfferProgram> OfferPrograms => Set<OfferProgram>();
     public DbSet<SessionSlot> SessionSlots => Set<SessionSlot>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductPack> ProductPacks => Set<ProductPack>();
+    public DbSet<ProductPackItem> ProductPackItems => Set<ProductPackItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

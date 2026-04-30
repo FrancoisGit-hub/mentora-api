@@ -17,4 +17,6 @@ public class Coach
     public CoachParameter? CoachParameter { get; set; }
     public ICollection<OfferProgram> OfferPrograms { get; set; } = [];
     public ICollection<SessionSlot> SessionSlots { get; set; } = [];
+    public ICollection<Product> Products { get; set; } = [];
+    public ICollection<ProductPack> ProductPacks { get; set; } = [];
 }
