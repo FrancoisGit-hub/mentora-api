@@ -1,7 +1,9 @@
 using System.Text;
+using Mentora.API.Middleware;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Settings;
 using Mentora.Infrastructure.Persistence;
+using Mentora.Infrastructure.Seeding;
 using Mentora.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -63,9 +65,24 @@ builder.Services
             ClockSkew = TimeSpan.Zero
         };
     });
-builder.Services.AddAuthorization();
 
+// Authorization policies — see AuthService.GenerateAccessToken for claim definitions
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CoachOnly", policy =>
+        policy.RequireClaim("userType", "COACH", "BOTH"));
+
+    options.AddPolicy("MemberOnly", policy =>
+        policy.RequireClaim("memberId"));
+});
+
+// Lot 1
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Lot 2.1
+builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
+builder.Services.AddScoped<IOfferProgramService, OfferProgramService>();
+builder.Services.AddScoped<ISessionSlotService, SessionSlotService>();
 
 builder.Services.AddControllers();
 
@@ -87,12 +104,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-migrate at startup
-using (var scope = app.Services.CreateScope())
+// Auto-migrate and seed at startup
+await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MentoraDbContext>();
-    db.Database.Migrate();
+    await db.Database.MigrateAsync();
+
+    await CoachParameterSeeder.SeedAsync(scope.ServiceProvider);
+    await OfferProgramSeeder.SeedAsync(scope.ServiceProvider);
 }
+
+// Global exception handler must be outermost so it wraps all middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
