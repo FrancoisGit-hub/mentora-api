@@ -19,13 +19,10 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
 
     public async Task RequestOtpAsync(string email)
     {
+        // Any enabled user (member or coach) can request an OTP
         var user = await db.Users
-            .Include(u => u.Member)
             .FirstOrDefaultAsync(u => u.UserEmail == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
-
-        if (user.Member == null)
-            throw new InvalidOperationException("No member profile associated with this account.");
 
         // Invalidate any previous unused OTPs for this user
         var previousOtps = await db.AuthOtps
@@ -52,11 +49,9 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
     {
         var user = await db.Users
             .Include(u => u.Member)
+            .Include(u => u.Coach)
             .FirstOrDefaultAsync(u => u.UserEmail == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
-
-        if (user.Member == null)
-            throw new InvalidOperationException("No member profile associated with this account.");
 
         // Load candidates into memory — BCrypt.Verify cannot be translated to SQL
         var candidates = await db.AuthOtps
@@ -73,7 +68,7 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
         await db.SaveChangesAsync();
 
         return new AuthResponse(
-            AccessToken: GenerateAccessToken(user, user.Member.MemberId),
+            AccessToken: GenerateAccessToken(user, user.Member?.MemberId, user.Coach?.CoachId),
             RefreshToken: clientToken,
             ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60
         );
@@ -85,6 +80,7 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
 
         var record = await db.AuthRefreshTokens
             .Include(r => r.User).ThenInclude(u => u.Member)
+            .Include(r => r.User).ThenInclude(u => u.Coach)
             .FirstOrDefaultAsync(r =>
                 r.AuthRefreshTokenId == tokenId &&
                 !r.AuthRefreshTokenIsRevoked &&
@@ -94,9 +90,6 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
         if (!BCrypt.Net.BCrypt.Verify(rawSecret, record.AuthRefreshTokenHash))
             throw new InvalidOperationException("Invalid or expired refresh token.");
 
-        if (record.User.Member == null)
-            throw new InvalidOperationException("No member profile associated with this account.");
-
         // Revoke the consumed token
         record.AuthRefreshTokenIsRevoked = true;
         record.AuthRefreshTokenRevokedDate = DateTime.UtcNow;
@@ -105,7 +98,7 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
         await db.SaveChangesAsync();
 
         return new AuthResponse(
-            AccessToken: GenerateAccessToken(record.User, record.User.Member.MemberId),
+            AccessToken: GenerateAccessToken(record.User, record.User.Member?.MemberId, record.User.Coach?.CoachId),
             RefreshToken: newClientToken,
             ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60
         );
@@ -113,20 +106,49 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private string GenerateAccessToken(User user, Guid memberId)
+    /// <summary>
+    /// Builds the access token.
+    ///
+    /// Claims always present:
+    ///   sub       — UserId (UUID)
+    ///   email     — user email
+    ///   userType  — "MEMBER" | "COACH" | "BOTH"
+    ///   jti       — unique token id
+    ///
+    /// Claims added when the corresponding profile exists:
+    ///   memberId  — MemberId (UUID), present for MEMBER and BOTH
+    ///   coachId   — CoachId  (UUID), present for COACH and BOTH
+    /// </summary>
+    private string GenerateAccessToken(User user, Guid? memberId, Guid? coachId)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Secret));
+        var userType = (memberId.HasValue, coachId.HasValue) switch
+        {
+            (true,  true)  => "BOTH",
+            (false, true)  => "COACH",
+            (true,  false) => "MEMBER",
+            _              => "UNKNOWN"
+        };
+
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub,   user.UserId.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.UserEmail),
+            new("userType",                    userType),
+            new(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString())
+        };
+
+        if (memberId.HasValue)
+            claims.Add(new Claim("memberId", memberId.Value.ToString()));
+
+        if (coachId.HasValue)
+            claims.Add(new Claim("coachId", coachId.Value.ToString()));
+
+        var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Secret));
         var token = new JwtSecurityToken(
-            issuer: _jwt.Issuer,
-            audience: _jwt.Audience,
-            claims:
-            [
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.UserEmail),
-                new Claim("memberId", memberId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            ],
-            expires: DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes),
+            issuer:             _jwt.Issuer,
+            audience:           _jwt.Audience,
+            claims:             claims,
+            expires:            DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes),
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
         );
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -138,11 +160,11 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
         var rawSecret = GenerateSecureRandom();
         var entity = new AuthRefreshToken
         {
-            AuthRefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(rawSecret),
-            AuthRefreshTokenCreatedDate = DateTime.UtcNow,
+            AuthRefreshTokenHash           = BCrypt.Net.BCrypt.HashPassword(rawSecret),
+            AuthRefreshTokenCreatedDate    = DateTime.UtcNow,
             AuthRefreshTokenExpirationDate = DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpirationDays),
-            AuthRefreshTokenIsRevoked = false,
-            UserId = userId
+            AuthRefreshTokenIsRevoked      = false,
+            UserId                         = userId
         };
         db.AuthRefreshTokens.Add(entity);
         // Flush to get the DB-generated Guid before encoding it in the token
