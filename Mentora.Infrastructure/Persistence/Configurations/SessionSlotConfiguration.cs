@@ -29,21 +29,10 @@ public class SessionSlotConfiguration : IEntityTypeConfiguration<SessionSlot>
             .IsRequired();
 
         // Stored as uppercase string: VISIO / PRESENTIEL_SOLO / PRESENTIEL_GROUPE
+        // Static helpers required — expression trees cannot contain switch expressions
         var offerTypeConverter = new ValueConverter<OfferType, string>(
-            v => v switch
-            {
-                OfferType.Visio           => "VISIO",
-                OfferType.PresentielSolo  => "PRESENTIEL_SOLO",
-                OfferType.PresentielGroupe => "PRESENTIEL_GROUPE",
-                _                         => throw new ArgumentOutOfRangeException(nameof(v), v, null)
-            },
-            v => v switch
-            {
-                "VISIO"            => OfferType.Visio,
-                "PRESENTIEL_SOLO"  => OfferType.PresentielSolo,
-                "PRESENTIEL_GROUPE" => OfferType.PresentielGroupe,
-                _                  => throw new ArgumentOutOfRangeException(nameof(v), v, null)
-            }
+            v => OfferTypeToDb(v),
+            v => OfferTypeFromDb(v)
         );
 
         builder.Property(e => e.SessionSlotOfferType)
@@ -73,5 +62,21 @@ public class SessionSlotConfiguration : IEntityTypeConfiguration<SessionSlot>
             .WithMany(c => c.SessionSlots)
             .HasForeignKey(e => e.CoachId)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static string OfferTypeToDb(OfferType v)
+    {
+        if (v == OfferType.Visio)           return "VISIO";
+        if (v == OfferType.PresentielSolo)  return "PRESENTIEL_SOLO";
+        if (v == OfferType.PresentielGroupe) return "PRESENTIEL_GROUPE";
+        throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType value.");
+    }
+
+    private static OfferType OfferTypeFromDb(string v)
+    {
+        if (v == "VISIO")             return OfferType.Visio;
+        if (v == "PRESENTIEL_SOLO")   return OfferType.PresentielSolo;
+        if (v == "PRESENTIEL_GROUPE") return OfferType.PresentielGroupe;
+        throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType DB value.");
     }
 }
