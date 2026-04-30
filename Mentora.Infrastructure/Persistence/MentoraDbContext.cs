@@ -13,6 +13,9 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<AuthOtp> AuthOtps => Set<AuthOtp>();
     public DbSet<AuthRefreshToken> AuthRefreshTokens => Set<AuthRefreshToken>();
     public DbSet<AgentToken> AgentTokens => Set<AgentToken>();
+    public DbSet<CoachParameter> CoachParameters => Set<CoachParameter>();
+    public DbSet<OfferProgram> OfferPrograms => Set<OfferProgram>();
+    public DbSet<SessionSlot> SessionSlots => Set<SessionSlot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
