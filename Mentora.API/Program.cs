@@ -1,5 +1,7 @@
 using System.Text;
+using FluentValidation;
 using Mentora.API.Middleware;
+using Mentora.Core.Validators.Catalog;
 using Npgsql;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Settings;
@@ -89,6 +91,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
 builder.Services.AddScoped<IOfferProgramService, OfferProgramService>();
 builder.Services.AddScoped<ISessionSlotService, SessionSlotService>();
+
+// Lot 2.2
+builder.Services.AddValidatorsFromAssemblyContaining<ProductRequestValidator>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductPackService, ProductPackService>();
 
 builder.Services.AddControllers();
 

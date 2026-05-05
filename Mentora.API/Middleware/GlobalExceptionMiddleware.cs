@@ -1,3 +1,4 @@
+using FluentValidation;
 using Mentora.Core.Exceptions;
 
 namespace Mentora.API.Middleware;
@@ -19,6 +20,25 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         {
             logger.LogWarning(ex, "Conflict: {Message}", ex.Message);
             await WriteResponseAsync(context, 409, ex.Message);
+        }
+        catch (ValidationException ex)
+        {
+            logger.LogWarning(ex, "Validation failed");
+            var errors = ex.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray());
+            context.Response.StatusCode  = 422;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                success    = false,
+                data       = (object?)null,
+                error      = "Validation failed.",
+                errors,
+                statusCode = 422
+            });
         }
         catch (InvalidOperationException ex)
         {
