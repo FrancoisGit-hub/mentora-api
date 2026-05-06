@@ -1,0 +1,172 @@
+// TODO Lot 2.6 hardening:
+//   - POST /webhook: validate Stripe-Signature header (Stripe.net ConstructEvent)
+//   - POST /simulate-webhook: restrict by IP or add basic auth (dev/staging only)
+//   - POST /webhook: return 500 on FAILED status so Stripe retries the event
+using System.Text;
+using System.Text.Json;
+using FluentValidation;
+using Mentora.Core.DTOs.Stripe;
+using Mentora.Core.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Mentora.API.Controllers.Internal;
+
+/// <summary>Internal endpoints for receiving and simulating Stripe webhook events.</summary>
+[ApiController]
+[Route("api/v1/internal/stripe")]
+[ApiExplorerSettings(GroupName = "internal")]
+[Tags("System — Stripe")]
+public class InternalStripeWebhookController(
+    IStripeWebhookHandler handler,
+    IValidator<SimulateWebhookRequest> validator,
+    ILogger<InternalStripeWebhookController> logger) : ControllerBase
+{
+    /// <summary>
+    /// Receives a raw Stripe webhook event and delegates processing to the webhook handler.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Processing status and idempotency flag.</returns>
+    /// <remarks>
+    /// Always returns 200 OK in V1 simulated mode, even when processing fails (to avoid
+    /// Stripe marking our endpoint as broken). TODO Lot 2.6: return 500 on FAILED so
+    /// live Stripe retries the event.
+    /// </remarks>
+    [HttpPost("webhook")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ReceiveWebhook(CancellationToken ct)
+    {
+        var rawBody = await new StreamReader(Request.Body, Encoding.UTF8).ReadToEndAsync(ct);
+
+        JsonDocument doc;
+        try
+        {
+            doc = JsonDocument.Parse(rawBody);
+        }
+        catch (JsonException)
+        {
+            return BadRequest(new { success = false, data = (object?)null, error = "Invalid JSON payload.", statusCode = 400 });
+        }
+
+        var root      = doc.RootElement;
+        var eventId   = root.TryGetProperty("id",   out var idEl)   ? idEl.GetString()   : null;
+        var eventType = root.TryGetProperty("type", out var typeEl) ? typeEl.GetString() : null;
+
+        string? sessionId = null;
+        if (root.TryGetProperty("data", out var dataEl) &&
+            dataEl.TryGetProperty("object", out var objEl) &&
+            objEl.TryGetProperty("id", out var sessEl))
+        {
+            sessionId = sessEl.GetString();
+        }
+
+        if (string.IsNullOrEmpty(eventId) || string.IsNullOrEmpty(eventType))
+        {
+            return BadRequest(new { success = false, data = (object?)null, error = "Invalid Stripe event payload.", statusCode = 400 });
+        }
+
+        logger.LogInformation("Stripe webhook received: eventId={EventId} type={EventType}", eventId, eventType);
+
+        var result = await handler.HandleAsync(eventId, eventType, rawBody, sessionId, ct);
+
+        return Ok(new { status = result.Status, idempotent = result.Idempotent });
+    }
+
+    /// <summary>
+    /// Synthesizes a Stripe-shaped event and processes it through the webhook handler.
+    /// Developer tool — triggers PAID, EXPIRED, or FAILED state transitions without real Stripe.
+    /// </summary>
+    /// <param name="request">Event type and session ID to simulate.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The generated event ID, processing status, and idempotency flag.</returns>
+    /// <remarks>
+    /// Allowed eventType values: checkout.session.completed, checkout.session.expired,
+    /// payment_intent.payment_failed.
+    /// SessionId must start with "cs_".
+    /// Each call generates a new unique event ID so it is never idempotent with a prior call.
+    /// </remarks>
+    [HttpPost("simulate-webhook")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SimulateWebhook([FromBody] SimulateWebhookRequest request, CancellationToken ct)
+    {
+        await validator.ValidateAndThrowAsync(request, ct);
+
+        var eventId = "evt_simulated_" + Guid.NewGuid().ToString("N");
+        var fakePayload = JsonSerializer.Serialize(new
+        {
+            id   = eventId,
+            type = request.EventType,
+            data = new { @object = new { id = request.SessionId } }
+        });
+
+        logger.LogInformation(
+            "Simulating Stripe event: eventId={EventId} type={EventType} sessionId={SessionId}",
+            eventId, request.EventType, request.SessionId);
+
+        var result = await handler.HandleAsync(eventId, request.EventType, fakePayload, request.SessionId, ct);
+
+        return Ok(new { eventId, status = result.Status, idempotent = result.Idempotent });
+    }
+
+    /// <summary>
+    /// Minimal HTML page that acts as a stand-in for the Stripe Checkout UI.
+    /// Returned by the checkout URL generated by StripeCheckoutStub.
+    /// </summary>
+    /// <param name="sessionId">The Stripe Checkout session ID embedded in the stub URL.</param>
+    /// <returns>An HTML page with "Simulate Pay" and "Simulate Cancel" buttons.</returns>
+    [HttpGet("fake-checkout/{sessionId}")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public IActionResult FakeCheckout(string sessionId)
+    {
+        var simulateUrl = $"{Request.Scheme}://{Request.Host}/api/v1/internal/stripe/simulate-webhook";
+
+        var html = $$"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <title>Fake Checkout — Mentora Dev</title>
+              <style>
+                body { font-family: monospace; max-width: 600px; margin: 60px auto; padding: 0 20px; background: #f5f5f5; }
+                h1 { color: #333; }
+                .session { background: #fff; border: 1px solid #ccc; padding: 12px; border-radius: 4px; word-break: break-all; }
+                .btn { display: inline-block; padding: 12px 24px; margin: 8px 4px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+                .btn-pay    { background: #28a745; color: #fff; }
+                .btn-cancel { background: #dc3545; color: #fff; }
+                .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+                #result { margin-top: 20px; padding: 12px; background: #fff; border: 1px solid #ccc; border-radius: 4px; display: none; }
+              </style>
+            </head>
+            <body>
+              <h1>&#127881; Fake Checkout (dev only)</h1>
+              <p>This is a simulated Stripe Checkout page. No real payment is processed.</p>
+              <p class="session"><strong>Session ID:</strong> {{sessionId}}</p>
+              <div>
+                <button class="btn btn-pay"    onclick="simulate('checkout.session.completed')">&#10003; Simulate Pay</button>
+                <button class="btn btn-cancel" onclick="simulate('checkout.session.expired')">&#10007; Simulate Cancel</button>
+              </div>
+              <div id="result"></div>
+              <script>
+                const SIMULATE_URL = '{{simulateUrl}}';
+                const SESSION_ID   = '{{sessionId}}';
+                async function simulate(eventType) {
+                  document.querySelectorAll('.btn').forEach(b => b.disabled = true);
+                  const res = await fetch(SIMULATE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ eventType, sessionId: SESSION_ID })
+                  });
+                  const json = await res.json();
+                  const el = document.getElementById('result');
+                  el.style.display = 'block';
+                  el.textContent = JSON.stringify(json, null, 2);
+                }
+              </script>
+            </body>
+            </html>
+            """;
+
+        return Content(html, "text/html");
+    }
+}
