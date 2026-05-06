@@ -143,4 +143,46 @@ public static class EnumMappings
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown StripeEventStatus enum value.");
         }
     }
+
+    public static class SessionStatusMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["SCHEDULED", "COMPLETED", "CANCELLED"]);
+
+        public static SessionStatus Parse(string value)
+        {
+            if (value == "SCHEDULED")  return SessionStatus.Scheduled;
+            if (value == "COMPLETED")  return SessionStatus.Completed;
+            if (value == "CANCELLED")  return SessionStatus.Cancelled;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown SessionStatus wire value.");
+        }
+
+        public static string ToWire(SessionStatus value)
+        {
+            if (value == SessionStatus.Scheduled)  return "SCHEDULED";
+            if (value == SessionStatus.Completed)  return "COMPLETED";
+            if (value == SessionStatus.Cancelled)  return "CANCELLED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown SessionStatus enum value.");
+        }
+    }
+
+    public static class CancelledByMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["MEMBER", "COACH"]);
+
+        public static CancelledBy Parse(string value)
+        {
+            if (value == "MEMBER") return CancelledBy.Member;
+            if (value == "COACH")  return CancelledBy.Coach;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown CancelledBy wire value.");
+        }
+
+        public static string ToWire(CancelledBy value)
+        {
+            if (value == CancelledBy.Member) return "MEMBER";
+            if (value == CancelledBy.Coach)  return "COACH";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown CancelledBy enum value.");
+        }
+    }
 }

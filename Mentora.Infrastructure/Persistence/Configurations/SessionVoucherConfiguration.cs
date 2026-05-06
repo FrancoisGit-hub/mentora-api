@@ -100,6 +100,15 @@ public class SessionVoucherConfiguration : IEntityTypeConfiguration<SessionVouch
             .WithMany()
             .HasForeignKey(e => e.CoachId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Retroactive FK added in Lot 2.4.1 — SESSIONS table now exists.
+        // SetNull: if a Session is hard-deleted, the voucher drops its back-pointer
+        // rather than blocking the delete.
+        builder.HasOne<Session>()
+            .WithMany()
+            .HasForeignKey(v => v.ReservedSessionId)
+            .HasConstraintName("FK_SESSION_VOUCHERS_RESERVED_SESSION")
+            .OnDelete(DeleteBehavior.SetNull);
     }
 
     private static string OfferTypeToDb(OfferType v)
