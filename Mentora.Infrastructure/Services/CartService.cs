@@ -288,10 +288,12 @@ public class CartService(
                     foreach (var packItem in pack.Items.OrderBy(pi => pi.ProductId))
                     {
                         if (packItem.Product is null) continue;
-                        var pp         = packItem.Product;
+                        var pp           = packItem.Product;
                         // Per-line ceiling discount — Interpretation A (locked decision)
-                        var netUnit    = Math.Ceiling(
+                        var netUnit      = Math.Ceiling(
                             pp.ProductPriceEuros * (1 - pack.ProductPackDiscountPercent / 100m) * 100m) / 100m;
+                        // cartItem.Quantity = how many packs; packItem.ProductPackItemQuantity = units per pack
+                        var finalQuantity = cartItem.Quantity * packItem.ProductPackItemQuantity;
                         orderItems.Add(new OrderItem
                         {
                             OrderItemId                     = Guid.NewGuid(),
@@ -301,8 +303,8 @@ public class CartService(
                             OrderItemOriginalUnitPriceEuros = pp.ProductPriceEuros,
                             UnitPriceEuros                  = netUnit,
                             OrderItemPackDiscountPercentApplied = pack.ProductPackDiscountPercent,
-                            Quantity                        = cartItem.Quantity,
-                            LineTotalEuros                  = Math.Round(netUnit * cartItem.Quantity, 2, MidpointRounding.AwayFromZero),
+                            Quantity                        = finalQuantity,
+                            LineTotalEuros                  = Math.Round(netUnit * finalQuantity, 2, MidpointRounding.AwayFromZero),
                             OfferType                       = pp.ProductOfferType,
                             DurationMinutes                 = pp.ProductDurationMinutes,
                             Sport                           = pp.ProductSport,
