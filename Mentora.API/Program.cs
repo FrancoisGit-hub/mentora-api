@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using Mentora.API.Middleware;
 using Mentora.Core.Validators.Catalog;
+using Mentora.Infrastructure.Services.Stripe;
 using Npgsql;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Settings;
@@ -156,6 +157,11 @@ builder.Services.AddScoped<ISessionSlotService, SessionSlotService>();
 builder.Services.AddValidatorsFromAssemblyContaining<ProductRequestValidator>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductPackService, ProductPackService>();
+
+// Lot 2.3
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IStripeCheckoutService, StripeCheckoutStub>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 builder.Services.AddControllers();
 
