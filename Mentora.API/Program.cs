@@ -162,6 +162,9 @@ builder.Services.AddScoped<IProductPackService, ProductPackService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IStripeCheckoutService, StripeCheckoutStub>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IVoucherService, VoucherService>();
+builder.Services.AddScoped<IStripeWebhookHandler, StripeWebhookHandler>();
 
 builder.Services.AddControllers();
 
