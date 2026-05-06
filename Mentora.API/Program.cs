@@ -18,11 +18,56 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    c.SwaggerDoc("mobile", new OpenApiInfo
     {
-        Title = "Mentora API",
+        Title = "Mentora API — Mobile",
         Version = "v1",
-        Description = "Mentora coaching platform API"
+        Description = "Endpoints consumed by the Mentora mobile application (members)."
+    });
+    c.SwaggerDoc("coach", new OpenApiInfo
+    {
+        Title = "Mentora API — Coach Back-Office",
+        Version = "v1",
+        Description = "Endpoints consumed by the coach back-office (currently the AI agent, later a web app)."
+    });
+    c.SwaggerDoc("internal", new OpenApiInfo
+    {
+        Title = "Mentora API — Internal",
+        Version = "v1",
+        Description = "Internal endpoints: health checks, webhooks, debug, monitoring. Not consumed by clients."
+    });
+
+    // Endpoints without an explicit GroupName default to "internal" (safe: least exposed)
+    c.DocInclusionPredicate((docName, apiDesc) =>
+    {
+        var groupName = apiDesc.GroupName ?? "internal";
+        return groupName == docName;
+    });
+
+    // Read [Tags(...)] from endpoint metadata; fall back to controller name
+    c.TagActionsBy(api =>
+    {
+        var metadataTags = api.ActionDescriptor.EndpointMetadata
+            .OfType<Microsoft.AspNetCore.Http.Metadata.ITagsMetadata>()
+            .SelectMany(t => t.Tags)
+            .Distinct()
+            .ToList();
+        if (metadataTags.Count > 0)
+            return metadataTags;
+
+        if (api.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor cad)
+        {
+            var attrTags = cad.ControllerTypeInfo
+                .GetCustomAttributes(inherit: true)
+                .OfType<Microsoft.AspNetCore.Http.Metadata.ITagsMetadata>()
+                .SelectMany(t => t.Tags)
+                .Distinct()
+                .ToList();
+            if (attrTags.Count > 0) return attrTags;
+            return new[] { cad.ControllerName };
+        }
+
+        return new[] { "Other" };
     });
 
     var jwtScheme = new OpenApiSecurityScheme
@@ -44,6 +89,21 @@ builder.Services.AddSwaggerGen(c =>
     {
         { jwtScheme, [] }
     });
+
+    var xmlFiles = new[]
+    {
+        $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml",
+        "Mentora.Core.xml"
+    };
+    foreach (var xmlFile in xmlFiles)
+    {
+        var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (System.IO.File.Exists(xmlPath))
+            c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+    }
+
+    c.DescribeAllParametersInCamelCase();
+    c.CustomSchemaIds(t => t.FullName);
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -131,7 +191,14 @@ await using (var scope = app.Services.CreateAsyncScope())
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/mobile/swagger.json",   "Mobile API");
+    c.SwaggerEndpoint("/swagger/coach/swagger.json",    "Coach Back-Office API");
+    c.SwaggerEndpoint("/swagger/internal/swagger.json", "Internal API");
+    c.RoutePrefix    = "swagger";
+    c.DocumentTitle  = "Mentora API";
+});
 
 app.UseCors("MentoraCorsPolicy");
 app.UseAuthentication();
@@ -149,7 +216,9 @@ app.MapGet("/api/v1/health", async (MentoraDbContext db) =>
         statusCode = 200
     });
 })
-.WithName("GetHealth");
+.WithName("GetHealth")
+.WithGroupName("internal")
+.WithTags("System — Health");
 
 app.MapControllers();
 

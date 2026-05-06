@@ -8,6 +8,8 @@ namespace Mentora.API.Controllers.Coach;
 [ApiController]
 [Route("api/v1/coach/parameters")]
 [Authorize(Policy = "CoachOnly")]
+[ApiExplorerSettings(GroupName = "coach")]
+[Tags("Coach — Parameters")]
 public class CoachParametersController(ICoachParameterService parameterService) : ControllerBase
 {
     [HttpGet]

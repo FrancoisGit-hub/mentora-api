@@ -7,6 +7,8 @@ namespace Mentora.API.Controllers.Member;
 [ApiController]
 [Route("api/v1/session-slots")]
 [Authorize(Policy = "MemberOnly")]
+[ApiExplorerSettings(GroupName = "mobile")]
+[Tags("Member — Session Slots")]
 public class MemberSessionSlotsController(ISessionSlotService sessionSlotService) : ControllerBase
 {
     /// <summary>

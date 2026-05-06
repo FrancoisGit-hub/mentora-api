@@ -8,6 +8,8 @@ namespace Mentora.API.Controllers.Coach;
 [ApiController]
 [Route("api/v1/coach/programs")]
 [Authorize(Policy = "CoachOnly")]
+[ApiExplorerSettings(GroupName = "coach")]
+[Tags("Coach — Programs")]
 public class OfferProgramsController(IOfferProgramService programService) : ControllerBase
 {
     [HttpGet]

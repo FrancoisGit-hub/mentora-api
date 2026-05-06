@@ -6,6 +6,8 @@ namespace Mentora.API.Controllers.Auth;
 
 [ApiController]
 [Route("api/v1/auth")]
+[ApiExplorerSettings(GroupName = "mobile")]
+[Tags("Auth")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("otp/request")]

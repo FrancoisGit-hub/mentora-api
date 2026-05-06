@@ -8,6 +8,8 @@ namespace Mentora.API.Controllers.Coach;
 [ApiController]
 [Route("api/v1/coach/session-slots")]
 [Authorize(Policy = "CoachOnly")]
+[ApiExplorerSettings(GroupName = "coach")]
+[Tags("Coach — Session Slots")]
 public class SessionSlotsController(ISessionSlotService sessionSlotService) : ControllerBase
 {
     [HttpPost]

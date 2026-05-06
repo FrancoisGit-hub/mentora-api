@@ -5,12 +5,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Mentora.API.Controllers.Coach;
 
+/// <summary>Manages product packs (bundles) in the coach's catalog.</summary>
 [ApiController]
 [Route("api/v1/coach/product-packs")]
 [Authorize(Policy = "CoachOnly")]
+[ApiExplorerSettings(GroupName = "coach")]
+[Tags("Coach — Catalog")]
 public class CoachProductPacksController(IProductPackService productPackService) : ControllerBase
 {
+    /// <summary>Lists all product packs owned by the authenticated coach, ordered by most recently updated.</summary>
+    /// <returns>A list of all packs belonging to this coach regardless of status.</returns>
     [HttpGet]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll()
     {
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
@@ -18,7 +26,14 @@ public class CoachProductPacksController(IProductPackService productPackService)
         return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
     }
 
+    /// <summary>Returns a single product pack by ID, verifying it belongs to the authenticated coach.</summary>
+    /// <param name="packId">Unique identifier of the pack.</param>
+    /// <returns>The full pack details including its product lines.</returns>
     [HttpGet("{packId:guid}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid packId)
     {
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
@@ -26,7 +41,13 @@ public class CoachProductPacksController(IProductPackService productPackService)
         return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
     }
 
+    /// <summary>Creates a new product pack in the coach's catalog with an initial status of DRAFT.</summary>
+    /// <returns>The newly created pack. The Location header points to the resource URL.</returns>
     [HttpPost]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create([FromBody] ProductPackRequest request)
     {
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
@@ -36,7 +57,20 @@ public class CoachProductPacksController(IProductPackService productPackService)
             new { success = true, data = result, error = (string?)null, statusCode = 201 });
     }
 
+    /// <summary>
+    /// Fully replaces all fields and product lines of an existing pack. The pack must belong to the
+    /// authenticated coach and must not be archived.
+    /// </summary>
+    /// <param name="packId">Unique identifier of the pack to update.</param>
+    /// <param name="request">The replacement pack data.</param>
+    /// <returns>The updated pack.</returns>
     [HttpPut("{packId:guid}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(Guid packId, [FromBody] ProductPackRequest request)
     {
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
@@ -44,7 +78,16 @@ public class CoachProductPacksController(IProductPackService productPackService)
         return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
     }
 
+    /// <summary>
+    /// Archives (soft-deletes) a product pack. Fails if the pack is already archived.
+    /// </summary>
+    /// <param name="packId">Unique identifier of the pack to archive.</param>
     [HttpDelete("{packId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid packId)
     {
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
