@@ -11,7 +11,9 @@
       "Bash(docker compose:*)",
       "Bash(netstat -ano)",
       "Bash(powershell:*)",
-      "Bash(docker exec mentora-postgres-local:*)"
+      "Bash(docker exec mentora-postgres-local:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

@@ -19,7 +19,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         catch (ConflictException ex)
         {
             logger.LogWarning(ex, "Conflict: {Message}", ex.Message);
-            await WriteResponseAsync(context, 409, ex.Message);
+            await WriteResponseAsync(context, 409, ex.Message, ex.Details);
         }
         catch (ValidationException ex)
         {
@@ -52,16 +52,31 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         }
     }
 
-    private static async Task WriteResponseAsync(HttpContext context, int statusCode, string error)
+    private static async Task WriteResponseAsync(HttpContext context, int statusCode, string error,
+        object? details = null)
     {
         context.Response.StatusCode  = statusCode;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
+        if (details is not null)
         {
-            success    = false,
-            data       = (object?)null,
-            error,
-            statusCode
-        });
+            await context.Response.WriteAsJsonAsync(new
+            {
+                success    = false,
+                data       = (object?)null,
+                error,
+                details,
+                statusCode
+            });
+        }
+        else
+        {
+            await context.Response.WriteAsJsonAsync(new
+            {
+                success    = false,
+                data       = (object?)null,
+                error,
+                statusCode
+            });
+        }
     }
 }

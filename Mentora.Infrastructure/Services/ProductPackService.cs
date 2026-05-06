@@ -156,6 +156,71 @@ public class ProductPackService(
         await db.SaveChangesAsync();
     }
 
+    public async Task<ProductPackResponse> PublishAsync(Guid packId, Guid coachId, CancellationToken ct)
+    {
+        var pack = await db.ProductPacks
+            .Include(p => p.Items)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(p => p.ProductPackId == packId && p.CoachId == coachId, ct)
+            ?? throw new NotFoundException($"ProductPack {packId} not found.");
+
+        if (pack.ProductPackStatus == ProductStatus.Published)
+            throw new ConflictException("Already published.");
+
+        if (pack.ProductPackStatus == ProductStatus.Archived)
+            throw new ConflictException("Cannot publish an archived item.");
+
+        // Rule A: pack must not be empty
+        if (pack.Items.Count == 0)
+            throw new ConflictException(
+                "Cannot publish an empty pack: at least one product item is required.");
+
+        // Rule A: all referenced products must be PUBLISHED
+        var blockingItems = pack.Items
+            .Where(i => i.Product is null || i.Product.ProductStatus != ProductStatus.Published)
+            .Select(i => new
+            {
+                productId = i.ProductId,
+                name      = i.Product?.ProductName ?? string.Empty,
+                status    = i.Product is null
+                    ? "DRAFT"
+                    : EnumMappings.ProductStatusMapping.ToWire(i.Product.ProductStatus)
+            })
+            .ToList();
+
+        if (blockingItems.Count > 0)
+            throw new ConflictException(
+                "Cannot publish pack: some products are not published.",
+                new { draftProducts = blockingItems });
+
+        pack.ProductPackStatus      = ProductStatus.Published;
+        pack.ProductPackUpdatedDate = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return ToResponse(pack);
+    }
+
+    public async Task<ProductPackResponse> UnpublishAsync(Guid packId, Guid coachId, CancellationToken ct)
+    {
+        var pack = await db.ProductPacks
+            .Include(p => p.Items)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(p => p.ProductPackId == packId && p.CoachId == coachId, ct)
+            ?? throw new NotFoundException($"ProductPack {packId} not found.");
+
+        if (pack.ProductPackStatus == ProductStatus.Draft)
+            throw new ConflictException("Already in draft.");
+
+        if (pack.ProductPackStatus == ProductStatus.Archived)
+            throw new ConflictException("Cannot unpublish an archived item.");
+
+        pack.ProductPackStatus      = ProductStatus.Draft;
+        pack.ProductPackUpdatedDate = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return ToResponse(pack);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private static ProductPackResponse ToResponse(ProductPack p)

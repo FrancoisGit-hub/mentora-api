@@ -78,6 +78,48 @@ public class CoachProductsController(IProductService productService) : Controlle
         return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
     }
 
+    /// <summary>Transitions a product from DRAFT to PUBLISHED.</summary>
+    /// <param name="productId">Unique identifier of the product to publish.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <remarks>
+    /// Non-idempotent: returns 409 if the product is already PUBLISHED.
+    /// Returns 409 if the product is ARCHIVED (terminal state in V1).
+    /// </remarks>
+    [HttpPost("{productId:guid}/publish")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Publish(Guid productId, CancellationToken ct)
+    {
+        var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
+        var result  = await productService.PublishAsync(productId, coachId, ct);
+        return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
+    }
+
+    /// <summary>Transitions a product from PUBLISHED back to DRAFT.</summary>
+    /// <param name="productId">Unique identifier of the product to unpublish.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <remarks>
+    /// Non-idempotent: returns 409 if the product is already DRAFT.
+    /// Returns 409 if the product is ARCHIVED (terminal state in V1).
+    /// Blocked with 409 if the product is referenced by any PUBLISHED pack;
+    /// the response details list the blocking packs.
+    /// </remarks>
+    [HttpPost("{productId:guid}/unpublish")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Unpublish(Guid productId, CancellationToken ct)
+    {
+        var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
+        var result  = await productService.UnpublishAsync(productId, coachId, ct);
+        return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
+    }
+
     /// <summary>
     /// Archives (soft-deletes) a product. Fails if the product is referenced by an active
     /// pack or is already archived.

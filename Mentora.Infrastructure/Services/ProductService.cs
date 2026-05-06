@@ -135,6 +135,56 @@ public class ProductService(
         await db.SaveChangesAsync();
     }
 
+    public async Task<ProductResponse> PublishAsync(Guid productId, Guid coachId, CancellationToken ct)
+    {
+        var product = await db.Products
+            .FirstOrDefaultAsync(p => p.ProductId == productId && p.CoachId == coachId, ct)
+            ?? throw new NotFoundException($"Product {productId} not found.");
+
+        if (product.ProductStatus == ProductStatus.Published)
+            throw new ConflictException("Already published.");
+
+        if (product.ProductStatus == ProductStatus.Archived)
+            throw new ConflictException("Cannot publish an archived item.");
+
+        product.ProductStatus      = ProductStatus.Published;
+        product.ProductUpdatedDate = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return ToResponse(product);
+    }
+
+    public async Task<ProductResponse> UnpublishAsync(Guid productId, Guid coachId, CancellationToken ct)
+    {
+        var product = await db.Products
+            .FirstOrDefaultAsync(p => p.ProductId == productId && p.CoachId == coachId, ct)
+            ?? throw new NotFoundException($"Product {productId} not found.");
+
+        if (product.ProductStatus == ProductStatus.Draft)
+            throw new ConflictException("Already in draft.");
+
+        if (product.ProductStatus == ProductStatus.Archived)
+            throw new ConflictException("Cannot unpublish an archived item.");
+
+        // Rule B: block if any published pack still references this product
+        var publishedPacks = await db.ProductPacks
+            .Where(pp => pp.ProductPackStatus == ProductStatus.Published
+                      && pp.Items.Any(i => i.ProductId == productId))
+            .Select(pp => new { packId = pp.ProductPackId, name = pp.ProductPackName })
+            .ToListAsync(ct);
+
+        if (publishedPacks.Count > 0)
+            throw new ConflictException(
+                "Cannot unpublish product: it is included in published packs.",
+                new { publishedPacks });
+
+        product.ProductStatus      = ProductStatus.Draft;
+        product.ProductUpdatedDate = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return ToResponse(product);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private static string NormalizeOfferNature(string? offerNature)
