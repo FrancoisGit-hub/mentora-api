@@ -9,6 +9,7 @@ using Mentora.Core.Settings;
 using Mentora.Infrastructure.Persistence;
 using Mentora.Infrastructure.Seeding;
 using Mentora.Infrastructure.Services;
+using Mentora.Infrastructure.Services.Visio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -165,6 +166,10 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IStripeWebhookHandler, StripeWebhookHandler>();
+
+// Lot 2.4
+builder.Services.AddScoped<IVisioUrlGenerator, JitsiVisioUrlGenerator>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 
 builder.Services.AddControllers();
 

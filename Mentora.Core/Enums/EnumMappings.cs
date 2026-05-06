@@ -185,4 +185,30 @@ public static class EnumMappings
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown CancelledBy enum value.");
         }
     }
+
+    public static class SessionStatusFilterMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["SCHEDULED", "COMPLETED", "CANCELLED", "UPCOMING", "PAST"]);
+
+        public static SessionStatusFilter Parse(string value)
+        {
+            if (value == "SCHEDULED") return SessionStatusFilter.Scheduled;
+            if (value == "COMPLETED") return SessionStatusFilter.Completed;
+            if (value == "CANCELLED") return SessionStatusFilter.Cancelled;
+            if (value == "UPCOMING")  return SessionStatusFilter.Upcoming;
+            if (value == "PAST")      return SessionStatusFilter.Past;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown SessionStatusFilter wire value.");
+        }
+
+        public static string ToWire(SessionStatusFilter value)
+        {
+            if (value == SessionStatusFilter.Scheduled) return "SCHEDULED";
+            if (value == SessionStatusFilter.Completed) return "COMPLETED";
+            if (value == SessionStatusFilter.Cancelled) return "CANCELLED";
+            if (value == SessionStatusFilter.Upcoming)  return "UPCOMING";
+            if (value == SessionStatusFilter.Past)      return "PAST";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown SessionStatusFilter enum value.");
+        }
+    }
 }
