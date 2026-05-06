@@ -19,6 +19,12 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductPack> ProductPacks => Set<ProductPack>();
     public DbSet<ProductPackItem> ProductPackItems => Set<ProductPackItem>();
+    public DbSet<Cart> Carts => Set<Cart>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<SessionVoucher> SessionVouchers => Set<SessionVoucher>();
+    public DbSet<StripeWebhookEvent> StripeWebhookEvents => Set<StripeWebhookEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
