@@ -11,9 +11,14 @@ public class ProductPackConfiguration : IEntityTypeConfiguration<ProductPack>
     public void Configure(EntityTypeBuilder<ProductPack> builder)
     {
         builder.ToTable("PRODUCT_PACKS", t =>
+        {
             t.HasCheckConstraint(
                 "CK_PRODUCT_PACKS_PRICE_NON_NEGATIVE",
-                "\"PRODUCT_PACK_PRICE_EUROS\" >= 0"));
+                "\"PRODUCT_PACK_PRICE_EUROS\" >= 0");
+            t.HasCheckConstraint(
+                "CK_PRODUCT_PACKS_DISCOUNT_PERCENT_RANGE",
+                "\"PRODUCT_PACK_DISCOUNT_PERCENT\" >= 0 AND \"PRODUCT_PACK_DISCOUNT_PERCENT\" <= 100");
+        });
 
         builder.HasKey(e => e.ProductPackId);
         builder.Property(e => e.ProductPackId)
@@ -33,6 +38,12 @@ public class ProductPackConfiguration : IEntityTypeConfiguration<ProductPack>
             .HasColumnName("PRODUCT_PACK_PRICE_EUROS")
             .IsRequired()
             .HasColumnType("numeric(8,2)");
+
+        builder.Property(e => e.ProductPackDiscountPercent)
+            .HasColumnName("PRODUCT_PACK_DISCOUNT_PERCENT")
+            .IsRequired()
+            .HasColumnType("numeric(5,2)")
+            .HasDefaultValue(0m);
 
         // ProductStatus reused — DRAFT / PUBLISHED / ARCHIVED
         var statusConverter = new ValueConverter<ProductStatus, string>(

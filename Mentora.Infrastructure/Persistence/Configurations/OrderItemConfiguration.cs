@@ -74,6 +74,16 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
             .HasConversion(sportConverter)
             .HasDefaultValueSql("'TRAINING'");
 
+        builder.Property(e => e.OrderItemOriginalUnitPriceEuros)
+            .HasColumnName("ORDER_ITEM_ORIGINAL_UNIT_PRICE_EUROS")
+            .IsRequired()
+            .HasColumnType("numeric(10,2)")
+            .HasDefaultValue(0m);
+
+        builder.Property(e => e.OrderItemPackDiscountPercentApplied)
+            .HasColumnName("ORDER_ITEM_PACK_DISCOUNT_PERCENT_APPLIED")
+            .HasColumnType("numeric(5,2)");
+
         builder.HasOne(e => e.Order)
             .WithMany(o => o.Items)
             .HasForeignKey(e => e.OrderId)

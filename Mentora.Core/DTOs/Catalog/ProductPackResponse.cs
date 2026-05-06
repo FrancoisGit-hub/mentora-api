@@ -18,6 +18,17 @@ namespace Mentora.Core.DTOs.Catalog;
 /// Items whose referenced product has been archived or is otherwise unavailable
 /// contribute 0 to this total.
 /// </param>
+/// <param name="DiscountPercent">
+/// Percentage discount applied to this pack at checkout (0 = no discount, 100 = free).
+/// Stored on the pack; coaches set this independently of the constituent product prices.
+/// </param>
+/// <param name="EffectivePriceEuros">
+/// Preview of what a member would pay: <see cref="ItemsTotalEuros"/> × (1 − <see cref="DiscountPercent"/> / 100),
+/// ceiling-rounded to the nearest cent. Not stored; computed at read time.
+/// Uses a ceiling-to-cent rule so the preview matches the per-line ceiling
+/// applied at checkout — the result may be marginally higher than a naive
+/// floor or round on the total. Informative only.
+/// </param>
 /// <param name="Status">
 /// Lifecycle status of the pack: <c>DRAFT</c>, <c>PUBLISHED</c>, or <c>ARCHIVED</c>.
 /// </param>
@@ -30,7 +41,9 @@ public record ProductPackResponse(
     string Name,
     string? Description,
     decimal PriceEuros,
+    decimal DiscountPercent,
     decimal ItemsTotalEuros,
+    decimal EffectivePriceEuros,
     string Status,
     List<ProductPackItemResponse> Items,
     Guid CoachId,

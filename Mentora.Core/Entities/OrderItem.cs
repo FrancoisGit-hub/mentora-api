@@ -16,6 +16,8 @@ public class OrderItem
     // Snapshot fields — immutable after order creation
     public string ProductName { get; set; } = null!;
     public decimal UnitPriceEuros { get; set; }
+    public decimal OrderItemOriginalUnitPriceEuros { get; set; }
+    public decimal? OrderItemPackDiscountPercentApplied { get; set; }
     public int Quantity { get; set; }
     public decimal LineTotalEuros { get; set; }
     public OfferType OfferType { get; set; }

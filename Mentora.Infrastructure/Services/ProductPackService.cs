@@ -57,13 +57,14 @@ public class ProductPackService(
         var now = DateTime.UtcNow;
         var pack = new ProductPack
         {
-            ProductPackName        = request.Name.Trim(),
-            ProductPackDescription = request.Description?.Trim(),
-            ProductPackPriceEuros  = request.PriceEuros,
-            ProductPackStatus      = ProductStatus.Draft,
-            ProductPackCreatedDate = now,
-            ProductPackUpdatedDate = now,
-            CoachId                = coachId,
+            ProductPackName           = request.Name.Trim(),
+            ProductPackDescription    = request.Description?.Trim(),
+            ProductPackPriceEuros     = request.PriceEuros,
+            ProductPackDiscountPercent = request.DiscountPercent,
+            ProductPackStatus         = ProductStatus.Draft,
+            ProductPackCreatedDate    = now,
+            ProductPackUpdatedDate    = now,
+            CoachId                   = coachId,
             Items = request.Items.Select(i => new ProductPackItem
             {
                 ProductPackItemQuantity = i.Quantity,
@@ -111,10 +112,11 @@ public class ProductPackService(
         // Replace items — remove all existing, add new set
         db.ProductPackItems.RemoveRange(pack.Items);
 
-        pack.ProductPackName        = request.Name.Trim();
-        pack.ProductPackDescription = request.Description?.Trim();
-        pack.ProductPackPriceEuros  = request.PriceEuros;
-        pack.ProductPackUpdatedDate = DateTime.UtcNow;
+        pack.ProductPackName           = request.Name.Trim();
+        pack.ProductPackDescription    = request.Description?.Trim();
+        pack.ProductPackPriceEuros     = request.PriceEuros;
+        pack.ProductPackDiscountPercent = request.DiscountPercent;
+        pack.ProductPackUpdatedDate    = DateTime.UtcNow;
         pack.Items = request.Items.Select(i => new ProductPackItem
         {
             ProductPackItemQuantity = i.Quantity,
@@ -235,12 +237,21 @@ public class ProductPackService(
         var itemsTotalEuros = p.Items.Sum(
             i => (i.Product?.ProductPriceEuros ?? 0m) * i.ProductPackItemQuantity);
 
+        var discountPercent = p.ProductPackDiscountPercent;
+        // Ceiling-to-cent rule (Interpretation A): matches the per-line ceiling applied at
+        // checkout, so this preview price equals what the member will actually be charged.
+        // May be marginally higher than Math.Round due to ceiling on fractional cents.
+        var effectivePriceEuros =
+            Math.Ceiling(itemsTotalEuros * (1 - discountPercent / 100m) * 100m) / 100m;
+
         return new(
             p.ProductPackId,
             p.ProductPackName,
             p.ProductPackDescription,
             p.ProductPackPriceEuros,
+            discountPercent,
             itemsTotalEuros,
+            effectivePriceEuros,
             EnumMappings.ProductStatusMapping.ToWire(p.ProductPackStatus),
             items,
             p.CoachId,

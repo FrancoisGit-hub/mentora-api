@@ -14,6 +14,9 @@ public class ProductPackRequestValidator : AbstractValidator<ProductPackRequest>
         RuleFor(x => x.PriceEuros)
             .GreaterThanOrEqualTo(0);
 
+        RuleFor(x => x.DiscountPercent)
+            .InclusiveBetween(0, 100);
+
         RuleFor(x => x.Items)
             .NotEmpty()
             .WithMessage("A pack must contain at least one item.");

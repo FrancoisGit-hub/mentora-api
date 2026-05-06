@@ -8,6 +8,7 @@ public class ProductPack
     public string ProductPackName { get; set; } = null!;
     public string? ProductPackDescription { get; set; }
     public decimal ProductPackPriceEuros { get; set; }
+    public decimal ProductPackDiscountPercent { get; set; }
     public ProductStatus ProductPackStatus { get; set; } = ProductStatus.Draft;
     public DateTime ProductPackCreatedDate { get; set; }
     public DateTime ProductPackUpdatedDate { get; set; }
