@@ -9,6 +9,15 @@ namespace Mentora.Core.DTOs.Catalog;
 /// not constrained by the sum of the individual product prices — treat it as
 /// informative only when comparing against item totals.
 /// </param>
+/// <param name="ItemsTotalEuros">
+/// Sum of each pack item's current product price multiplied by its quantity.
+/// Computed at read time from the live product catalog; not stored in the database.
+/// Informative only — the coach is free to set <see cref="PriceEuros"/> independently
+/// (e.g. to apply a bundle discount or markup). No validation enforces any relationship
+/// between the two values.
+/// Items whose referenced product has been archived or is otherwise unavailable
+/// contribute 0 to this total.
+/// </param>
 /// <param name="Status">
 /// Lifecycle status of the pack: <c>DRAFT</c>, <c>PUBLISHED</c>, or <c>ARCHIVED</c>.
 /// </param>
@@ -21,6 +30,7 @@ public record ProductPackResponse(
     string Name,
     string? Description,
     decimal PriceEuros,
+    decimal ItemsTotalEuros,
     string Status,
     List<ProductPackItemResponse> Items,
     Guid CoachId,

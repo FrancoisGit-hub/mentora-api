@@ -158,20 +158,29 @@ public class ProductPackService(
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private static ProductPackResponse ToResponse(ProductPack p) => new(
-        p.ProductPackId,
-        p.ProductPackName,
-        p.ProductPackDescription,
-        p.ProductPackPriceEuros,
-        EnumMappings.ProductStatusMapping.ToWire(p.ProductPackStatus),
-        p.Items.Select(i => new ProductPackItemResponse(
+    private static ProductPackResponse ToResponse(ProductPack p)
+    {
+        var items = p.Items.Select(i => new ProductPackItemResponse(
             i.ProductPackItemId,
             i.ProductId,
             i.Product?.ProductName ?? string.Empty,
             i.ProductPackItemQuantity
-        )).ToList(),
-        p.CoachId,
-        p.ProductPackCreatedDate,
-        p.ProductPackUpdatedDate
-    );
+        )).ToList();
+
+        var itemsTotalEuros = p.Items.Sum(
+            i => (i.Product?.ProductPriceEuros ?? 0m) * i.ProductPackItemQuantity);
+
+        return new(
+            p.ProductPackId,
+            p.ProductPackName,
+            p.ProductPackDescription,
+            p.ProductPackPriceEuros,
+            itemsTotalEuros,
+            EnumMappings.ProductStatusMapping.ToWire(p.ProductPackStatus),
+            items,
+            p.CoachId,
+            p.ProductPackCreatedDate,
+            p.ProductPackUpdatedDate
+        );
+    }
 }
