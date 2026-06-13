@@ -1,6 +1,9 @@
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Mentora.API.Middleware;
+using Mentora.API.Swagger;
 using Mentora.Core.Validators.Catalog;
 using Mentora.Infrastructure.Services.Stripe;
 using Npgsql;
@@ -106,6 +109,9 @@ builder.Services.AddSwaggerGen(c =>
 
     c.DescribeAllParametersInCamelCase();
     c.CustomSchemaIds(t => t.FullName);
+
+    // Expose VoucherStatus query param as a constrained string enum in Swagger
+    c.OperationFilter<VoucherStatusOperationFilter>();
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -174,7 +180,15 @@ builder.Services.AddScoped<ISessionService, SessionService>();
 // Lot 2 fix — Member Me
 builder.Services.AddScoped<IMemberMeService, MemberMeService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Serialize all enum properties as UPPERCASE strings on the wire (e.g. "AVAILABLE").
+        // SnakeCaseUpper converts PascalCase enum member names to SCREAMING_SNAKE_CASE,
+        // which matches the project's EnumMappings wire convention.
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
+    });
 
 builder.Services.AddCors(options =>
 {
