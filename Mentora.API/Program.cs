@@ -171,6 +171,9 @@ builder.Services.AddScoped<IStripeWebhookHandler, StripeWebhookHandler>();
 builder.Services.AddScoped<IVisioUrlGenerator, JitsiVisioUrlGenerator>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 
+// Lot 2 fix — Member Me
+builder.Services.AddScoped<IMemberMeService, MemberMeService>();
+
 builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>
