@@ -1,4 +1,5 @@
 using Mentora.Core.DTOs.Lot2;
+using Mentora.Core.DTOs.Member;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
 using Mentora.Core.Exceptions;
@@ -10,6 +11,8 @@ namespace Mentora.Infrastructure.Services;
 
 public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
 {
+    // ── Coach-facing mutations ─────────────────────────────────────────────────
+
     public async Task<SessionSlotDto> CreateAsync(Guid coachId, CreateSessionSlotRequest request)
     {
         var offerType = ParseOfferType(request.OfferType);
@@ -21,19 +24,19 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
 
         var slot = new SessionSlot
         {
-            SessionSlotStartDate     = request.StartDate,
-            SessionSlotEndDate       = request.EndDate,
-            SessionSlotOfferType     = offerType,
+            SessionSlotStartDate       = request.StartDate,
+            SessionSlotEndDate         = request.EndDate,
+            SessionSlotOfferType       = offerType,
             SessionSlotDurationMinutes = durationMinutes,
-            SessionSlotIsAvailable   = true,
-            SessionSlotCreatedDate   = DateTime.UtcNow,
-            CoachId                  = coachId
+            SessionSlotIsAvailable     = true,
+            SessionSlotCreatedDate     = DateTime.UtcNow,
+            CoachId                    = coachId
         };
 
         db.SessionSlots.Add(slot);
         await db.SaveChangesAsync();
 
-        return ToDto(slot);
+        return ToSlotDto(slot);
     }
 
     public async Task<SessionSlotDto> UpdateAsync(Guid coachId, Guid slotId, UpdateSessionSlotRequest request)
@@ -50,14 +53,14 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
         if (request.EndDate <= request.StartDate)
             throw new InvalidOperationException("End date must be after start date.");
 
-        slot.SessionSlotStartDate      = request.StartDate;
-        slot.SessionSlotEndDate        = request.EndDate;
-        slot.SessionSlotOfferType      = offerType;
+        slot.SessionSlotStartDate       = request.StartDate;
+        slot.SessionSlotEndDate         = request.EndDate;
+        slot.SessionSlotOfferType       = offerType;
         slot.SessionSlotDurationMinutes = (int)(request.EndDate - request.StartDate).TotalMinutes;
 
         await db.SaveChangesAsync();
 
-        return ToDto(slot);
+        return ToSlotDto(slot);
     }
 
     public async Task DeleteAsync(Guid coachId, Guid slotId)
@@ -73,55 +76,138 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
         await db.SaveChangesAsync();
     }
 
-    public async Task<List<SessionSlotDto>> GetAvailableSlotsForMemberAsync(Guid memberId, DateTime from, DateTime to)
+    // ── Member-facing read ─────────────────────────────────────────────────────
+
+    public async Task<List<MemberSessionSlotDto>> GetAvailableSlotsForMemberAsync(
+        Guid memberId,
+        Guid? coachId,
+        Guid? voucherId,
+        DateTime? fromDate,
+        DateTime? toDate,
+        CancellationToken ct)
     {
-        if (to <= from)
-            throw new InvalidOperationException("'to' must be after 'from'.");
+        if (!coachId.HasValue)
+            throw new InvalidOperationException("coachId is required.");
 
-        if ((to - from).TotalDays > 31)
-            throw new InvalidOperationException("Date range cannot exceed 31 days.");
+        var now           = DateTime.UtcNow;
+        var effectiveFrom = fromDate ?? now;
+        var effectiveTo   = toDate   ?? now.AddDays(60);
 
-        var primaryCoachId = await db.MemberCoaches
-            .Where(mc => mc.MemberId == memberId && mc.IsPrimary)
-            .Select(mc => (Guid?)mc.CoachId)
-            .FirstOrDefaultAsync();
+        if (effectiveFrom >= effectiveTo)
+            throw new InvalidOperationException("fromDate must be before toDate.");
 
-        if (primaryCoachId is null)
-            throw new NotFoundException("No primary coach found for this member.");
+        if ((effectiveTo - effectiveFrom).TotalDays > 90)
+            throw new InvalidOperationException("Date range cannot exceed 90 days.");
 
-        return await db.SessionSlots
-            .Where(s =>
-                s.CoachId == primaryCoachId &&
+        // ── Voucher validation (when provided) ─────────────────────────────────
+        // Single query on memberId + voucherId: missing OR foreign-member → same 404, no info leak.
+        SessionVoucher? voucher = null;
+        if (voucherId.HasValue)
+        {
+            voucher = await db.SessionVouchers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    v => v.VoucherId == voucherId.Value && v.MemberId == memberId, ct)
+                ?? throw new NotFoundException("Voucher not found.");
+
+            if (voucher.CoachId != coachId.Value)
+                throw new InvalidOperationException("Voucher does not belong to this coach.");
+
+            if (voucher.Status != VoucherStatus.Available)
+            {
+                var wire = EnumMappings.VoucherStatusMapping.ToWire(voucher.Status);
+                throw new InvalidOperationException(
+                    $"Voucher is not available for reservation (current status: {wire}).");
+            }
+        }
+
+        // ── Slot query ─────────────────────────────────────────────────────────
+        IQueryable<SessionSlot> query = voucher is not null
+            // Strict mode: filter by voucher's exact offer type and duration
+            ? db.SessionSlots.Where(s =>
+                s.CoachId                    == voucher.CoachId &&
+                s.SessionSlotOfferType       == voucher.OfferType &&
+                s.SessionSlotDurationMinutes == voucher.DurationMinutes &&
+                s.SessionSlotIsAvailable     &&
+                s.SessionSlotStartDate       >  now &&
+                s.SessionSlotStartDate       >= effectiveFrom &&
+                s.SessionSlotStartDate       <  effectiveTo)
+            // Plain mode: any available slot for the requested coach in the window
+            : db.SessionSlots.Where(s =>
+                s.CoachId                == coachId.Value &&
                 s.SessionSlotIsAvailable &&
-                s.SessionSlotStartDate >= from &&
-                s.SessionSlotStartDate < to)
-            .Select(s => ToDto(s))
-            .ToListAsync();
+                s.SessionSlotStartDate   >= effectiveFrom &&
+                s.SessionSlotStartDate   <  effectiveTo);
+
+        var slots = await query
+            .OrderBy(s => s.SessionSlotStartDate)
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        if (slots.Count == 0)
+            return [];
+
+        // ── Auxiliary: resolve productLocation per (offerType, durationMinutes) ─
+        // One query, ordered by PRODUCT_CREATED_DATE ASC so GroupBy.First() picks the oldest.
+        var locationRows = await db.Products
+            .Where(p =>
+                p.CoachId         == coachId.Value &&
+                p.ProductStatus   == ProductStatus.Published &&
+                p.ProductLocation != null)
+            .OrderBy(p => p.ProductCreatedDate)
+            .Select(p => new
+            {
+                p.ProductOfferType,
+                p.ProductDurationMinutes,
+                p.ProductLocation
+            })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        // Keep only the first (oldest-created) matching product per (offerType, duration) pair
+        var locationDict = locationRows
+            .GroupBy(p => (p.ProductOfferType, p.ProductDurationMinutes))
+            .ToDictionary(g => g.Key, g => g.First().ProductLocation);
+
+        bool? compatibleFlag = voucherId.HasValue ? true : null;
+
+        return slots.Select(s =>
+        {
+            locationDict.TryGetValue(
+                (s.SessionSlotOfferType, s.SessionSlotDurationMinutes), out var loc);
+
+            return new MemberSessionSlotDto(
+                SlotId:                  s.SessionSlotId,
+                CoachId:                 s.CoachId,
+                StartDate:               s.SessionSlotStartDate,
+                EndDate:                 s.SessionSlotEndDate,
+                OfferType:               EnumMappings.OfferTypeMapping.ToWire(s.SessionSlotOfferType),
+                DurationMinutes:         s.SessionSlotDurationMinutes,
+                ProductLocation:         loc,
+                CompatibleWithVoucherId: compatibleFlag);
+        }).ToList();
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Parses a string offer type. Rejects PresentielGroupe — not exposed in V1.
-    /// </summary>
     private static OfferType ParseOfferType(string raw)
     {
         if (!Enum.TryParse<OfferType>(raw, ignoreCase: false, out var offerType))
             throw new InvalidOperationException("Invalid offer type. Accepted values: Visio, PresentielSolo.");
 
         if (offerType == OfferType.PresentielGroupe)
-            throw new InvalidOperationException("PresentielGroupe is not available in V1. Accepted values: Visio, PresentielSolo.");
+            throw new InvalidOperationException(
+                "PresentielGroupe is not available in V1. Accepted values: Visio, PresentielSolo.");
 
         return offerType;
     }
 
-    private static SessionSlotDto ToDto(SessionSlot s) => new(
+    private static SessionSlotDto ToSlotDto(SessionSlot s) => new(
         s.SessionSlotId,
         s.SessionSlotStartDate,
         s.SessionSlotEndDate,
         s.SessionSlotOfferType.ToString(),
         s.SessionSlotDurationMinutes,
         s.SessionSlotIsAvailable,
-        s.SessionSlotCreatedDate
-    );
+        s.SessionSlotCreatedDate);
 }
