@@ -180,6 +180,9 @@ builder.Services.AddScoped<ISessionService, SessionService>();
 // Lot 2 fix — Member Me
 builder.Services.AddScoped<IMemberMeService, MemberMeService>();
 
+// Lot 2 fix — Member Orders (paginated list + detail with vouchers)
+builder.Services.AddScoped<IMemberOrderService, MemberOrderService>();
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
