@@ -8,10 +8,12 @@ using Mentora.Core.Validators.Catalog;
 using Mentora.Infrastructure.Services.Stripe;
 using Npgsql;
 using Mentora.Core.Interfaces;
+using Mentora.Core.Options;
 using Mentora.Core.Settings;
 using Mentora.Infrastructure.Persistence;
 using Mentora.Infrastructure.Seeding;
 using Mentora.Infrastructure.Services;
+using Mentora.Infrastructure.Services.Email;
 using Mentora.Infrastructure.Services.Visio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -185,6 +187,14 @@ builder.Services.AddScoped<IMemberOrderService, MemberOrderService>();
 
 // Lot 3.0 — Member Catalog
 builder.Services.AddScoped<IMemberCatalogService, MemberCatalogService>();
+
+// Lot 3.0 — Email (OTP delivery)
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+var emailProvider = builder.Configuration["Email:Provider"] ?? "Logging";
+if (string.Equals(emailProvider, "Smtp", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+else
+    builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
