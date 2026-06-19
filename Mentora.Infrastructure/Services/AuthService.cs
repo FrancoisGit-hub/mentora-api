@@ -13,7 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Mentora.Infrastructure.Services;
 
-public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) : IAuthService
+public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, IEmailSender emailSender) : IAuthService
 {
     private readonly JwtSettings _jwt = jwtOptions.Value;
 
@@ -43,6 +43,14 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
         await db.SaveChangesAsync();
 
         Console.WriteLine($"[OTP] {email} → {plainOtp}");
+
+        var subject = $"Votre code Mentora : {plainOtp}";
+        _ = await emailSender.SendAsync(
+            user.UserEmail,
+            subject,
+            BuildOtpHtmlBody(plainOtp),
+            BuildOtpTextBody(plainOtp),
+            CancellationToken.None);
     }
 
     public async Task<AuthResponse> VerifyOtpAsync(string email, string code)
@@ -195,4 +203,32 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions) 
         RandomNumberGenerator.Fill(bytes);
         return Convert.ToBase64String(bytes);
     }
+
+    private static string BuildOtpHtmlBody(string otpCode) => $@"
+<!DOCTYPE html>
+<html>
+<head><meta charset=""utf-8""></head>
+<body style=""font-family: Arial, sans-serif; color: #1a1a1a; max-width: 560px; margin: 0 auto; padding: 24px;"">
+  <h1 style=""color: #1a1a1a; font-size: 20px;"">Mentora</h1>
+  <p>Bonjour,</p>
+  <p>Voici votre code de connexion :</p>
+  <p style=""font-size: 32px; font-weight: bold; letter-spacing: 4px; background: #f4f4f4; padding: 16px 24px; display: inline-block; border-radius: 8px;"">
+    {otpCode}
+  </p>
+  <p>Ce code expire dans 15 minutes.</p>
+  <p style=""color: #666; font-size: 13px; margin-top: 32px;"">
+    Si vous n'avez pas demandé ce code, ignorez ce message.
+  </p>
+</body>
+</html>";
+
+    private static string BuildOtpTextBody(string otpCode) => $@"Mentora
+
+Bonjour,
+
+Voici votre code de connexion : {otpCode}
+
+Ce code expire dans 15 minutes.
+
+Si vous n'avez pas demandé ce code, ignorez ce message.";
 }
