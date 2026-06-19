@@ -147,16 +147,21 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
         if (slots.Count == 0)
             return [];
 
-        // ── Auxiliary: resolve productLocation per (offerType, durationMinutes) ─
-        // One query, ordered by PRODUCT_CREATED_DATE ASC so GroupBy.First() picks the oldest.
-        var locationRows = await db.Products
+        // ── Auxiliary: resolve productLocation AND product CTA fields per (offerType, durationMinutes) ─
+        // Single query for all published products of the coach, ordered by PRODUCT_CREATED_DATE ASC
+        // so GroupBy.First() always picks the earliest-created product per pair.
+        // No ProductLocation != null filter here — we need all published products for the CTA lookup;
+        // the location dictionary filters in memory on the non-null subset.
+        var productRows = await db.Products
             .Where(p =>
-                p.CoachId         == coachId.Value &&
-                p.ProductStatus   == ProductStatus.Published &&
-                p.ProductLocation != null)
+                p.CoachId       == coachId.Value &&
+                p.ProductStatus == ProductStatus.Published)
             .OrderBy(p => p.ProductCreatedDate)
             .Select(p => new
             {
+                p.ProductId,
+                p.ProductName,
+                p.ProductPriceEuros,
                 p.ProductOfferType,
                 p.ProductDurationMinutes,
                 p.ProductLocation
@@ -164,17 +169,24 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
             .AsNoTracking()
             .ToListAsync(ct);
 
-        // Keep only the first (oldest-created) matching product per (offerType, duration) pair
-        var locationDict = locationRows
+        // First product with a non-null location per (offerType, duration)
+        var locationDict = productRows
+            .Where(p => p.ProductLocation != null)
             .GroupBy(p => (p.ProductOfferType, p.ProductDurationMinutes))
             .ToDictionary(g => g.Key, g => g.First().ProductLocation);
+
+        // First published product per (offerType, duration) for the "Buy this slot" CTA fields
+        var productLookup = productRows
+            .GroupBy(p => (p.ProductOfferType, p.ProductDurationMinutes))
+            .ToDictionary(g => g.Key, g => g.First());
 
         bool? compatibleFlag = voucherId.HasValue ? true : null;
 
         return slots.Select(s =>
         {
-            locationDict.TryGetValue(
-                (s.SessionSlotOfferType, s.SessionSlotDurationMinutes), out var loc);
+            var pair = (s.SessionSlotOfferType, s.SessionSlotDurationMinutes);
+            locationDict.TryGetValue(pair, out var loc);
+            productLookup.TryGetValue(pair, out var prod);
 
             return new MemberSessionSlotDto(
                 SlotId:                  s.SessionSlotId,
@@ -184,7 +196,10 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
                 OfferType:               EnumMappings.OfferTypeMapping.ToWire(s.SessionSlotOfferType),
                 DurationMinutes:         s.SessionSlotDurationMinutes,
                 ProductLocation:         loc,
-                CompatibleWithVoucherId: compatibleFlag);
+                CompatibleWithVoucherId: compatibleFlag,
+                ProductId:               prod?.ProductId,
+                ProductName:             prod?.ProductName,
+                ProductPriceEuros:       prod?.ProductPriceEuros);
         }).ToList();
     }
 
