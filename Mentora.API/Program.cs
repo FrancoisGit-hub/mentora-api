@@ -183,6 +183,9 @@ builder.Services.AddScoped<IMemberMeService, MemberMeService>();
 // Lot 2 fix — Member Orders (paginated list + detail with vouchers)
 builder.Services.AddScoped<IMemberOrderService, MemberOrderService>();
 
+// Lot 3.0 — Member Catalog
+builder.Services.AddScoped<IMemberCatalogService, MemberCatalogService>();
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

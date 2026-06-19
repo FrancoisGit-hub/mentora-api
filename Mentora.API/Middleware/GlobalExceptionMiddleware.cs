@@ -16,6 +16,11 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             logger.LogWarning(ex, "Not found: {Message}", ex.Message);
             await WriteResponseAsync(context, 404, ex.Message);
         }
+        catch (ForbiddenException ex)
+        {
+            logger.LogWarning(ex, "Forbidden: {Message}", ex.Message);
+            await WriteResponseAsync(context, 403, ex.Message);
+        }
         catch (ConflictException ex)
         {
             logger.LogWarning(ex, "Conflict: {Message}", ex.Message);
