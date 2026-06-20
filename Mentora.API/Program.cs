@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
+using Mentora.API.Hubs;
 using Mentora.API.Middleware;
 using Mentora.API.Swagger;
 using Mentora.Core.Validators.Catalog;
@@ -142,6 +143,22 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
             ClockSkew = TimeSpan.Zero
         };
+
+        // Lot 3.3 — SignalR: read JWT from query string for /hubs/chat WebSocket upgrade requests.
+        // Browsers cannot set Authorization headers on WebSocket connections.
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
+                    context.Token = accessToken;
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 // Authorization policies — see AuthService.GenerateAccessToken for claim definitions
@@ -190,6 +207,14 @@ builder.Services.AddScoped<IMemberCatalogService, MemberCatalogService>();
 
 // Lot 3.1 — Conversations
 builder.Services.AddScoped<IConversationService, ConversationService>();
+
+// Lot 3.3 — SignalR (enum serialization mirrors the REST JSON convention)
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
+    });
 
 // Lot 3.0 — Email (OTP delivery)
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
@@ -271,5 +296,8 @@ app.MapGet("/api/v1/health", async (MentoraDbContext db) =>
 .WithTags("System — Health");
 
 app.MapControllers();
+
+// Lot 3.3 — SignalR Chat Hub
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

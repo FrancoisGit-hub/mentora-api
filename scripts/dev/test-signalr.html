@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mentora SignalR Test Client</title>
+  <style>
+    body { font-family: monospace; max-width: 900px; margin: 20px auto; padding: 16px; }
+    h1 { font-size: 18px; }
+    input, button, textarea { font-family: monospace; font-size: 14px; padding: 6px; }
+    input, textarea { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+    button { margin-right: 8px; margin-bottom: 8px; cursor: pointer; }
+    #log { background: #111; color: #0f0; padding: 12px; height: 360px; overflow-y: auto; white-space: pre-wrap; border-radius: 4px; }
+    .field { margin-bottom: 12px; }
+    label { display: block; font-weight: bold; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Mentora SignalR Test Client — /hubs/chat</h1>
+
+  <div class="field">
+    <label>Hub URL</label>
+    <input id="hubUrl" value="http://localhost:5243/hubs/chat" />
+  </div>
+
+  <div class="field">
+    <label>JWT (paste your access token)</label>
+    <textarea id="jwt" rows="3" placeholder="eyJhbGciOi..."></textarea>
+  </div>
+
+  <div class="field">
+    <label>Conversation ID (UUID)</label>
+    <input id="conversationId" placeholder="00000000-0000-0000-0000-000000000000" />
+  </div>
+
+  <div>
+    <button id="connectBtn">Connect</button>
+    <button id="joinBtn" disabled>Join conversation</button>
+    <button id="leaveBtn" disabled>Leave conversation</button>
+    <button id="markReadBtn" disabled>Mark as read</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+  </div>
+
+  <div class="field" style="margin-top: 12px;">
+    <label>Message content</label>
+    <textarea id="content" rows="3" placeholder="Type your message..."></textarea>
+    <button id="sendBtn" disabled>Send</button>
+  </div>
+
+  <div>
+    <label>Log</label>
+    <div id="log"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const logEl = $('log');
+    let connection = null;
+
+    function log(line, obj) {
+      const time = new Date().toISOString().substring(11, 19);
+      logEl.textContent += `[${time}] ${line}` + (obj !== undefined ? ' ' + JSON.stringify(obj) : '') + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setConnectedUi(connected) {
+      $('connectBtn').disabled = connected;
+      $('joinBtn').disabled = !connected;
+      $('leaveBtn').disabled = !connected;
+      $('markReadBtn').disabled = !connected;
+      $('sendBtn').disabled = !connected;
+      $('disconnectBtn').disabled = !connected;
+    }
+
+    $('connectBtn').onclick = async () => {
+      const hubUrl = $('hubUrl').value.trim();
+      const jwt = $('jwt').value.trim();
+      if (!hubUrl || !jwt) { log('Missing hub URL or JWT'); return; }
+
+      connection = new signalR.HubConnectionBuilder()
+        .withUrl(hubUrl + '?access_token=' + encodeURIComponent(jwt))
+        .withAutomaticReconnect()
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+      connection.on('ReceiveMessage', (msg) => log('← ReceiveMessage', msg));
+      connection.on('MessagesRead', (count, readDate) => log('← MessagesRead', { count, readDate }));
+      connection.onclose((err) => { log('Connection closed', err ? err.message : ''); setConnectedUi(false); });
+      connection.onreconnecting((err) => log('Reconnecting...', err ? err.message : ''));
+      connection.onreconnected((id) => log('Reconnected', { connectionId: id }));
+
+      try {
+        await connection.start();
+        log('Connected', { connectionId: connection.connectionId });
+        setConnectedUi(true);
+      } catch (e) {
+        log('Connect failed', { error: e.message });
+      }
+    };
+
+    $('joinBtn').onclick = async () => {
+      try {
+        await connection.invoke('JoinConversationAsync', $('conversationId').value.trim());
+        log('→ JoinConversationAsync OK');
+      } catch (e) { log('Join failed', { error: e.message }); }
+    };
+
+    $('leaveBtn').onclick = async () => {
+      try {
+        await connection.invoke('LeaveConversationAsync', $('conversationId').value.trim());
+        log('→ LeaveConversationAsync OK');
+      } catch (e) { log('Leave failed', { error: e.message }); }
+    };
+
+    $('sendBtn').onclick = async () => {
+      try {
+        await connection.invoke('SendMessageAsync', $('conversationId').value.trim(), $('content').value);
+        log('→ SendMessageAsync OK');
+        $('content').value = '';
+      } catch (e) { log('Send failed', { error: e.message }); }
+    };
+
+    $('markReadBtn').onclick = async () => {
+      try {
+        await connection.invoke('MarkAsReadAsync', $('conversationId').value.trim());
+        log('→ MarkAsReadAsync OK');
+      } catch (e) { log('Mark-read failed', { error: e.message }); }
+    };
+
+    $('disconnectBtn').onclick = async () => {
+      try { await connection.stop(); } catch {}
+      setConnectedUi(false);
+    };
+  </script>
+</body>
+</html>
