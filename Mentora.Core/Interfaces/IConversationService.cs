@@ -50,4 +50,16 @@ public interface IConversationService
         Guid coachId,
         MessageSenderType readerType,
         CancellationToken ct);
+
+    /// <summary>
+    /// Sets (or resets) the visio URL of the conversation between the given coach and member.
+    /// Pass null to revert to the auto-generated Jitsi URL.
+    /// Throws <see cref="Mentora.Core.Exceptions.NotFoundException"/> if the member doesn't exist.
+    /// Throws <see cref="Mentora.Core.Exceptions.ForbiddenException"/> if the member is not linked to the coach.
+    /// </summary>
+    Task<ConversationDto> SetVisioUrlAsync(
+        Guid coachId,
+        Guid memberId,
+        string? url,
+        CancellationToken ct);
 }

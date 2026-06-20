@@ -31,4 +31,27 @@ public sealed class CoachConversationController(IConversationService service) : 
         var result = await service.GetOrCreateForCoachAsync(coachId, memberId, ct);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Sets the visio URL for the conversation between the authenticated coach and the specified member.
+    /// Pass { "url": null } to reset to the auto-generated Jitsi URL.
+    /// </summary>
+    /// <remarks>
+    /// Validation: url must be a valid https:// URL, max 2000 characters, or null.
+    /// No domain whitelist — the coach is trusted to provide a meaningful link for their member.
+    /// </remarks>
+    [HttpPut("visio-url")]
+    [ProducesResponseType(typeof(ConversationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ConversationDto>> SetVisioUrl(
+        [FromRoute] Guid memberId,
+        [FromBody] SetVisioUrlRequestDto body,
+        CancellationToken ct)
+    {
+        var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
+        var result = await service.SetVisioUrlAsync(coachId, memberId, body.Url, ct);
+        return Ok(result);
+    }
 }

@@ -12,7 +12,9 @@ namespace Mentora.Infrastructure.Services;
 
 public class ConversationService(
     MentoraDbContext db,
-    IValidator<SendMessageRequestDto> sendMessageValidator) : IConversationService
+    IValidator<SendMessageRequestDto> sendMessageValidator,
+    IValidator<SetVisioUrlRequestDto> setVisioUrlValidator,
+    IVisioUrlGenerator visioUrlGenerator) : IConversationService
 {
     public async Task<ConversationDto> GetOrCreateForMemberAsync(Guid memberId, Guid coachId, CancellationToken ct)
     {
@@ -152,6 +154,39 @@ public class ConversationService(
         return markedCount;
     }
 
+    public async Task<ConversationDto> SetVisioUrlAsync(
+        Guid coachId, Guid memberId, string? url, CancellationToken ct)
+    {
+        await setVisioUrlValidator.ValidateAndThrowAsync(new SetVisioUrlRequestDto(url), ct);
+
+        var memberExists = await db.Members.AnyAsync(m => m.MemberId == memberId, ct);
+        if (!memberExists)
+            throw new NotFoundException("Member not found.");
+
+        var isLinked = await db.MemberCoaches
+            .AnyAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct);
+        if (!isLinked)
+            throw new ForbiddenException("You are not linked to this member.");
+
+        var conversation = await GetOrCreateConversationEntityAsync(memberId, coachId, ct);
+
+        conversation.ConversationVisioUrl = url?.Trim();
+        await db.SaveChangesAsync(ct);
+
+        var lastMessage = await db.Messages
+            .Where(m => m.ConversationId == conversation.ConversationId)
+            .OrderByDescending(m => m.MessageSentDate)
+            .Select(m => new LastMessageDto(
+                m.MessageId,
+                m.MessageContent,
+                m.MessageSenderType,
+                m.MessageSentDate,
+                m.MessageIsRead))
+            .FirstOrDefaultAsync(ct);
+
+        return Map(conversation, lastMessage);
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────────
 
     private async Task ValidateAsync(Guid memberId, Guid coachId, CancellationToken ct)
@@ -277,12 +312,19 @@ public class ConversationService(
         return Map(newConv, null);
     }
 
-    private static ConversationDto Map(Conversation c, LastMessageDto? lastMessage) => new(
-        ConversationId:  c.ConversationId,
-        MemberId:        c.MemberId,
-        CoachId:         c.CoachId,
-        VisioUrl:        c.ConversationVisioUrl,
-        CreatedDate:     c.ConversationCreatedDate,
-        LastMessageDate: c.ConversationLastMessageDate,
-        LastMessage:     lastMessage);
+    private ConversationDto Map(Conversation c, LastMessageDto? lastMessage)
+    {
+        var visioUrl = string.IsNullOrWhiteSpace(c.ConversationVisioUrl)
+            ? visioUrlGenerator.GenerateForConversation(c.ConversationId)
+            : c.ConversationVisioUrl;
+
+        return new ConversationDto(
+            ConversationId:  c.ConversationId,
+            MemberId:        c.MemberId,
+            CoachId:         c.CoachId,
+            VisioUrl:        visioUrl,
+            CreatedDate:     c.ConversationCreatedDate,
+            LastMessageDate: c.ConversationLastMessageDate,
+            LastMessage:     lastMessage);
+    }
 }
