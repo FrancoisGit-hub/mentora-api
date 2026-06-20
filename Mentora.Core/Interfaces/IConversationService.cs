@@ -1,4 +1,5 @@
 using Mentora.Core.DTOs.Conversation;
+using Mentora.Core.Enums;
 
 namespace Mentora.Core.Interfaces;
 
@@ -17,4 +18,36 @@ public interface IConversationService
     /// Throws <see cref="Mentora.Core.Exceptions.ForbiddenException"/> if the member is not linked to the coach.
     /// </summary>
     Task<ConversationDto> GetOrCreateForCoachAsync(Guid coachId, Guid memberId, CancellationToken ct);
+
+    /// <summary>
+    /// Returns paginated messages for the conversation, most-recent first.
+    /// Returns an empty list if no conversation row exists yet (read-only — does not create).
+    /// </summary>
+    Task<MessageListResponseDto> GetMessagesAsync(
+        Guid memberId,
+        Guid coachId,
+        DateTime? before,
+        int limit,
+        CancellationToken ct);
+
+    /// <summary>
+    /// Sends a message in the conversation, lazy-creating the conversation row if needed.
+    /// </summary>
+    Task<MessageDto> SendMessageAsync(
+        Guid memberId,
+        Guid coachId,
+        MessageSenderType senderType,
+        Guid senderId,
+        string content,
+        CancellationToken ct);
+
+    /// <summary>
+    /// Marks all unread messages from the other party as read.
+    /// Returns the count of messages actually updated (0 if no conversation exists yet).
+    /// </summary>
+    Task<int> MarkMessagesAsReadAsync(
+        Guid memberId,
+        Guid coachId,
+        MessageSenderType readerType,
+        CancellationToken ct);
 }
