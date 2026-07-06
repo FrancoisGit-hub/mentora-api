@@ -15,7 +15,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         try
         {
-            await authService.RequestOtpAsync(request.Email);
+            await authService.RequestOtpAsync(request.Email, request.IsCoach);
             return Ok(new { success = true, data = (object?)null, error = (string?)null, statusCode = 200 });
         }
         catch (InvalidOperationException ex)
@@ -29,7 +29,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         try
         {
-            var result = await authService.VerifyOtpAsync(request.Email, request.Code);
+            var result = await authService.VerifyOtpAsync(request.Email, request.Code, request.IsCoach);
             return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
         }
         catch (InvalidOperationException ex)

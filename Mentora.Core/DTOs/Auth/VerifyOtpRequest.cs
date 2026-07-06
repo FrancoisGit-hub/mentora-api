@@ -1,3 +1,3 @@
 namespace Mentora.Core.DTOs.Auth;
 
-public record VerifyOtpRequest(string Email, string Code);
+public record VerifyOtpRequest(string Email, string Code, bool IsCoach);

@@ -17,12 +17,19 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, 
 {
     private readonly JwtSettings _jwt = jwtOptions.Value;
 
-    public async Task RequestOtpAsync(string email)
+    public async Task RequestOtpAsync(string email, bool isCoach)
     {
         // Any enabled user (member or coach) can request an OTP
         var user = await db.Users
+            .Include(u => u.Coach)
+            .Include(u => u.Member)
             .FirstOrDefaultAsync(u => u.UserEmail == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
+
+        if (isCoach && user.Coach == null)
+            throw new InvalidOperationException("No coach account for this email.");
+        if (!isCoach && user.Member == null)
+            throw new InvalidOperationException("No member account for this email.");
 
         // Invalidate any previous unused OTPs for this user
         var previousOtps = await db.AuthOtps
@@ -53,7 +60,7 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, 
             CancellationToken.None);
     }
 
-    public async Task<AuthResponse> VerifyOtpAsync(string email, string code)
+    public async Task<AuthResponse> VerifyOtpAsync(string email, string code, bool isCoach)
     {
         var user = await db.Users
             .Include(u => u.Member)
@@ -70,13 +77,20 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, 
         var validOtp = candidates.FirstOrDefault(o => BCrypt.Net.BCrypt.Verify(code, o.AuthOtpCodeHash))
             ?? throw new InvalidOperationException("Invalid or expired OTP.");
 
+        if (isCoach && user.Coach == null)
+            throw new InvalidOperationException("No coach account for this email.");
+        if (!isCoach && user.Member == null)
+            throw new InvalidOperationException("No member account for this email.");
+
         validOtp.AuthOtpIsUsed = true;
 
         var (clientToken, _) = await CreateRefreshTokenAsync(user.UserId);
         await db.SaveChangesAsync();
 
         return new AuthResponse(
-            AccessToken: GenerateAccessToken(user, user.Member?.MemberId, user.Coach?.CoachId),
+            AccessToken: isCoach
+                ? GenerateAccessToken(user, memberId: null, coachId: user.Coach!.CoachId)
+                : GenerateAccessToken(user, memberId: user.Member!.MemberId, coachId: null),
             RefreshToken: clientToken,
             ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60
         );
