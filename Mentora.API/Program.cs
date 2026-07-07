@@ -243,6 +243,9 @@ builder.Services.AddCors(options =>
             "http://localhost:4200",
             "http://localhost:8100",
             "http://localhost",
+            "https://localhost",
+            "https://localhost:4200",
+            "https://localhost:8100",
             "capacitor://localhost"
         )
         .AllowAnyHeader()
