@@ -4,20 +4,26 @@ using System.Security.Cryptography;
 using System.Text;
 using Mentora.Core.DTOs.Auth;
 using Mentora.Core.Entities;
+using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Settings;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Mentora.Infrastructure.Services;
 
-public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, IEmailSender emailSender) : IAuthService
+public class AuthService(
+    MentoraDbContext db,
+    IOptions<JwtSettings> jwtOptions,
+    IEmailSender emailSender,
+    ILogger<AuthService> logger) : IAuthService
 {
     private readonly JwtSettings _jwt = jwtOptions.Value;
 
-    public async Task RequestOtpAsync(string email, bool isCoach)
+    public async Task RequestOtpAsync(string email, bool? isCoach)
     {
         // Any enabled user (member or coach) can request an OTP
         var user = await db.Users
@@ -26,10 +32,7 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, 
             .FirstOrDefaultAsync(u => u.UserEmail == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
 
-        if (isCoach && user.Coach == null)
-            throw new InvalidOperationException("No coach account for this email.");
-        if (!isCoach && user.Member == null)
-            throw new InvalidOperationException("No member account for this email.");
+        ResolveEffectiveIsCoach(user, isCoach, email);
 
         // Invalidate any previous unused OTPs for this user
         var previousOtps = await db.AuthOtps
@@ -60,7 +63,7 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, 
             CancellationToken.None);
     }
 
-    public async Task<AuthResponse> VerifyOtpAsync(string email, string code, bool isCoach)
+    public async Task<AuthResponse> VerifyOtpAsync(string email, string code, bool? isCoach)
     {
         var user = await db.Users
             .Include(u => u.Member)
@@ -77,10 +80,7 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, 
         var validOtp = candidates.FirstOrDefault(o => BCrypt.Net.BCrypt.Verify(code, o.AuthOtpCodeHash))
             ?? throw new InvalidOperationException("Invalid or expired OTP.");
 
-        if (isCoach && user.Coach == null)
-            throw new InvalidOperationException("No coach account for this email.");
-        if (!isCoach && user.Member == null)
-            throw new InvalidOperationException("No member account for this email.");
+        var effectiveIsCoach = ResolveEffectiveIsCoach(user, isCoach, email);
 
         validOtp.AuthOtpIsUsed = true;
 
@@ -88,12 +88,48 @@ public class AuthService(MentoraDbContext db, IOptions<JwtSettings> jwtOptions, 
         await db.SaveChangesAsync();
 
         return new AuthResponse(
-            AccessToken: isCoach
+            AccessToken: effectiveIsCoach
                 ? GenerateAccessToken(user, memberId: null, coachId: user.Coach!.CoachId)
                 : GenerateAccessToken(user, memberId: user.Member!.MemberId, coachId: null),
             RefreshToken: clientToken,
             ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60
         );
+    }
+
+    /// <summary>
+    /// Resolves whether the caller should be treated as coach (true) or member (false).
+    /// When <paramref name="isCoach"/> is provided, it is honored but still validated against
+    /// the user's actual profiles (backward-compat). When absent, the role is auto-detected from
+    /// which profile(s) exist. An email with BOTH a Coach and a Member profile cannot be
+    /// auto-resolved — that is a business-rule violation, surfaced as a 409 rather than guessed.
+    /// </summary>
+    private bool ResolveEffectiveIsCoach(User user, bool? isCoach, string email)
+    {
+        if (isCoach.HasValue)
+        {
+            var value = isCoach.Value;
+            if (value && user.Coach == null)
+                throw new InvalidOperationException("No coach account for this email.");
+            if (!value && user.Member == null)
+                throw new InvalidOperationException("No member account for this email.");
+            return value;
+        }
+
+        if (user.Coach != null && user.Member != null)
+        {
+            logger.LogError(
+                "Ambiguous role for {Email}: user has both a Coach and a Member profile and no isCoach was provided.",
+                email);
+            throw new ConflictException(
+                "This email has both a coach and a member account. Please specify isCoach explicitly.");
+        }
+
+        if (user.Coach != null)
+            return true;
+        if (user.Member != null)
+            return false;
+
+        throw new InvalidOperationException("No coach or member account for this email.");
     }
 
     public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)
