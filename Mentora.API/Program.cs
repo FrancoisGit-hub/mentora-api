@@ -17,6 +17,7 @@ using Mentora.Infrastructure.Services;
 using Mentora.Infrastructure.Services.Email;
 using Mentora.Infrastructure.Services.Visio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -250,6 +251,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
 
 // Auto-migrate and seed at startup
@@ -261,6 +269,10 @@ await using (var scope = app.Services.CreateAsyncScope())
     await CoachParameterSeeder.SeedAsync(scope.ServiceProvider);
     await OfferProgramSeeder.SeedAsync(scope.ServiceProvider);
 }
+
+// Must run first so downstream middleware (and Request.Scheme in URL generation) see the
+// original client scheme/IP forwarded by nginx, not the http:// of the container-internal hop.
+app.UseForwardedHeaders();
 
 // Global exception handler must be outermost so it wraps all middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
