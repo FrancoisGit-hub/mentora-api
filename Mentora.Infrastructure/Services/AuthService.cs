@@ -92,7 +92,8 @@ public class AuthService(
                 ? GenerateAccessToken(user, memberId: null, coachId: user.Coach!.CoachId)
                 : GenerateAccessToken(user, memberId: user.Member!.MemberId, coachId: null),
             RefreshToken: clientToken,
-            ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60
+            ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60,
+            IsCoach: effectiveIsCoach
         );
     }
 
