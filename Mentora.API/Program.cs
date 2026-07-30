@@ -169,7 +169,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim("userType", "COACH", "BOTH"));
 
     options.AddPolicy("MemberOnly", policy =>
-        policy.RequireClaim("memberId"));
+        policy.RequireClaim("memberId")
+              .RequireClaim("userType", "MEMBER"));
 });
 
 // Lot 1
