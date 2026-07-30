@@ -36,13 +36,17 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
                     g => g.Select(e => e.ErrorMessage).ToArray());
             context.Response.StatusCode  = 422;
             context.Response.ContentType = "application/json";
+            // Same envelope as every other error response ({success, data, error, statusCode}),
+            // plus the per-field detail. Field-name casing in `errors` is whatever
+            // FluentValidation's PropertyName is (PascalCase — the C# property name, since no
+            // validator in this project calls .WithName(...) to override it).
             await context.Response.WriteAsJsonAsync(new
             {
                 success    = false,
                 data       = (object?)null,
                 error      = "Validation failed.",
-                errors,
-                statusCode = 422
+                statusCode = 422,
+                errors
             });
         }
         catch (InvalidOperationException ex)

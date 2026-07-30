@@ -198,16 +198,14 @@ public class SessionService(
     {
         var now = DateTime.UtcNow;
 
-        var query = db.Sessions
-            .Include(s => s.Coach)
+        IQueryable<Session> query = db.Sessions
             .Where(s => s.SessionMemberId == memberId)
             .AsNoTracking();
 
         query = ApplyStatusFilter(query, statusFilter, now);
         query = query.OrderBy(s => s.SessionScheduledAt);
 
-        var sessions = await query.ToListAsync(ct);
-        return await MapToResponsesAsync(sessions, ct);
+        return await QueryToResponsesAsync(query, ct);
     }
 
     public async Task<SessionResponse> GetForMemberAsync(
@@ -226,7 +224,9 @@ public class SessionService(
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.ProductId == session.SessionProductId, ct);
 
-        return ToResponse(session, session.Coach, product);
+        var memberCoach = await GetMemberCoachAsync(session.SessionMemberId, session.SessionCoachId, ct);
+
+        return ToResponse(session, session.Coach, product, memberCoach);
     }
 
     // ── Coach-side ──────────────────────────────────────────────────────────────
@@ -280,8 +280,7 @@ public class SessionService(
     {
         var now = DateTime.UtcNow;
 
-        var query = db.Sessions
-            .Include(s => s.Coach)
+        IQueryable<Session> query = db.Sessions
             .Where(s => s.SessionCoachId == coachId)
             .AsNoTracking();
 
@@ -294,8 +293,7 @@ public class SessionService(
 
         query = query.OrderBy(s => s.SessionScheduledAt);
 
-        var sessions = await query.ToListAsync(ct);
-        return await MapToResponsesAsync(sessions, ct);
+        return await QueryToResponsesAsync(query, ct);
     }
 
     public async Task<SessionResponse> GetForCoachAsync(
@@ -314,7 +312,9 @@ public class SessionService(
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.ProductId == session.SessionProductId, ct);
 
-        return ToResponse(session, session.Coach, product);
+        var memberCoach = await GetMemberCoachAsync(session.SessionMemberId, session.SessionCoachId, ct);
+
+        return ToResponse(session, session.Coach, product, memberCoach);
     }
 
     // ── Private helpers ─────────────────────────────────────────────────────────
@@ -330,12 +330,20 @@ public class SessionService(
         return DateTime.UtcNow > endsAt ? SessionStatus.Completed : SessionStatus.Scheduled;
     }
 
-    private static SessionResponse ToResponse(Session session, Coach coach, Product? product)
+    private static SessionResponse ToResponse(Session session, Coach coach, Product? product, MemberCoach? memberCoach)
     {
         var effectiveStatus = ComputeEffectiveStatus(session);
         // Visio URL only for VISIO sessions that are not cancelled
         var visioUrl = session.SessionOfferType == OfferType.Visio && effectiveStatus != SessionStatus.Cancelled
             ? session.SessionVisioUrl
+            : null;
+
+        // Effective address, resolved at read time (never snapshotted) for in-person sessions:
+        // the member's per-coach override, else the booked product's own location. Treated as
+        // "in-person" for any non-VISIO offer type (covers PresentielSolo and PresentielGroupe,
+        // even though the latter isn't reservable in V1) so this stays correct if that changes.
+        var effectiveAddress = session.SessionOfferType != OfferType.Visio
+            ? memberCoach?.MemberCoachPresentialAddress ?? product?.ProductLocation
             : null;
 
         return new SessionResponse(
@@ -352,6 +360,7 @@ public class SessionService(
             ScheduledAt:        session.SessionScheduledAt,
             Status:             EnumMappings.SessionStatusMapping.ToWire(effectiveStatus),
             VisioUrl:           visioUrl,
+            EffectiveAddress:   effectiveAddress,
             CancellationReason: session.SessionCancellationReason,
             CancelledBy:        session.SessionCancelledBy.HasValue
                                     ? EnumMappings.CancelledByMapping.ToWire(session.SessionCancelledBy.Value)
@@ -361,6 +370,11 @@ public class SessionService(
             UpdatedDate:        session.SessionUpdatedDate);
     }
 
+    private Task<MemberCoach?> GetMemberCoachAsync(Guid memberId, Guid coachId, CancellationToken ct) =>
+        db.MemberCoaches
+            .AsNoTracking()
+            .FirstOrDefaultAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct);
+
     private async Task<SessionResponse> BuildResponseAsync(Guid sessionId, CancellationToken ct)
     {
         var session = await db.Sessions
@@ -368,7 +382,8 @@ public class SessionService(
             .FirstAsync(s => s.SessionId == sessionId, ct);
         var product = await db.Products
             .FirstOrDefaultAsync(p => p.ProductId == session.SessionProductId, ct);
-        return ToResponse(session, session.Coach, product);
+        var memberCoach = await GetMemberCoachAsync(session.SessionMemberId, session.SessionCoachId, ct);
+        return ToResponse(session, session.Coach, product, memberCoach);
     }
 
     private static IQueryable<Session> ApplyStatusFilter(
@@ -402,19 +417,29 @@ public class SessionService(
         };
     }
 
-    private async Task<IReadOnlyList<SessionResponse>> MapToResponsesAsync(
-        List<Session> sessions, CancellationToken ct)
+    // Single query, single round trip: LEFT JOIN to PRODUCTS (SessionProductId is a weak
+    // reference — no FK, product may be archived, so a missing row must yield null rather than
+    // drop the session) and LEFT JOIN to MEMBER_COACHES on the session's own (member, coach)
+    // pair (so the address override can never leak from a different member's row). No per-row
+    // lookups — the join and the mapping both happen once for the whole result set.
+    private async Task<IReadOnlyList<SessionResponse>> QueryToResponsesAsync(
+        IQueryable<Session> sessionQuery, CancellationToken ct)
     {
-        if (sessions.Count == 0) return [];
+        var query =
+            from s in sessionQuery
+            join p in db.Products on s.SessionProductId equals p.ProductId into productJoin
+            from p in productJoin.DefaultIfEmpty()
+            join mc in db.MemberCoaches
+                on new { MemberId = s.SessionMemberId, CoachId = s.SessionCoachId }
+                equals new { MemberId = mc.MemberId, CoachId = mc.CoachId }
+                into memberCoachJoin
+            from mc in memberCoachJoin.DefaultIfEmpty()
+            select new { Session = s, Coach = s.Coach, Product = p, MemberCoach = mc };
 
-        var productIds = sessions.Select(s => s.SessionProductId).Distinct().ToList();
-        var products = await db.Products
-            .Where(p => productIds.Contains(p.ProductId))
-            .AsNoTracking()
-            .ToDictionaryAsync(p => p.ProductId, ct);
+        var rows = await query.ToListAsync(ct);
 
-        return sessions
-            .Select(s => ToResponse(s, s.Coach, products.GetValueOrDefault(s.SessionProductId)))
+        return rows
+            .Select(r => ToResponse(r.Session, r.Coach, r.Product, r.MemberCoach))
             .ToList();
     }
 }
