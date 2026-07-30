@@ -3,8 +3,8 @@ namespace Mentora.Core.Entities;
 public class CoachParameter
 {
     public Guid CoachParameterId { get; set; }
-    public decimal CoachParameterHourlyRateEuros { get; set; }
-    public int CoachParameterCancellationDelayHours { get; set; }
+    public decimal CoachParameterHourlyRateEuros { get; set; } = 50.00m;
+    public int CoachParameterCancellationDelayHours { get; set; } = 24;
     public string CoachParameterLanguage { get; set; } = "FR";
     public bool CoachParameterNotifMessages { get; set; } = true;
     public bool CoachParameterNotifNewBooking { get; set; } = true;

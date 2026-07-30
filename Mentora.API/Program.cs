@@ -209,6 +209,9 @@ builder.Services.AddScoped<IMemberOrderService, MemberOrderService>();
 // Lot 3.0 — Member Catalog
 builder.Services.AddScoped<IMemberCatalogService, MemberCatalogService>();
 
+// Lot 5 — Parameters (coach + member)
+builder.Services.AddScoped<IMemberParameterService, MemberParameterService>();
+
 // Lot 3.1 — Conversations
 builder.Services.AddScoped<IConversationService, ConversationService>();
 
