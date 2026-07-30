@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Mentora.Core.DTOs.Auth;
 using Mentora.Core.Entities;
+using Mentora.Core.Enums;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Settings;
@@ -81,10 +82,11 @@ public class AuthService(
             ?? throw new InvalidOperationException("Invalid or expired OTP.");
 
         var effectiveIsCoach = ResolveEffectiveIsCoach(user, isCoach, email);
+        var role = effectiveIsCoach ? UserRole.Coach : UserRole.Member;
 
         validOtp.AuthOtpIsUsed = true;
 
-        var (clientToken, _) = await CreateRefreshTokenAsync(user.UserId);
+        var (clientToken, _) = await CreateRefreshTokenAsync(user.UserId, role);
         await db.SaveChangesAsync();
 
         return new AuthResponse(
@@ -153,11 +155,28 @@ public class AuthService(
         record.AuthRefreshTokenIsRevoked = true;
         record.AuthRefreshTokenRevokedDate = DateTime.UtcNow;
 
-        var (newClientToken, _) = await CreateRefreshTokenAsync(record.UserId);
+        // The role is fixed at the token's original issuance (VerifyOtpAsync) — never
+        // re-derived from whichever profiles the user currently has, so a dual-profile
+        // user who logged in as MEMBER stays MEMBER across refreshes, not "BOTH".
+        Guid? memberId = null;
+        Guid? coachId  = null;
+
+        if (record.AuthRefreshTokenUserRole == UserRole.Member)
+        {
+            memberId = record.User.Member?.MemberId
+                ?? throw new InvalidOperationException("Refresh token role is MEMBER but the user has no member profile.");
+        }
+        else
+        {
+            coachId = record.User.Coach?.CoachId
+                ?? throw new InvalidOperationException("Refresh token role is COACH but the user has no coach profile.");
+        }
+
+        var (newClientToken, _) = await CreateRefreshTokenAsync(record.UserId, record.AuthRefreshTokenUserRole);
         await db.SaveChangesAsync();
 
         return new AuthResponse(
-            AccessToken: GenerateAccessToken(record.User, record.User.Member?.MemberId, record.User.Coach?.CoachId),
+            AccessToken: GenerateAccessToken(record.User, memberId, coachId),
             RefreshToken: newClientToken,
             ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60
         );
@@ -214,7 +233,7 @@ public class AuthService(
     }
 
     // Returns (clientToken, entity). Flushes to DB to obtain the generated Guid PK.
-    private async Task<(string clientToken, AuthRefreshToken entity)> CreateRefreshTokenAsync(Guid userId)
+    private async Task<(string clientToken, AuthRefreshToken entity)> CreateRefreshTokenAsync(Guid userId, UserRole role)
     {
         var rawSecret = GenerateSecureRandom();
         var entity = new AuthRefreshToken
@@ -223,6 +242,7 @@ public class AuthService(
             AuthRefreshTokenCreatedDate    = DateTime.UtcNow,
             AuthRefreshTokenExpirationDate = DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpirationDays),
             AuthRefreshTokenIsRevoked      = false,
+            AuthRefreshTokenUserRole       = role,
             UserId                         = userId
         };
         db.AuthRefreshTokens.Add(entity);

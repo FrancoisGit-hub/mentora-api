@@ -23,10 +23,6 @@ public class ConversationConfiguration : IEntityTypeConfiguration<Conversation>
             .HasColumnName("COACH_ID")
             .IsRequired();
 
-        builder.Property(e => e.ConversationVisioUrl)
-            .HasColumnName("CONVERSATION_VISIO_URL")
-            .HasColumnType("text");
-
         builder.Property(e => e.ConversationCreatedDate)
             .HasColumnName("CONVERSATION_CREATED_DATE")
             .IsRequired()

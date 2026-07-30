@@ -1,3 +1,5 @@
+using Mentora.Core.Enums;
+
 namespace Mentora.Core.Entities;
 
 public class AuthRefreshToken
@@ -6,6 +8,7 @@ public class AuthRefreshToken
     public string AuthRefreshTokenHash { get; set; } = null!;
     public DateTime AuthRefreshTokenExpirationDate { get; set; }
     public bool AuthRefreshTokenIsRevoked { get; set; }
+    public UserRole AuthRefreshTokenUserRole { get; set; }
     public DateTime AuthRefreshTokenCreatedDate { get; set; }
     public DateTime? AuthRefreshTokenRevokedDate { get; set; }
 

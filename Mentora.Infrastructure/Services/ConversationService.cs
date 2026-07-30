@@ -12,9 +12,7 @@ namespace Mentora.Infrastructure.Services;
 
 public class ConversationService(
     MentoraDbContext db,
-    IValidator<SendMessageRequestDto> sendMessageValidator,
-    IValidator<SetVisioUrlRequestDto> setVisioUrlValidator,
-    IVisioUrlGenerator visioUrlGenerator) : IConversationService
+    IValidator<SendMessageRequestDto> sendMessageValidator) : IConversationService
 {
     public async Task<ConversationDto> GetOrCreateForMemberAsync(Guid memberId, Guid coachId, CancellationToken ct)
     {
@@ -154,39 +152,6 @@ public class ConversationService(
         return markedCount;
     }
 
-    public async Task<ConversationDto> SetVisioUrlAsync(
-        Guid coachId, Guid memberId, string? url, CancellationToken ct)
-    {
-        await setVisioUrlValidator.ValidateAndThrowAsync(new SetVisioUrlRequestDto(url), ct);
-
-        var memberExists = await db.Members.AnyAsync(m => m.MemberId == memberId, ct);
-        if (!memberExists)
-            throw new NotFoundException("Member not found.");
-
-        var isLinked = await db.MemberCoaches
-            .AnyAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct);
-        if (!isLinked)
-            throw new ForbiddenException("You are not linked to this member.");
-
-        var conversation = await GetOrCreateConversationEntityAsync(memberId, coachId, ct);
-
-        conversation.ConversationVisioUrl = url?.Trim();
-        await db.SaveChangesAsync(ct);
-
-        var lastMessage = await db.Messages
-            .Where(m => m.ConversationId == conversation.ConversationId)
-            .OrderByDescending(m => m.MessageSentDate)
-            .Select(m => new LastMessageDto(
-                m.MessageId,
-                m.MessageContent,
-                m.MessageSenderType,
-                m.MessageSentDate,
-                m.MessageIsRead))
-            .FirstOrDefaultAsync(ct);
-
-        return Map(conversation, lastMessage);
-    }
-
     // ── Private helpers ────────────────────────────────────────────────────────
 
     private async Task ValidateAsync(Guid memberId, Guid coachId, CancellationToken ct)
@@ -260,7 +225,7 @@ public class ConversationService(
                 SenderType: row.LastMessage.MessageSenderType,
                 SentDate:   row.LastMessage.MessageSentDate,
                 IsRead:     row.LastMessage.MessageIsRead);
-            return Map(row.Conversation, last);
+            return await MapAsync(row.Conversation, last, ct);
         }
 
         var newConv = new Conversation
@@ -306,25 +271,47 @@ public class ConversationService(
                 SenderType: existing.LastMessage.MessageSenderType,
                 SentDate:   existing.LastMessage.MessageSentDate,
                 IsRead:     existing.LastMessage.MessageIsRead);
-            return Map(existing.Conversation, last);
+            return await MapAsync(existing.Conversation, last, ct);
         }
 
-        return Map(newConv, null);
+        return await MapAsync(newConv, null, ct);
     }
 
-    private ConversationDto Map(Conversation c, LastMessageDto? lastMessage)
+    private async Task<ConversationDto> MapAsync(Conversation c, LastMessageDto? lastMessage, CancellationToken ct)
     {
-        var visioUrl = string.IsNullOrWhiteSpace(c.ConversationVisioUrl)
-            ? visioUrlGenerator.GenerateForConversation(c.ConversationId)
-            : c.ConversationVisioUrl;
+        var activeVisioSession = await GetActiveVisioSessionAsync(c.MemberId, c.CoachId, ct);
 
         return new ConversationDto(
-            ConversationId:  c.ConversationId,
-            MemberId:        c.MemberId,
-            CoachId:         c.CoachId,
-            VisioUrl:        visioUrl,
-            CreatedDate:     c.ConversationCreatedDate,
-            LastMessageDate: c.ConversationLastMessageDate,
-            LastMessage:     lastMessage);
+            ConversationId:     c.ConversationId,
+            MemberId:           c.MemberId,
+            CoachId:            c.CoachId,
+            ActiveVisioSession: activeVisioSession,
+            CreatedDate:        c.ConversationCreatedDate,
+            LastMessageDate:    c.ConversationLastMessageDate,
+            LastMessage:        lastMessage);
+    }
+
+    // A session is "joinable" for the "Join the video call" button from 15 minutes before its
+    // start through its end — not a permanent room, and never for cancelled sessions.
+    private async Task<ActiveVisioSessionDto?> GetActiveVisioSessionAsync(
+        Guid memberId, Guid coachId, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+
+        return await db.Sessions
+            .Where(s => s.SessionMemberId == memberId
+                     && s.SessionCoachId == coachId
+                     && s.SessionOfferType == OfferType.Visio
+                     && s.SessionStatus != SessionStatus.Cancelled
+                     && s.SessionVisioUrl != null
+                     && now >= s.SessionScheduledAt.AddMinutes(-15)
+                     && now <= s.SessionScheduledAt.AddMinutes(s.SessionDurationMinutes))
+            .OrderBy(s => s.SessionScheduledAt)
+            .Select(s => new ActiveVisioSessionDto(
+                s.SessionId,
+                s.SessionVisioUrl!,
+                s.SessionScheduledAt,
+                s.SessionScheduledAt.AddMinutes(s.SessionDurationMinutes)))
+            .FirstOrDefaultAsync(ct);
     }
 }

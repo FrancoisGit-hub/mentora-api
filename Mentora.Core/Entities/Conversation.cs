@@ -5,7 +5,6 @@ public class Conversation
     public Guid ConversationId { get; set; }
     public Guid MemberId { get; set; }
     public Guid CoachId { get; set; }
-    public string? ConversationVisioUrl { get; set; }
     public DateTime ConversationCreatedDate { get; set; }
     public DateTime? ConversationLastMessageDate { get; set; }
 

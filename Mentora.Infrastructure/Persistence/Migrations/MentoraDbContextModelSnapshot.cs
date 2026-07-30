@@ -128,6 +128,12 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("AUTH_REFRESH_TOKEN_REVOKED_DATE");
 
+                    b.Property<string>("AuthRefreshTokenUserRole")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("AUTH_REFRESH_TOKEN_USER_ROLE");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("USER_ID");
@@ -394,10 +400,6 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ConversationLastMessageDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("CONVERSATION_LAST_MESSAGE_DATE");
-
-                    b.Property<string>("ConversationVisioUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("CONVERSATION_VISIO_URL");
 
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid")

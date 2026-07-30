@@ -9,7 +9,4 @@ public class JitsiVisioUrlGenerator : IVisioUrlGenerator
         var roomId = "mentora-" + Guid.NewGuid().ToString("N");
         return $"https://meet.jit.si/{roomId}";
     }
-
-    public string GenerateForConversation(Guid conversationId)
-        => $"https://meet.jit.si/mentora-{conversationId}";
 }

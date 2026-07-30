@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mentora.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(MentoraDbContext))]
-    [Migration("20260730182025_AddLot5Parameters")]
+    [Migration("20260730184542_AddLot5Parameters")]
     partial class AddLot5Parameters
     {
         /// <inheritdoc />
@@ -130,6 +130,12 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("AuthRefreshTokenRevokedDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("AUTH_REFRESH_TOKEN_REVOKED_DATE");
+
+                    b.Property<string>("AuthRefreshTokenUserRole")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("AUTH_REFRESH_TOKEN_USER_ROLE");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -397,10 +403,6 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ConversationLastMessageDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("CONVERSATION_LAST_MESSAGE_DATE");
-
-                    b.Property<string>("ConversationVisioUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("CONVERSATION_VISIO_URL");
 
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid")

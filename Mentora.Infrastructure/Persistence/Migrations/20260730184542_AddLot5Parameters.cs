@@ -11,6 +11,10 @@ namespace Mentora.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(
+                name: "CONVERSATION_VISIO_URL",
+                table: "CONVERSATIONS");
+
             migrationBuilder.AddColumn<string>(
                 name: "USER_DELETION_REASON",
                 table: "USERS",
@@ -125,6 +129,15 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                 type: "text",
                 nullable: true);
 
+            // Added nullable first — backfilled below, then locked to NOT NULL — because a
+            // straight non-nullable AddColumn has no correct value for existing rows.
+            migrationBuilder.AddColumn<string>(
+                name: "AUTH_REFRESH_TOKEN_USER_ROLE",
+                table: "AUTH_REFRESH_TOKENS",
+                type: "character varying(10)",
+                maxLength: 10,
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "MEMBER_PARAMETERS",
                 columns: table => new
@@ -198,6 +211,36 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                 name: "IX_USER_DEVICES_USER_ID",
                 table: "USER_DEVICES",
                 column: "USER_ID");
+
+            // Backfill: tokens already in flight keep working. MEMBER where the user has a
+            // MEMBERS row, COACH where the user has a COACHES row.
+            migrationBuilder.Sql(
+                """
+                UPDATE "AUTH_REFRESH_TOKENS" art
+                SET "AUTH_REFRESH_TOKEN_USER_ROLE" = sub.role
+                FROM (
+                    SELECT u."USER_ID",
+                           CASE
+                               WHEN m."MEMBER_ID" IS NOT NULL THEN 'MEMBER'
+                               WHEN c."COACH_ID" IS NOT NULL THEN 'COACH'
+                           END AS role
+                    FROM "USERS" u
+                    LEFT JOIN "MEMBERS" m ON m."USER_ID" = u."USER_ID"
+                    LEFT JOIN "COACHES" c ON c."USER_ID" = u."USER_ID"
+                ) sub
+                WHERE art."USER_ID" = sub."USER_ID";
+                """);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "AUTH_REFRESH_TOKEN_USER_ROLE",
+                table: "AUTH_REFRESH_TOKENS",
+                type: "character varying(10)",
+                maxLength: 10,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "character varying(10)",
+                oldMaxLength: 10,
+                oldNullable: true);
         }
 
         /// <inheritdoc />
@@ -276,6 +319,16 @@ namespace Mentora.Infrastructure.Persistence.Migrations
             migrationBuilder.DropColumn(
                 name: "COACH_PARAMETER_PRESENTIAL_ADDRESS",
                 table: "COACH_PARAMETERS");
+
+            migrationBuilder.DropColumn(
+                name: "AUTH_REFRESH_TOKEN_USER_ROLE",
+                table: "AUTH_REFRESH_TOKENS");
+
+            migrationBuilder.AddColumn<string>(
+                name: "CONVERSATION_VISIO_URL",
+                table: "CONVERSATIONS",
+                type: "text",
+                nullable: true);
         }
     }
 }
