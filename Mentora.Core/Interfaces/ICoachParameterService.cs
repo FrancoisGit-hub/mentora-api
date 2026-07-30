@@ -4,6 +4,6 @@ namespace Mentora.Core.Interfaces;
 
 public interface ICoachParameterService
 {
-    Task<CoachParameterDto> GetAsync(Guid coachId);
-    Task<CoachParameterDto> UpdateAsync(Guid coachId, UpdateCoachParameterRequest request);
+    Task<CoachParameterDto> GetAsync(Guid coachId, CancellationToken ct);
+    Task<CoachParameterDto> UpdateAsync(Guid coachId, UpdateCoachParameterRequest request, CancellationToken ct);
 }

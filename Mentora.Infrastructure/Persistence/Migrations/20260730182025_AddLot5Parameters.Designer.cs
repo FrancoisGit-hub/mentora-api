@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mentora.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(MentoraDbContext))]
-    [Migration("20260730170531_AddLot5Parameters")]
+    [Migration("20260730182025_AddLot5Parameters")]
     partial class AddLot5Parameters
     {
         /// <inheritdoc />
@@ -292,10 +292,6 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("COACH_PARAMETER_CREATED_DATE");
 
-                    b.Property<string>("CoachParameterCustomVisioUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("COACH_PARAMETER_CUSTOM_VISIO_URL");
-
                     b.Property<int>("CoachParameterDefaultSessionDurationMinutes")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -533,6 +529,10 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("IS_PRIMARY");
+
+                    b.Property<string>("MemberCoachPresentialAddress")
+                        .HasColumnType("text")
+                        .HasColumnName("MEMBER_COACH_PRESENTIAL_ADDRESS");
 
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uuid")

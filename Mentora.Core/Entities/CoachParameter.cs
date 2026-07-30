@@ -16,7 +16,6 @@ public class CoachParameter
     public bool CoachParameterLateCancellationRefunds { get; set; } = false;
     public bool CoachParameterIsAcceptingNewBookings { get; set; } = true;
     public int CoachParameterDefaultSessionDurationMinutes { get; set; } = 60;
-    public string? CoachParameterCustomVisioUrl { get; set; }
     public DateTime CoachParameterCreatedDate { get; set; }
     public DateTime CoachParameterUpdatedDate { get; set; }
 

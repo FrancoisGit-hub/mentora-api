@@ -12,12 +12,12 @@ public class CoachParameterService(
     MentoraDbContext db,
     IValidator<UpdateCoachParameterRequest> validator) : ICoachParameterService
 {
-    public async Task<CoachParameterDto> GetAsync(Guid coachId)
+    public async Task<CoachParameterDto> GetAsync(Guid coachId, CancellationToken ct)
     {
         var coach = await db.Coaches
             .Include(c => c.User)
             .Include(c => c.CoachParameter)
-            .FirstOrDefaultAsync(c => c.CoachId == coachId)
+            .FirstOrDefaultAsync(c => c.CoachId == coachId, ct)
             ?? throw new NotFoundException($"Coach {coachId} not found.");
 
         if (coach.CoachParameter is null)
@@ -25,24 +25,24 @@ public class CoachParameterService(
             var param = CreateDefaultParameter(coach.CoachId);
             db.CoachParameters.Add(param);
             coach.CoachParameter = param;
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
         }
 
         return ToDto(coach);
     }
 
-    public async Task<CoachParameterDto> UpdateAsync(Guid coachId, UpdateCoachParameterRequest request)
+    public async Task<CoachParameterDto> UpdateAsync(Guid coachId, UpdateCoachParameterRequest request, CancellationToken ct)
     {
-        await validator.ValidateAndThrowAsync(request);
+        await validator.ValidateAndThrowAsync(request, ct);
 
         var coach = await db.Coaches
             .Include(c => c.User)
             .Include(c => c.CoachParameter)
-            .FirstOrDefaultAsync(c => c.CoachId == coachId)
+            .FirstOrDefaultAsync(c => c.CoachId == coachId, ct)
             ?? throw new NotFoundException($"Coach {coachId} not found.");
 
-        // Get-or-create: members are always provisioned with a parameters row by the seeder,
-        // but this guard removes the "Seeder invariant broken" fragility entirely.
+        // Get-or-create: the startup seeder only backfills coaches that existed at that
+        // startup, so a coach created since then can still be missing this row.
         if (coach.CoachParameter is null)
         {
             var param = CreateDefaultParameter(coach.CoachId);
@@ -65,8 +65,7 @@ public class CoachParameterService(
         p.CoachParameterIsAcceptingNewBookings        = request.IsAcceptingNewBookings;
         p.CoachParameterDefaultSessionDurationMinutes = request.DefaultSessionDurationMinutes;
         p.CoachParameterPresentialAddress             = request.PresentialAddress?.Trim();
-        p.CoachParameterCustomVisioUrl                = request.CustomVisioUrl?.Trim();
-        p.CoachParameterLanguage                      = request.Language;
+        p.CoachParameterLanguage                      = request.Language.ToUpperInvariant();
         p.CoachParameterNotifMessages                 = request.NotifMessages;
         p.CoachParameterNotifNewBooking               = request.NotifNewBooking;
         p.CoachParameterNotifBookingCancelled         = request.NotifBookingCancelled;
@@ -74,7 +73,7 @@ public class CoachParameterService(
         p.CoachParameterUpdatedDate                   = DateTime.UtcNow;
 
         // One SaveChangesAsync persists COACHES and COACH_PARAMETERS together.
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         return ToDto(coach);
     }
@@ -112,7 +111,6 @@ public class CoachParameterService(
             IsAcceptingNewBookings:        p.CoachParameterIsAcceptingNewBookings,
             DefaultSessionDurationMinutes: p.CoachParameterDefaultSessionDurationMinutes,
             PresentialAddress:             p.CoachParameterPresentialAddress,
-            CustomVisioUrl:                p.CoachParameterCustomVisioUrl,
             Language:                      p.CoachParameterLanguage,
             NotifMessages:                 p.CoachParameterNotifMessages,
             NotifNewBooking:               p.CoachParameterNotifNewBooking,

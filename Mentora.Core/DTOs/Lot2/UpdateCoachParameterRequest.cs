@@ -16,7 +16,6 @@ public record UpdateCoachParameterRequest(
     int DefaultSessionDurationMinutes,
     // delivery
     string? PresentialAddress,
-    string? CustomVisioUrl,
     // prefs
     string Language,
     bool NotifMessages,

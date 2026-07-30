@@ -43,19 +43,8 @@ public class UpdateCoachParameterRequestValidator : AbstractValidator<UpdateCoac
             .MaximumLength(500)
             .When(x => x.PresentialAddress is not null);
 
-        RuleFor(x => x.CustomVisioUrl)
-            .Must(BeAbsoluteHttpsUrl)
-            .When(x => x.CustomVisioUrl is not null)
-            .WithMessage("CustomVisioUrl must be an absolute https:// URL.");
-
         RuleFor(x => x.Language)
-            .Must(v => AllowedLanguages.Contains(v))
+            .Must(v => AllowedLanguages.Contains(v, StringComparer.OrdinalIgnoreCase))
             .WithMessage($"Language must be one of: {string.Join(", ", AllowedLanguages)}");
-    }
-
-    private static bool BeAbsoluteHttpsUrl(string? url)
-    {
-        if (string.IsNullOrWhiteSpace(url)) return false;
-        return Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps;
     }
 }

@@ -20,6 +20,10 @@ public class MemberCoachConfiguration : IEntityTypeConfiguration<MemberCoach>
         builder.Property(e => e.IsPrimary).HasColumnName("IS_PRIMARY").IsRequired().HasDefaultValue(false);
         builder.Property(e => e.StartedAt).HasColumnName("STARTED_AT").IsRequired().HasDefaultValueSql("now()");
 
+        builder.Property(e => e.MemberCoachPresentialAddress)
+            .HasColumnName("MEMBER_COACH_PRESENTIAL_ADDRESS")
+            .HasColumnType("text");
+
         builder.HasIndex(e => new { e.MemberId, e.CoachId }).IsUnique();
 
         builder.HasOne(e => e.Member)

@@ -81,10 +81,6 @@ public class CoachParameterConfiguration : IEntityTypeConfiguration<CoachParamet
             .IsRequired()
             .HasDefaultValue(60);
 
-        builder.Property(e => e.CoachParameterCustomVisioUrl)
-            .HasColumnName("COACH_PARAMETER_CUSTOM_VISIO_URL")
-            .HasColumnType("text");
-
         builder.Property(e => e.CoachParameterCreatedDate)
             .HasColumnName("COACH_PARAMETER_CREATED_DATE")
             .IsRequired();

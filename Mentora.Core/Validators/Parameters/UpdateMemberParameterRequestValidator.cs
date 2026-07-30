@@ -26,7 +26,7 @@ public class UpdateMemberParameterRequestValidator : AbstractValidator<UpdateMem
             .WithMessage("BirthDate must be in the past and imply an age between 13 and 120.");
 
         RuleFor(x => x.Language)
-            .Must(v => AllowedLanguages.Contains(v))
+            .Must(v => AllowedLanguages.Contains(v, StringComparer.OrdinalIgnoreCase))
             .WithMessage($"Language must be one of: {string.Join(", ", AllowedLanguages)}");
 
         RuleFor(x => x.SessionReminderHoursBefore)

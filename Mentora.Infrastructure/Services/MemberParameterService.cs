@@ -58,7 +58,7 @@ public class MemberParameterService(
 
         // MEMBER_PARAMETERS — prefs
         var p = member.MemberParameter!;
-        p.MemberParameterLanguage                  = request.Language;
+        p.MemberParameterLanguage                  = request.Language.ToUpperInvariant();
         p.MemberParameterNotifMessages              = request.NotifMessages;
         p.MemberParameterNotifSessionReminders      = request.NotifSessionReminders;
         p.MemberParameterNotifMarketing             = request.NotifMarketing;

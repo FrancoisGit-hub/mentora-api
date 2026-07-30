@@ -43,8 +43,8 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
-                name: "COACH_PARAMETER_CUSTOM_VISIO_URL",
-                table: "COACH_PARAMETERS",
+                name: "MEMBER_COACH_PRESENTIAL_ADDRESS",
+                table: "MEMBER_COACHES",
                 type: "text",
                 nullable: true);
 
@@ -230,8 +230,8 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                 table: "MEMBERS");
 
             migrationBuilder.DropColumn(
-                name: "COACH_PARAMETER_CUSTOM_VISIO_URL",
-                table: "COACH_PARAMETERS");
+                name: "MEMBER_COACH_PRESENTIAL_ADDRESS",
+                table: "MEMBER_COACHES");
 
             migrationBuilder.DropColumn(
                 name: "COACH_PARAMETER_DEFAULT_SESSION_DURATION_MINUTES",
