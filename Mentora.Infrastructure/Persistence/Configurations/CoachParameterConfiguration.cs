@@ -52,10 +52,6 @@ public class CoachParameterConfiguration : IEntityTypeConfiguration<CoachParamet
             .IsRequired()
             .HasDefaultValue(false);
 
-        builder.Property(e => e.CoachParameterPresentialAddress)
-            .HasColumnName("COACH_PARAMETER_PRESENTIAL_ADDRESS")
-            .HasColumnType("text");
-
         builder.Property(e => e.CoachParameterMinBookingNoticeHours)
             .HasColumnName("COACH_PARAMETER_MIN_BOOKING_NOTICE_HOURS")
             .IsRequired()

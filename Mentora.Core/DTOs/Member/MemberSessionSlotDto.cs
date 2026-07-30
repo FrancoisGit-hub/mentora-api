@@ -10,8 +10,10 @@ namespace Mentora.Core.DTOs.Member;
 /// <param name="OfferType">Session format: VISIO, PRESENTIEL_SOLO, or PRESENTIEL_GROUPE (wire UPPERCASE).</param>
 /// <param name="DurationMinutes">Slot duration in minutes.</param>
 /// <param name="ProductLocation">
-/// Location for in-person sessions from the earliest PUBLISHED product on this coach that matches the
-/// slot's offer type and duration and has a non-null location. <c>null</c> when none matches.
+/// Effective location for in-person sessions: this member's per-coach address override
+/// (MEMBER_COACHES.MEMBER_COACH_PRESENTIAL_ADDRESS) if set, otherwise the location of the
+/// earliest PUBLISHED product on this coach that matches the slot's offer type and duration.
+/// <c>null</c> when neither is set.
 /// </param>
 /// <param name="CompatibleWithVoucherId">
 /// <c>true</c> when the slot matches the voucher supplied as the <c>voucherId</c> query parameter.

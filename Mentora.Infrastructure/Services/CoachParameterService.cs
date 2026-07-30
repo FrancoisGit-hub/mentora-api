@@ -64,7 +64,6 @@ public class CoachParameterService(
         p.CoachParameterLateCancellationRefunds       = request.LateCancellationRefunds;
         p.CoachParameterIsAcceptingNewBookings        = request.IsAcceptingNewBookings;
         p.CoachParameterDefaultSessionDurationMinutes = request.DefaultSessionDurationMinutes;
-        p.CoachParameterPresentialAddress             = request.PresentialAddress?.Trim();
         p.CoachParameterLanguage                      = request.Language.ToUpperInvariant();
         p.CoachParameterNotifMessages                 = request.NotifMessages;
         p.CoachParameterNotifNewBooking               = request.NotifNewBooking;
@@ -110,7 +109,6 @@ public class CoachParameterService(
             LateCancellationRefunds:       p.CoachParameterLateCancellationRefunds,
             IsAcceptingNewBookings:        p.CoachParameterIsAcceptingNewBookings,
             DefaultSessionDurationMinutes: p.CoachParameterDefaultSessionDurationMinutes,
-            PresentialAddress:             p.CoachParameterPresentialAddress,
             Language:                      p.CoachParameterLanguage,
             NotifMessages:                 p.CoachParameterNotifMessages,
             NotifNewBooking:               p.CoachParameterNotifNewBooking,

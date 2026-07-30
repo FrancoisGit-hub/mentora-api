@@ -180,6 +180,13 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
             .GroupBy(p => (p.ProductOfferType, p.ProductDurationMinutes))
             .ToDictionary(g => g.Key, g => g.First());
 
+        // Effective address = this member's per-coach override, if set, else the product's own
+        // location. Scoped to (memberId, coachId) so it can never leak another member's override.
+        var memberOverrideAddress = await db.MemberCoaches
+            .Where(mc => mc.MemberId == memberId && mc.CoachId == coachId.Value)
+            .Select(mc => mc.MemberCoachPresentialAddress)
+            .FirstOrDefaultAsync(ct);
+
         bool? compatibleFlag = voucherId.HasValue ? true : null;
 
         return slots.Select(s =>
@@ -195,7 +202,7 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
                 EndDate:                 s.SessionSlotEndDate,
                 OfferType:               EnumMappings.OfferTypeMapping.ToWire(s.SessionSlotOfferType),
                 DurationMinutes:         s.SessionSlotDurationMinutes,
-                ProductLocation:         loc,
+                ProductLocation:         memberOverrideAddress ?? loc,
                 CompatibleWithVoucherId: compatibleFlag,
                 ProductId:               prod?.ProductId,
                 ProductName:             prod?.ProductName,

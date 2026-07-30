@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mentora.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(MentoraDbContext))]
-    [Migration("20260730184542_AddLot5Parameters")]
+    [Migration("20260730194501_AddLot5Parameters")]
     partial class AddLot5Parameters
     {
         /// <inheritdoc />
@@ -365,10 +365,6 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("COACH_PARAMETER_NOTIF_NEW_BOOKING");
-
-                    b.Property<string>("CoachParameterPresentialAddress")
-                        .HasColumnType("text")
-                        .HasColumnName("COACH_PARAMETER_PRESENTIAL_ADDRESS");
 
                     b.Property<DateTime>("CoachParameterUpdatedDate")
                         .HasColumnType("timestamp with time zone")

@@ -123,12 +123,6 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                 nullable: false,
                 defaultValue: true);
 
-            migrationBuilder.AddColumn<string>(
-                name: "COACH_PARAMETER_PRESENTIAL_ADDRESS",
-                table: "COACH_PARAMETERS",
-                type: "text",
-                nullable: true);
-
             // Added nullable first — backfilled below, then locked to NOT NULL — because a
             // straight non-nullable AddColumn has no correct value for existing rows.
             migrationBuilder.AddColumn<string>(
@@ -314,10 +308,6 @@ namespace Mentora.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropColumn(
                 name: "COACH_PARAMETER_NOTIF_NEW_BOOKING",
-                table: "COACH_PARAMETERS");
-
-            migrationBuilder.DropColumn(
-                name: "COACH_PARAMETER_PRESENTIAL_ADDRESS",
                 table: "COACH_PARAMETERS");
 
             migrationBuilder.DropColumn(

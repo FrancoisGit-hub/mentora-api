@@ -15,8 +15,6 @@ public record CoachParameterDto(
     bool LateCancellationRefunds,
     bool IsAcceptingNewBookings,
     int DefaultSessionDurationMinutes,
-    // delivery
-    string? PresentialAddress,
     // prefs
     string Language,
     bool NotifMessages,

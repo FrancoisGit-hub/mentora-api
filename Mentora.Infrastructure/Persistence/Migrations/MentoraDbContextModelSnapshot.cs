@@ -363,10 +363,6 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("COACH_PARAMETER_NOTIF_NEW_BOOKING");
 
-                    b.Property<string>("CoachParameterPresentialAddress")
-                        .HasColumnType("text")
-                        .HasColumnName("COACH_PARAMETER_PRESENTIAL_ADDRESS");
-
                     b.Property<DateTime>("CoachParameterUpdatedDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("COACH_PARAMETER_UPDATED_DATE");

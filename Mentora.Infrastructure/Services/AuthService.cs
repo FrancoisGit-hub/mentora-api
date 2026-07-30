@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using FluentValidation;
 using Mentora.Core.DTOs.Auth;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
@@ -20,6 +21,7 @@ public class AuthService(
     MentoraDbContext db,
     IOptions<JwtSettings> jwtOptions,
     IEmailSender emailSender,
+    IValidator<LogoutRequest> logoutValidator,
     ILogger<AuthService> logger) : IAuthService
 {
     private readonly JwtSettings _jwt = jwtOptions.Value;
@@ -182,6 +184,37 @@ public class AuthService(
         );
     }
 
+    public async Task LogoutAsync(Guid userId, LogoutRequest request, CancellationToken ct)
+    {
+        await logoutValidator.ValidateAndThrowAsync(request, ct);
+
+        // Never throw for an unknown/foreign/already-revoked token — that would be an oracle.
+        // Silently no-op instead; only revoke when the token both parses AND is proven to
+        // belong to the calling user AND its secret verifies.
+        if (TryParseClientToken(request.RefreshToken, out var tokenId, out var rawSecret))
+        {
+            var record = await db.AuthRefreshTokens
+                .FirstOrDefaultAsync(r => r.AuthRefreshTokenId == tokenId && r.UserId == userId, ct);
+
+            if (record is not null
+                && !record.AuthRefreshTokenIsRevoked
+                && BCrypt.Net.BCrypt.Verify(rawSecret, record.AuthRefreshTokenHash))
+            {
+                record.AuthRefreshTokenIsRevoked = true;
+                record.AuthRefreshTokenRevokedDate = DateTime.UtcNow;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.DeviceToken))
+        {
+            await db.UserDevices
+                .Where(d => d.UserDeviceToken == request.DeviceToken && d.UserId == userId)
+                .ExecuteDeleteAsync(ct);
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -254,10 +287,22 @@ public class AuthService(
 
     private static (Guid tokenId, string rawSecret) ParseClientToken(string token)
     {
-        var sep = token.IndexOf(':');
-        if (sep < 1 || !Guid.TryParse(token[..sep], out var id))
+        if (!TryParseClientToken(token, out var tokenId, out var rawSecret))
             throw new InvalidOperationException("Invalid or expired refresh token.");
-        return (id, token[(sep + 1)..]);
+        return (tokenId, rawSecret);
+    }
+
+    private static bool TryParseClientToken(string token, out Guid tokenId, out string rawSecret)
+    {
+        tokenId = Guid.Empty;
+        rawSecret = "";
+
+        var sep = token.IndexOf(':');
+        if (sep < 1 || !Guid.TryParse(token[..sep], out tokenId))
+            return false;
+
+        rawSecret = token[(sep + 1)..];
+        return true;
     }
 
     private static string GenerateOtp()

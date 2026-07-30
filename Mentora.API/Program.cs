@@ -213,6 +213,13 @@ builder.Services.AddScoped<IMemberCatalogService, MemberCatalogService>();
 // Lot 5 — Parameters (coach + member)
 builder.Services.AddScoped<IMemberParameterService, MemberParameterService>();
 
+// Lot 5 — Logout & device registration (coach + member)
+builder.Services.AddScoped<IUserDeviceService, UserDeviceService>();
+
+// Lot 5 — Coach-managed member settings + account deletion request
+builder.Services.AddScoped<ICoachMemberSettingsService, CoachMemberSettingsService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+
 // Lot 3.1 — Conversations
 builder.Services.AddScoped<IConversationService, ConversationService>();
 

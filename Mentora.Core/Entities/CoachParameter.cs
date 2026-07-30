@@ -10,7 +10,6 @@ public class CoachParameter
     public bool CoachParameterNotifNewBooking { get; set; } = true;
     public bool CoachParameterNotifBookingCancelled { get; set; } = true;
     public bool CoachParameterNotifMarketing { get; set; } = false;
-    public string? CoachParameterPresentialAddress { get; set; }
     public int CoachParameterMinBookingNoticeHours { get; set; } = 24;
     public int CoachParameterMaxBookingHorizonDays { get; set; } = 90;
     public bool CoachParameterLateCancellationRefunds { get; set; } = false;

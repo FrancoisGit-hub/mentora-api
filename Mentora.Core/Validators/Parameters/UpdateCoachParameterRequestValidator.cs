@@ -39,10 +39,6 @@ public class UpdateCoachParameterRequestValidator : AbstractValidator<UpdateCoac
         RuleFor(x => x.DefaultSessionDurationMinutes)
             .InclusiveBetween(15, 480);
 
-        RuleFor(x => x.PresentialAddress)
-            .MaximumLength(500)
-            .When(x => x.PresentialAddress is not null);
-
         RuleFor(x => x.Language)
             .Must(v => AllowedLanguages.Contains(v, StringComparer.OrdinalIgnoreCase))
             .WithMessage($"Language must be one of: {string.Join(", ", AllowedLanguages)}");
