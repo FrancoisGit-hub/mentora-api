@@ -11,9 +11,12 @@ public class User
     public bool UserIsEnabled { get; set; }
     public DateTime? UserDisabledDate { get; set; }
     public string UserRole { get; set; } = null!;
+    public DateTime? UserDeletionRequestedDate { get; set; }
+    public string? UserDeletionReason { get; set; }
 
     public Coach? Coach { get; set; }
     public Member? Member { get; set; }
     public ICollection<AuthOtp> AuthOtps { get; set; } = [];
     public ICollection<AuthRefreshToken> AuthRefreshTokens { get; set; } = [];
+    public ICollection<UserDevice> UserDevices { get; set; } = [];
 }

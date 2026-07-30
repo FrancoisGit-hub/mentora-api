@@ -26,6 +26,65 @@ public class CoachParameterConfiguration : IEntityTypeConfiguration<CoachParamet
             .IsRequired()
             .HasDefaultValue(24);
 
+        builder.Property(e => e.CoachParameterLanguage)
+            .HasColumnName("COACH_PARAMETER_LANGUAGE")
+            .IsRequired()
+            .HasMaxLength(2)
+            .HasDefaultValue("FR");
+
+        builder.Property(e => e.CoachParameterNotifMessages)
+            .HasColumnName("COACH_PARAMETER_NOTIF_MESSAGES")
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        builder.Property(e => e.CoachParameterNotifNewBooking)
+            .HasColumnName("COACH_PARAMETER_NOTIF_NEW_BOOKING")
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        builder.Property(e => e.CoachParameterNotifBookingCancelled)
+            .HasColumnName("COACH_PARAMETER_NOTIF_BOOKING_CANCELLED")
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        builder.Property(e => e.CoachParameterNotifMarketing)
+            .HasColumnName("COACH_PARAMETER_NOTIF_MARKETING")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(e => e.CoachParameterPresentialAddress)
+            .HasColumnName("COACH_PARAMETER_PRESENTIAL_ADDRESS")
+            .HasColumnType("text");
+
+        builder.Property(e => e.CoachParameterMinBookingNoticeHours)
+            .HasColumnName("COACH_PARAMETER_MIN_BOOKING_NOTICE_HOURS")
+            .IsRequired()
+            .HasDefaultValue(24);
+
+        builder.Property(e => e.CoachParameterMaxBookingHorizonDays)
+            .HasColumnName("COACH_PARAMETER_MAX_BOOKING_HORIZON_DAYS")
+            .IsRequired()
+            .HasDefaultValue(90);
+
+        builder.Property(e => e.CoachParameterLateCancellationRefunds)
+            .HasColumnName("COACH_PARAMETER_LATE_CANCELLATION_REFUNDS")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(e => e.CoachParameterIsAcceptingNewBookings)
+            .HasColumnName("COACH_PARAMETER_IS_ACCEPTING_NEW_BOOKINGS")
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        builder.Property(e => e.CoachParameterDefaultSessionDurationMinutes)
+            .HasColumnName("COACH_PARAMETER_DEFAULT_SESSION_DURATION_MINUTES")
+            .IsRequired()
+            .HasDefaultValue(60);
+
+        builder.Property(e => e.CoachParameterCustomVisioUrl)
+            .HasColumnName("COACH_PARAMETER_CUSTOM_VISIO_URL")
+            .HasColumnType("text");
+
         builder.Property(e => e.CoachParameterCreatedDate)
             .HasColumnName("COACH_PARAMETER_CREATED_DATE")
             .IsRequired();

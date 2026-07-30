@@ -14,6 +14,8 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<AuthRefreshToken> AuthRefreshTokens => Set<AuthRefreshToken>();
     public DbSet<AgentToken> AgentTokens => Set<AgentToken>();
     public DbSet<CoachParameter> CoachParameters => Set<CoachParameter>();
+    public DbSet<MemberParameter> MemberParameters => Set<MemberParameter>();
+    public DbSet<UserDevice> UserDevices => Set<UserDevice>();
     public DbSet<OfferProgram> OfferPrograms => Set<OfferProgram>();
     public DbSet<SessionSlot> SessionSlots => Set<SessionSlot>();
     public DbSet<Product> Products => Set<Product>();

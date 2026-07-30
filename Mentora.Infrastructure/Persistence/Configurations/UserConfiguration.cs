@@ -24,6 +24,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(e => e.UserIsEnabled).HasColumnName("USER_IS_ENABLED").IsRequired();
         builder.Property(e => e.UserDisabledDate).HasColumnName("USER_DISABLED_DATE");
         builder.Property(e => e.UserRole).HasColumnName("USER_ROLE").IsRequired().HasMaxLength(50);
+        builder.Property(e => e.UserDeletionRequestedDate).HasColumnName("USER_DELETION_REQUESTED_DATE");
+        builder.Property(e => e.UserDeletionReason).HasColumnName("USER_DELETION_REASON").HasColumnType("text");
 
         builder.HasOne(e => e.Coach)
             .WithOne(c => c.User)

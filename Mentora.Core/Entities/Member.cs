@@ -1,3 +1,5 @@
+using Mentora.Core.Enums;
+
 namespace Mentora.Core.Entities;
 
 public class Member
@@ -10,9 +12,13 @@ public class Member
     public bool MemberIsActive { get; set; }
     public bool MemberHasActivated { get; set; }
     public DateTime? MemberActivationDate { get; set; }
+    public Gender? MemberGender { get; set; }
+    public short? MemberHeightCm { get; set; }
+    public DateOnly? MemberBirthDate { get; set; }
 
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 
     public ICollection<MemberCoach> MemberCoaches { get; set; } = [];
+    public MemberParameter? MemberParameter { get; set; }
 }
