@@ -1,3 +1,4 @@
+using Mentora.Core.DTOs.Coach;
 using Mentora.Core.DTOs.Conversation;
 using Mentora.Core.Enums;
 
@@ -50,4 +51,12 @@ public interface IConversationService
         Guid coachId,
         MessageSenderType readerType,
         CancellationToken ct);
+
+    /// <summary>
+    /// Returns the coach's aggregated inbox: one entry per member linked via MEMBER_COACHES
+    /// (so a member who has never exchanged a message still appears, with a null conversationId),
+    /// ordered by lastMessageDate descending, no-message members last. Single query — the round
+    /// trip count does not grow with the number of members.
+    /// </summary>
+    Task<List<CoachConversationSummaryDto>> GetInboxForCoachAsync(Guid coachId, CancellationToken ct);
 }

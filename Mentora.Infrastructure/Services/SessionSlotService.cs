@@ -1,3 +1,5 @@
+using FluentValidation;
+using Mentora.Core.DTOs.Coach;
 using Mentora.Core.DTOs.Lot2;
 using Mentora.Core.DTOs.Member;
 using Mentora.Core.Entities;
@@ -9,7 +11,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Mentora.Infrastructure.Services;
 
-public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
+public class SessionSlotService(
+    MentoraDbContext db,
+    IValidator<ListSessionSlotsRequest> listSlotsValidator) : ISessionSlotService
 {
     // ── Coach-facing mutations ─────────────────────────────────────────────────
 
@@ -74,6 +78,54 @@ public class SessionSlotService(MentoraDbContext db) : ISessionSlotService
 
         db.SessionSlots.Remove(slot);
         await db.SaveChangesAsync();
+    }
+
+    public async Task<List<CoachSessionSlotDto>> ListForCoachAsync(
+        Guid coachId, ListSessionSlotsRequest request, CancellationToken ct)
+    {
+        await listSlotsValidator.ValidateAndThrowAsync(request, ct);
+
+        // SessionSlotStartDate is TIMESTAMPTZ — Npgsql requires DateTimeKind.Utc, and DateOnly
+        // has no timezone of its own, so the range boundaries are treated as UTC calendar days.
+        var fromDate = DateTime.SpecifyKind(request.From!.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+        var toDateExclusive = DateTime.SpecifyKind(
+            request.To!.Value.AddDays(1).ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+
+        IQueryable<SessionSlot> slotsQuery = db.SessionSlots
+            .Where(s => s.CoachId == coachId
+                     && s.SessionSlotStartDate >= fromDate
+                     && s.SessionSlotStartDate < toDateExclusive);
+
+        if (request.IsAvailable.HasValue)
+            slotsQuery = slotsQuery.Where(s => s.SessionSlotIsAvailable == request.IsAvailable.Value);
+
+        // Single query: LEFT JOIN to SESSIONS (excluding cancelled bookings, which free the slot
+        // back up conceptually) and LEFT JOIN to MEMBERS on the booking session's member. No
+        // per-row lookups — booked-member identity is resolved in the same round trip as the slots.
+        var rows = await (
+            from s in slotsQuery
+            join sess in db.Sessions.Where(x => x.SessionStatus != SessionStatus.Cancelled)
+                on s.SessionSlotId equals sess.SessionSlotId into sessJoin
+            from sess in sessJoin.DefaultIfEmpty()
+            join m in db.Members
+                on sess.SessionMemberId equals m.MemberId into memberJoin
+            from m in memberJoin.DefaultIfEmpty()
+            orderby s.SessionSlotStartDate
+            select new { Slot = s, Session = sess, Member = m })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        return rows.Select(r => new CoachSessionSlotDto(
+            r.Slot.SessionSlotId,
+            r.Slot.SessionSlotStartDate,
+            r.Slot.SessionSlotEndDate,
+            EnumMappings.OfferTypeMapping.ToWire(r.Slot.SessionSlotOfferType),
+            r.Slot.SessionSlotDurationMinutes,
+            r.Slot.SessionSlotIsAvailable,
+            r.Session?.SessionId,
+            r.Session?.SessionMemberId,
+            r.Member?.MemberFirstName,
+            r.Member?.MemberLastName)).ToList();
     }
 
     // ── Member-facing read ─────────────────────────────────────────────────────

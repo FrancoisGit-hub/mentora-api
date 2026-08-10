@@ -35,4 +35,17 @@ public class AccountService(
 
         await db.SaveChangesAsync(ct);
     }
+
+    public async Task<AccountDeletionStatusDto> GetDeletionStatusAsync(Guid userId, CancellationToken ct)
+    {
+        var user = await db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.UserId == userId, ct)
+            ?? throw new NotFoundException($"User {userId} not found.");
+
+        return new AccountDeletionStatusDto(
+            IsPending:   user.UserDeletionRequestedDate.HasValue,
+            RequestedAt: user.UserDeletionRequestedDate,
+            Reason:      user.UserDeletionReason);
+    }
 }

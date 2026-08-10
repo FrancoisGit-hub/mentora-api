@@ -5,6 +5,9 @@ namespace Mentora.Core.DTOs.Session;
 /// <param name="SlotId">Identifier of the slot this session was booked on.</param>
 /// <param name="CoachId">Identifier of the coach.</param>
 /// <param name="CoachDisplayName">The coach's first and last name.</param>
+/// <param name="MemberId">Identifier of the member the session is booked for.</param>
+/// <param name="MemberFirstName">First name of the member.</param>
+/// <param name="MemberLastName">Last name of the member.</param>
 /// <param name="ProductId">Identifier of the product this session was booked from (weak reference — product may be archived).</param>
 /// <param name="ProductName">Product name, or "(unavailable)" if the product no longer resolves.</param>
 /// <param name="OfferType">Session format: VISIO or PRESENTIEL_SOLO.</param>
@@ -29,6 +32,9 @@ public record SessionResponse(
     Guid SlotId,
     Guid CoachId,
     string CoachDisplayName,
+    Guid MemberId,
+    string MemberFirstName,
+    string MemberLastName,
     Guid ProductId,
     string ProductName,
     string OfferType,

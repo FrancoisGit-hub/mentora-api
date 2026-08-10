@@ -13,4 +13,10 @@ public interface IAccountService
 
     /// <summary>Cancels a pending deletion request for the calling user (both columns back to null).</summary>
     Task CancelDeletionRequestAsync(Guid userId, CancellationToken ct);
+
+    /// <summary>
+    /// Returns the calling user's current deletion-request status. When no request is pending,
+    /// <c>IsPending</c> is false and <c>RequestedAt</c>/<c>Reason</c> are both null.
+    /// </summary>
+    Task<AccountDeletionStatusDto> GetDeletionStatusAsync(Guid userId, CancellationToken ct);
 }

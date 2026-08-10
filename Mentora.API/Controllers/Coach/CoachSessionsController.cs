@@ -25,6 +25,11 @@ public class CoachSessionsController(ISessionService sessionService) : Controlle
     /// </param>
     /// <param name="fromDate">Optional lower bound on SessionScheduledAt (ISO 8601).</param>
     /// <param name="toDate">Optional upper bound on SessionScheduledAt (ISO 8601).</param>
+    /// <param name="memberId">
+    /// Optional filter to only this member's sessions. This is a filter, not an identity — the
+    /// coach scope still comes from the JWT, so a memberId belonging to another coach's member
+    /// yields an empty list, never that member's sessions.
+    /// </param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A list of sessions matching the filters, ordered by scheduled date ascending.</returns>
     [HttpGet]
@@ -36,6 +41,7 @@ public class CoachSessionsController(ISessionService sessionService) : Controlle
         [FromQuery] string? status,
         [FromQuery] DateTime? fromDate,
         [FromQuery] DateTime? toDate,
+        [FromQuery] Guid? memberId,
         CancellationToken ct)
     {
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
@@ -51,7 +57,7 @@ public class CoachSessionsController(ISessionService sessionService) : Controlle
             }
         }
 
-        var result = await sessionService.ListForCoachAsync(coachId, statusFilter, fromDate, toDate, ct);
+        var result = await sessionService.ListForCoachAsync(coachId, statusFilter, fromDate, toDate, memberId, ct);
         return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
     }
 

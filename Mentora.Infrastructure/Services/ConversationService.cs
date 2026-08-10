@@ -1,4 +1,5 @@
 using FluentValidation;
+using Mentora.Core.DTOs.Coach;
 using Mentora.Core.DTOs.Conversation;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
@@ -12,7 +13,8 @@ namespace Mentora.Infrastructure.Services;
 
 public class ConversationService(
     MentoraDbContext db,
-    IValidator<SendMessageRequestDto> sendMessageValidator) : IConversationService
+    IValidator<SendMessageRequestDto> sendMessageValidator,
+    IVisioUrlGenerator visioUrlGenerator) : IConversationService
 {
     public async Task<ConversationDto> GetOrCreateForMemberAsync(Guid memberId, Guid coachId, CancellationToken ct)
     {
@@ -152,6 +154,65 @@ public class ConversationService(
         return markedCount;
     }
 
+    public async Task<List<CoachConversationSummaryDto>> GetInboxForCoachAsync(Guid coachId, CancellationToken ct)
+    {
+        // MEMBER_COACHES is the base — not CONVERSATIONS — so a member who has never exchanged a
+        // message still appears (LEFT JOIN to CONVERSATIONS). LastMessage/UnreadCount are
+        // correlated subqueries on the conversation's own Messages navigation, so the whole inbox
+        // is one round trip regardless of how many members the coach has — no N+1.
+        var query =
+            from mc in db.MemberCoaches
+            where mc.CoachId == coachId
+            join c in db.Conversations
+                on new { MemberId = mc.MemberId, CoachId = mc.CoachId }
+                equals new { MemberId = c.MemberId, CoachId = c.CoachId }
+                into convJoin
+            from c in convJoin.DefaultIfEmpty()
+            select new
+            {
+                mc.MemberId,
+                mc.Member.MemberFirstName,
+                mc.Member.MemberLastName,
+                ConversationId   = (Guid?)c.ConversationId,
+                LastMessageDate  = c.ConversationLastMessageDate,
+                LastMessage = c.Messages
+                    .OrderByDescending(m => m.MessageSentDate)
+                    .Select(m => new
+                    {
+                        m.MessageId,
+                        m.MessageContent,
+                        m.MessageSenderType,
+                        m.MessageSentDate,
+                        m.MessageIsRead
+                    })
+                    .FirstOrDefault(),
+                // Unread = sent BY THE MEMBER (MessageSenderType.Member) and MESSAGE_IS_READ is false.
+                UnreadCount = c.Messages.Count(m =>
+                    m.MessageSenderType == MessageSenderType.Member && !m.MessageIsRead)
+            };
+
+        var rows = await query.ToListAsync(ct);
+
+        return rows
+            .Select(r => new CoachConversationSummaryDto(
+                ConversationId:   r.ConversationId,
+                MemberId:         r.MemberId,
+                MemberFirstName:  r.MemberFirstName,
+                MemberLastName:   r.MemberLastName,
+                UnreadCount:      r.UnreadCount,
+                LastMessage:      r.LastMessage is null ? null : new LastMessageDto(
+                                       r.LastMessage.MessageId,
+                                       r.LastMessage.MessageContent,
+                                       r.LastMessage.MessageSenderType,
+                                       r.LastMessage.MessageSentDate,
+                                       r.LastMessage.MessageIsRead),
+                LastMessageDate:  r.LastMessageDate))
+            // Nullable DateTime's default comparer treats null as the smallest value, so members
+            // with no message sink to the end under a descending sort.
+            .OrderByDescending(d => d.LastMessageDate)
+            .ToList();
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────────
 
     private async Task ValidateAsync(Guid memberId, Guid coachId, CancellationToken ct)
@@ -225,7 +286,7 @@ public class ConversationService(
                 SenderType: row.LastMessage.MessageSenderType,
                 SentDate:   row.LastMessage.MessageSentDate,
                 IsRead:     row.LastMessage.MessageIsRead);
-            return await MapAsync(row.Conversation, last, ct);
+            return Map(row.Conversation, last);
         }
 
         var newConv = new Conversation
@@ -271,47 +332,21 @@ public class ConversationService(
                 SenderType: existing.LastMessage.MessageSenderType,
                 SentDate:   existing.LastMessage.MessageSentDate,
                 IsRead:     existing.LastMessage.MessageIsRead);
-            return await MapAsync(existing.Conversation, last, ct);
+            return Map(existing.Conversation, last);
         }
 
-        return await MapAsync(newConv, null, ct);
+        return Map(newConv, null);
     }
 
-    private async Task<ConversationDto> MapAsync(Conversation c, LastMessageDto? lastMessage, CancellationToken ct)
+    private ConversationDto Map(Conversation c, LastMessageDto? lastMessage)
     {
-        var activeVisioSession = await GetActiveVisioSessionAsync(c.MemberId, c.CoachId, ct);
-
         return new ConversationDto(
-            ConversationId:     c.ConversationId,
-            MemberId:           c.MemberId,
-            CoachId:            c.CoachId,
-            ActiveVisioSession: activeVisioSession,
-            CreatedDate:        c.ConversationCreatedDate,
-            LastMessageDate:    c.ConversationLastMessageDate,
-            LastMessage:        lastMessage);
-    }
-
-    // A session is "joinable" for the "Join the video call" button from 15 minutes before its
-    // start through its end — not a permanent room, and never for cancelled sessions.
-    private async Task<ActiveVisioSessionDto?> GetActiveVisioSessionAsync(
-        Guid memberId, Guid coachId, CancellationToken ct)
-    {
-        var now = DateTime.UtcNow;
-
-        return await db.Sessions
-            .Where(s => s.SessionMemberId == memberId
-                     && s.SessionCoachId == coachId
-                     && s.SessionOfferType == OfferType.Visio
-                     && s.SessionStatus != SessionStatus.Cancelled
-                     && s.SessionVisioUrl != null
-                     && now >= s.SessionScheduledAt.AddMinutes(-15)
-                     && now <= s.SessionScheduledAt.AddMinutes(s.SessionDurationMinutes))
-            .OrderBy(s => s.SessionScheduledAt)
-            .Select(s => new ActiveVisioSessionDto(
-                s.SessionId,
-                s.SessionVisioUrl!,
-                s.SessionScheduledAt,
-                s.SessionScheduledAt.AddMinutes(s.SessionDurationMinutes)))
-            .FirstOrDefaultAsync(ct);
+            ConversationId:  c.ConversationId,
+            MemberId:        c.MemberId,
+            CoachId:         c.CoachId,
+            VisioUrl:        visioUrlGenerator.GenerateForConversation(c.ConversationId),
+            CreatedDate:     c.ConversationCreatedDate,
+            LastMessageDate: c.ConversationLastMessageDate,
+            LastMessage:     lastMessage);
     }
 }

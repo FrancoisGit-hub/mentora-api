@@ -213,6 +213,7 @@ public class SessionService(
     {
         var session = await db.Sessions
             .Include(s => s.Coach)
+            .Include(s => s.Member)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.SessionId == sessionId, ct)
             ?? throw new NotFoundException("Session not found.");
@@ -226,7 +227,7 @@ public class SessionService(
 
         var memberCoach = await GetMemberCoachAsync(session.SessionMemberId, session.SessionCoachId, ct);
 
-        return ToResponse(session, session.Coach, product, memberCoach);
+        return ToResponse(session, session.Coach, session.Member, product, memberCoach);
     }
 
     // ── Coach-side ──────────────────────────────────────────────────────────────
@@ -276,10 +277,14 @@ public class SessionService(
     }
 
     public async Task<IReadOnlyList<SessionResponse>> ListForCoachAsync(
-        Guid coachId, SessionStatusFilter? statusFilter, DateTime? fromDate, DateTime? toDate, CancellationToken ct)
+        Guid coachId, SessionStatusFilter? statusFilter, DateTime? fromDate, DateTime? toDate,
+        Guid? memberId, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
 
+        // coachId always comes from the JWT — memberId here is a filter, not an identity. Scoping
+        // stays on SessionCoachId first, so a coach passing another coach's member id gets an
+        // empty list rather than that member's sessions.
         IQueryable<Session> query = db.Sessions
             .Where(s => s.SessionCoachId == coachId)
             .AsNoTracking();
@@ -290,6 +295,8 @@ public class SessionService(
             query = query.Where(s => s.SessionScheduledAt >= fromDate.Value);
         if (toDate.HasValue)
             query = query.Where(s => s.SessionScheduledAt <= toDate.Value);
+        if (memberId.HasValue)
+            query = query.Where(s => s.SessionMemberId == memberId.Value);
 
         query = query.OrderBy(s => s.SessionScheduledAt);
 
@@ -301,6 +308,7 @@ public class SessionService(
     {
         var session = await db.Sessions
             .Include(s => s.Coach)
+            .Include(s => s.Member)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.SessionId == sessionId, ct)
             ?? throw new NotFoundException("Session not found.");
@@ -314,7 +322,7 @@ public class SessionService(
 
         var memberCoach = await GetMemberCoachAsync(session.SessionMemberId, session.SessionCoachId, ct);
 
-        return ToResponse(session, session.Coach, product, memberCoach);
+        return ToResponse(session, session.Coach, session.Member, product, memberCoach);
     }
 
     // ── Private helpers ─────────────────────────────────────────────────────────
@@ -330,7 +338,8 @@ public class SessionService(
         return DateTime.UtcNow > endsAt ? SessionStatus.Completed : SessionStatus.Scheduled;
     }
 
-    private static SessionResponse ToResponse(Session session, Coach coach, Product? product, MemberCoach? memberCoach)
+    private static SessionResponse ToResponse(
+        Session session, Coach coach, Member member, Product? product, MemberCoach? memberCoach)
     {
         var effectiveStatus = ComputeEffectiveStatus(session);
         // Visio URL only for VISIO sessions that are not cancelled
@@ -352,6 +361,9 @@ public class SessionService(
             SlotId:             session.SessionSlotId,
             CoachId:            session.SessionCoachId,
             CoachDisplayName:   $"{coach.CoachFirstName} {coach.CoachLastName}".Trim(),
+            MemberId:           session.SessionMemberId,
+            MemberFirstName:    member.MemberFirstName,
+            MemberLastName:     member.MemberLastName,
             ProductId:          session.SessionProductId,
             ProductName:        product?.ProductName ?? "(unavailable)",
             OfferType:          EnumMappings.OfferTypeMapping.ToWire(session.SessionOfferType),
@@ -379,11 +391,12 @@ public class SessionService(
     {
         var session = await db.Sessions
             .Include(s => s.Coach)
+            .Include(s => s.Member)
             .FirstAsync(s => s.SessionId == sessionId, ct);
         var product = await db.Products
             .FirstOrDefaultAsync(p => p.ProductId == session.SessionProductId, ct);
         var memberCoach = await GetMemberCoachAsync(session.SessionMemberId, session.SessionCoachId, ct);
-        return ToResponse(session, session.Coach, product, memberCoach);
+        return ToResponse(session, session.Coach, session.Member, product, memberCoach);
     }
 
     private static IQueryable<Session> ApplyStatusFilter(
@@ -434,12 +447,12 @@ public class SessionService(
                 equals new { MemberId = mc.MemberId, CoachId = mc.CoachId }
                 into memberCoachJoin
             from mc in memberCoachJoin.DefaultIfEmpty()
-            select new { Session = s, Coach = s.Coach, Product = p, MemberCoach = mc };
+            select new { Session = s, Coach = s.Coach, Member = s.Member, Product = p, MemberCoach = mc };
 
         var rows = await query.ToListAsync(ct);
 
         return rows
-            .Select(r => ToResponse(r.Session, r.Coach, r.Product, r.MemberCoach))
+            .Select(r => ToResponse(r.Session, r.Coach, r.Member, r.Product, r.MemberCoach))
             .ToList();
     }
 }

@@ -39,4 +39,16 @@ public class AccountController(IAccountService accountService) : ControllerBase
         await accountService.CancelDeletionRequestAsync(userId, ct);
         return Ok(new { success = true, data = (object?)null, error = (string?)null, statusCode = 200 });
     }
+
+    /// <summary>
+    /// Returns the current deletion-request status of the authenticated user. When no request is
+    /// pending, <c>isPending</c> is false and <c>requestedAt</c>/<c>reason</c> are both null.
+    /// </summary>
+    [HttpGet("deletion-request")]
+    public async Task<IActionResult> GetDeletionStatus(CancellationToken ct)
+    {
+        var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await accountService.GetDeletionStatusAsync(userId, ct);
+        return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
+    }
 }

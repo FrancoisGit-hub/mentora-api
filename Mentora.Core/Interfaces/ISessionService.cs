@@ -19,7 +19,8 @@ public interface ISessionService
     Task<SessionResponse> CancelByCoachAsync(
         Guid coachId, Guid sessionId, CancelSessionRequest request, CancellationToken ct);
     Task<IReadOnlyList<SessionResponse>> ListForCoachAsync(
-        Guid coachId, SessionStatusFilter? statusFilter, DateTime? fromDate, DateTime? toDate, CancellationToken ct);
+        Guid coachId, SessionStatusFilter? statusFilter, DateTime? fromDate, DateTime? toDate,
+        Guid? memberId, CancellationToken ct);
     Task<SessionResponse> GetForCoachAsync(
         Guid coachId, Guid sessionId, CancellationToken ct);
 }
