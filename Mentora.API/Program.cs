@@ -223,6 +223,9 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 // Lot 3.1 — Conversations
 builder.Services.AddScoped<IConversationService, ConversationService>();
 
+// Lot 6.1 — Exercise catalogue
+builder.Services.AddScoped<IExerciseService, ExerciseService>();
+
 // Lot 3.3 — SignalR (enum serialization mirrors the REST JSON convention)
 builder.Services.AddSignalR()
     .AddJsonProtocol(options =>
@@ -285,6 +288,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     await CoachParameterSeeder.SeedAsync(scope.ServiceProvider);
     await OfferProgramSeeder.SeedAsync(scope.ServiceProvider);
+    await ExerciseSeeder.SeedAsync(scope.ServiceProvider);
 }
 
 // Must run first so downstream middleware (and Request.Scheme in URL generation) see the

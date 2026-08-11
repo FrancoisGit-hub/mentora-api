@@ -211,4 +211,84 @@ public static class EnumMappings
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown SessionStatusFilter enum value.");
         }
     }
+
+    public static class MuscleGroupMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new([
+                "CHEST", "BACK", "SHOULDERS", "BICEPS", "TRICEPS", "FOREARMS", "ABS",
+                "QUADRICEPS", "HAMSTRINGS", "GLUTES", "CALVES", "FULL_BODY", "CARDIO"
+            ]);
+
+        public static MuscleGroup Parse(string value)
+        {
+            if (value == "CHEST")      return MuscleGroup.Chest;
+            if (value == "BACK")       return MuscleGroup.Back;
+            if (value == "SHOULDERS")  return MuscleGroup.Shoulders;
+            if (value == "BICEPS")     return MuscleGroup.Biceps;
+            if (value == "TRICEPS")    return MuscleGroup.Triceps;
+            if (value == "FOREARMS")   return MuscleGroup.Forearms;
+            if (value == "ABS")        return MuscleGroup.Abs;
+            if (value == "QUADRICEPS") return MuscleGroup.Quadriceps;
+            if (value == "HAMSTRINGS") return MuscleGroup.Hamstrings;
+            if (value == "GLUTES")     return MuscleGroup.Glutes;
+            if (value == "CALVES")     return MuscleGroup.Calves;
+            if (value == "FULL_BODY")  return MuscleGroup.FullBody;
+            if (value == "CARDIO")     return MuscleGroup.Cardio;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MuscleGroup wire value.");
+        }
+
+        public static string ToWire(MuscleGroup value)
+        {
+            if (value == MuscleGroup.Chest)      return "CHEST";
+            if (value == MuscleGroup.Back)       return "BACK";
+            if (value == MuscleGroup.Shoulders)  return "SHOULDERS";
+            if (value == MuscleGroup.Biceps)     return "BICEPS";
+            if (value == MuscleGroup.Triceps)    return "TRICEPS";
+            if (value == MuscleGroup.Forearms)   return "FOREARMS";
+            if (value == MuscleGroup.Abs)        return "ABS";
+            if (value == MuscleGroup.Quadriceps) return "QUADRICEPS";
+            if (value == MuscleGroup.Hamstrings) return "HAMSTRINGS";
+            if (value == MuscleGroup.Glutes)     return "GLUTES";
+            if (value == MuscleGroup.Calves)     return "CALVES";
+            if (value == MuscleGroup.FullBody)   return "FULL_BODY";
+            if (value == MuscleGroup.Cardio)     return "CARDIO";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MuscleGroup enum value.");
+        }
+    }
+
+    public static class EquipmentMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new([
+                "BODYWEIGHT", "BARBELL", "DUMBBELL", "KETTLEBELL", "MACHINE", "CABLE",
+                "ELASTIC", "OTHER"
+            ]);
+
+        public static Equipment Parse(string value)
+        {
+            if (value == "BODYWEIGHT") return Equipment.Bodyweight;
+            if (value == "BARBELL")    return Equipment.Barbell;
+            if (value == "DUMBBELL")   return Equipment.Dumbbell;
+            if (value == "KETTLEBELL") return Equipment.Kettlebell;
+            if (value == "MACHINE")    return Equipment.Machine;
+            if (value == "CABLE")      return Equipment.Cable;
+            if (value == "ELASTIC")    return Equipment.Elastic;
+            if (value == "OTHER")      return Equipment.Other;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown Equipment wire value.");
+        }
+
+        public static string ToWire(Equipment value)
+        {
+            if (value == Equipment.Bodyweight) return "BODYWEIGHT";
+            if (value == Equipment.Barbell)    return "BARBELL";
+            if (value == Equipment.Dumbbell)   return "DUMBBELL";
+            if (value == Equipment.Kettlebell) return "KETTLEBELL";
+            if (value == Equipment.Machine)    return "MACHINE";
+            if (value == Equipment.Cable)      return "CABLE";
+            if (value == Equipment.Elastic)    return "ELASTIC";
+            if (value == Equipment.Other)      return "OTHER";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown Equipment enum value.");
+        }
+    }
 }
