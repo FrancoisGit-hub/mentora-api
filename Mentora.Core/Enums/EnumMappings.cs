@@ -291,4 +291,37 @@ public static class EnumMappings
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown Equipment enum value.");
         }
     }
+
+    public static class ProgramGoalMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new([
+                "MUSCLE_GAIN", "FAT_LOSS", "STRENGTH", "ENDURANCE", "MOBILITY", "REHAB",
+                "GENERAL_FITNESS"
+            ]);
+
+        public static ProgramGoal Parse(string value)
+        {
+            if (value == "MUSCLE_GAIN")      return ProgramGoal.MuscleGain;
+            if (value == "FAT_LOSS")         return ProgramGoal.FatLoss;
+            if (value == "STRENGTH")         return ProgramGoal.Strength;
+            if (value == "ENDURANCE")        return ProgramGoal.Endurance;
+            if (value == "MOBILITY")         return ProgramGoal.Mobility;
+            if (value == "REHAB")            return ProgramGoal.Rehab;
+            if (value == "GENERAL_FITNESS")  return ProgramGoal.GeneralFitness;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramGoal wire value.");
+        }
+
+        public static string ToWire(ProgramGoal value)
+        {
+            if (value == ProgramGoal.MuscleGain)     return "MUSCLE_GAIN";
+            if (value == ProgramGoal.FatLoss)        return "FAT_LOSS";
+            if (value == ProgramGoal.Strength)       return "STRENGTH";
+            if (value == ProgramGoal.Endurance)      return "ENDURANCE";
+            if (value == ProgramGoal.Mobility)       return "MOBILITY";
+            if (value == ProgramGoal.Rehab)          return "REHAB";
+            if (value == ProgramGoal.GeneralFitness) return "GENERAL_FITNESS";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramGoal enum value.");
+        }
+    }
 }

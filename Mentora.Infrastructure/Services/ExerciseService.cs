@@ -154,6 +154,22 @@ public class ExerciseService(
         return ToResponse(exercise);
     }
 
+    public async Task<HashSet<Guid>> ResolveVisibleActiveIdsAsync(
+        IReadOnlyCollection<Guid> exerciseIds, Guid coachId, CancellationToken ct)
+    {
+        if (exerciseIds.Count == 0)
+            return [];
+
+        var visibleIds = await db.Exercises
+            .Where(e => exerciseIds.Contains(e.ExerciseId)
+                     && (e.ExerciseCoachId == null || e.ExerciseCoachId == coachId)
+                     && e.ExerciseIsActive)
+            .Select(e => e.ExerciseId)
+            .ToListAsync(ct);
+
+        return visibleIds.ToHashSet();
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private static void ValidateScope(string scope)

@@ -19,4 +19,11 @@ public interface IExerciseService
     Task<List<ExerciseResponse>> ListForMemberAsync(Guid memberId, CancellationToken ct);
 
     Task<ExerciseResponse> GetByIdForMemberAsync(Guid exerciseId, Guid memberId, CancellationToken ct);
+
+    /// <summary>
+    /// Resolves, in a single query, which of the given exercise ids are visible to the coach
+    /// (Mentora catalogue or owned by the coach) and currently active.
+    /// </summary>
+    Task<HashSet<Guid>> ResolveVisibleActiveIdsAsync(
+        IReadOnlyCollection<Guid> exerciseIds, Guid coachId, CancellationToken ct);
 }
