@@ -171,7 +171,7 @@ public static class ProgramTemplateSeeder
         [
             new ProgramTemplateSession
             {
-                Name = "Séance A — Cardio et renforcement", Type = "PRESENTIEL_SOLO", DayOfWeek = 1, Position = 1,
+                Name = "Séance A — Cardio et renforcement", Type = "A_DISTANCE", DayOfWeek = 1, Position = 1,
                 Circuits =
                 [
                     new ProgramTemplateCircuit
@@ -198,7 +198,7 @@ public static class ProgramTemplateSeeder
             },
             new ProgramTemplateSession
             {
-                Name = "Séance B — Mobilité et gainage", Type = "PRESENTIEL_SOLO", DayOfWeek = 3, Position = 2,
+                Name = "Séance B — Mobilité et gainage", Type = "VISIO", DayOfWeek = 3, Position = 2,
                 Circuits =
                 [
                     new ProgramTemplateCircuit
@@ -231,7 +231,11 @@ public static class ProgramTemplateSeeder
             },
         ];
 
-        return BuildFourWeekBody(BuildSessions);
+        // Rooted directly at MICROCYCLE (no MACROCYCLE/MESOCYCLE wrapper) — demonstrates that a
+        // coach may skip levels, accepted by both ProgramTemplateBodyValidator's level-descent rule
+        // and the CK_PROGRAM_BLOCKS_MACROCYCLE_HAS_NO_PARENT constraint (only MACROCYCLE blocks are
+        // required to have a null parent; other levels may be a null-parent root too).
+        return BuildFourWeekBodyRootedAtMicrocycle(BuildSessions);
     }
 
     private static ProgramTemplateBody BuildFourWeekBody(Func<List<ProgramTemplateSession>> sessionsFactory)
@@ -271,6 +275,31 @@ public static class ProgramTemplateSeeder
                     ]
                 }
             ]
+        };
+    }
+
+    // Same 4-week shape as BuildFourWeekBody, but the MICROCYCLE blocks sit directly at the root —
+    // no MACROCYCLE/MESOCYCLE wrapper. Level-skipping is an accepted product decision (see
+    // ProgramTemplateBodyValidator and CK_PROGRAM_BLOCKS_MACROCYCLE_HAS_NO_PARENT).
+    private static ProgramTemplateBody BuildFourWeekBodyRootedAtMicrocycle(Func<List<ProgramTemplateSession>> sessionsFactory)
+    {
+        var microcycles = new List<ProgramTemplateBlock>();
+        for (var week = 1; week <= 4; week++)
+        {
+            microcycles.Add(new ProgramTemplateBlock
+            {
+                Level      = "MICROCYCLE",
+                Name       = $"Semaine {week}",
+                Position   = week,
+                WeekNumber = week,
+                Sessions   = sessionsFactory(),
+            });
+        }
+
+        return new ProgramTemplateBody
+        {
+            BodyVersion = 1,
+            Blocks = microcycles,
         };
     }
 

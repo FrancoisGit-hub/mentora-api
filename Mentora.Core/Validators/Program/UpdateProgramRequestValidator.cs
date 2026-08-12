@@ -1,21 +1,17 @@
 using FluentValidation;
-using Mentora.Core.DTOs.ProgramTemplate;
+using Mentora.Core.DTOs.Program;
 using Mentora.Core.DTOs.ProgramTemplate.Body;
 using Mentora.Core.Enums;
 
-namespace Mentora.Core.Validators.ProgramTemplate;
+namespace Mentora.Core.Validators.Program;
 
-public class ProgramTemplateRequestValidator : AbstractValidator<ProgramTemplateRequest>
+public class UpdateProgramRequestValidator : AbstractValidator<UpdateProgramRequest>
 {
-    public ProgramTemplateRequestValidator(IValidator<ProgramTemplateBody> bodyValidator)
+    public UpdateProgramRequestValidator(IValidator<ProgramTemplateBody> bodyValidator)
     {
         RuleFor(x => x.Name)
             .NotEmpty()
             .MaximumLength(120);
-
-        RuleFor(x => x.Description)
-            .MaximumLength(2000)
-            .When(x => x.Description is not null);
 
         RuleFor(x => x.Goal)
             .NotEmpty()
@@ -28,9 +24,8 @@ public class ProgramTemplateRequestValidator : AbstractValidator<ProgramTemplate
         RuleFor(x => x.Body)
             .NotNull();
 
-        // Body-tree rules live in ProgramTemplateBodyValidator (shared with Lot 6.3's program
-        // assignment — do not duplicate them here). DurationWeeks isn't a property of Body, so
-        // it's bridged via RootContextData, the same channel already used for CoachId.
+        // DurationWeeks isn't a property of Body, so it's bridged via RootContextData — same
+        // channel already used for CoachId (see ProgramTemplateBodyValidator).
         RuleFor(x => x).Custom((request, context) =>
         {
             context.RootContextData["DurationWeeks"] = request.DurationWeeks;

@@ -324,4 +324,48 @@ public static class EnumMappings
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramGoal enum value.");
         }
     }
+
+    public static class ProgramStatusMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["ACTIVE", "COMPLETED", "ARCHIVED"]);
+
+        public static ProgramStatus Parse(string value)
+        {
+            if (value == "ACTIVE")    return ProgramStatus.Active;
+            if (value == "COMPLETED") return ProgramStatus.Completed;
+            if (value == "ARCHIVED")  return ProgramStatus.Archived;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramStatus wire value.");
+        }
+
+        public static string ToWire(ProgramStatus value)
+        {
+            if (value == ProgramStatus.Active)    return "ACTIVE";
+            if (value == ProgramStatus.Completed) return "COMPLETED";
+            if (value == ProgramStatus.Archived)  return "ARCHIVED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramStatus enum value.");
+        }
+    }
+
+    public static class ProgramSessionStatusMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["PLANNED", "DONE", "SKIPPED"]);
+
+        public static ProgramSessionStatus Parse(string value)
+        {
+            if (value == "PLANNED") return ProgramSessionStatus.Planned;
+            if (value == "DONE")    return ProgramSessionStatus.Done;
+            if (value == "SKIPPED") return ProgramSessionStatus.Skipped;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramSessionStatus wire value.");
+        }
+
+        public static string ToWire(ProgramSessionStatus value)
+        {
+            if (value == ProgramSessionStatus.Planned) return "PLANNED";
+            if (value == ProgramSessionStatus.Done)    return "DONE";
+            if (value == ProgramSessionStatus.Skipped) return "SKIPPED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramSessionStatus enum value.");
+        }
+    }
 }

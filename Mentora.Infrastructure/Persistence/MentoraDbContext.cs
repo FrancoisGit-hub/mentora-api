@@ -32,6 +32,11 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ProgramTemplate> ProgramTemplates => Set<ProgramTemplate>();
+    public DbSet<Program> Programs => Set<Program>();
+    public DbSet<ProgramBlock> ProgramBlocks => Set<ProgramBlock>();
+    public DbSet<ProgramSession> ProgramSessions => Set<ProgramSession>();
+    public DbSet<ProgramCircuit> ProgramCircuits => Set<ProgramCircuit>();
+    public DbSet<ProgramExercise> ProgramExercises => Set<ProgramExercise>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

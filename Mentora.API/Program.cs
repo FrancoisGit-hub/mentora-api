@@ -229,6 +229,9 @@ builder.Services.AddScoped<IExerciseService, ExerciseService>();
 // Lot 6.2 — Program templates
 builder.Services.AddScoped<IProgramTemplateService, ProgramTemplateService>();
 
+// Lot 6.3 — Assigned programs
+builder.Services.AddScoped<IProgramService, ProgramService>();
+
 // Lot 3.3 — SignalR (enum serialization mirrors the REST JSON convention)
 builder.Services.AddSignalR()
     .AddJsonProtocol(options =>

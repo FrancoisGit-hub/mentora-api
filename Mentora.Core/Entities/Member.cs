@@ -21,4 +21,5 @@ public class Member
 
     public ICollection<MemberCoach> MemberCoaches { get; set; } = [];
     public MemberParameter? MemberParameter { get; set; }
+    public ICollection<Program> Programs { get; set; } = [];
 }

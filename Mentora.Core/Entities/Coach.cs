@@ -21,4 +21,5 @@ public class Coach
     public ICollection<ProductPack> ProductPacks { get; set; } = [];
     public ICollection<Exercise> Exercises { get; set; } = [];
     public ICollection<ProgramTemplate> ProgramTemplates { get; set; } = [];
+    public ICollection<Program> Programs { get; set; } = [];
 }
