@@ -18,6 +18,10 @@ public interface IProgramService
 
     Task DeleteAsync(Guid coachId, Guid programId, CancellationToken ct);
 
+    // Coach-side — booking correction (Lot 6.5)
+    Task<ProgramSessionBookingResponse> UpdateBookingAsync(
+        Guid coachId, Guid programSessionId, UpdateProgramSessionBookingRequest request, CancellationToken ct);
+
     // Member-side
     Task<ProgramResponse> GetCurrentForMemberAsync(Guid memberId, CancellationToken ct);
 

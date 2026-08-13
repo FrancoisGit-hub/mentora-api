@@ -1,5 +1,6 @@
 using FluentValidation;
 using Mentora.Core.DTOs.Lot2;
+using Mentora.Core.Enums;
 
 namespace Mentora.Core.Validators.Parameters;
 
@@ -42,5 +43,9 @@ public class UpdateCoachParameterRequestValidator : AbstractValidator<UpdateCoac
         RuleFor(x => x.Language)
             .Must(v => AllowedLanguages.Contains(v, StringComparer.OrdinalIgnoreCase))
             .WithMessage($"Language must be one of: {string.Join(", ", AllowedLanguages)}");
+
+        RuleFor(x => x.MissedSessionBehavior)
+            .Must(v => EnumMappings.MissedSessionBehaviorMapping.WireValues.Contains(v))
+            .WithMessage($"MissedSessionBehavior must be one of: {string.Join(", ", EnumMappings.MissedSessionBehaviorMapping.WireValues)}");
     }
 }

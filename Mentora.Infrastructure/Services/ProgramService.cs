@@ -219,6 +219,66 @@ public class ProgramService(
         await db.SaveChangesAsync(ct);
     }
 
+    // ── Coach-side — booking correction (Lot 6.5) ─────────────────────────────────
+
+    public async Task<ProgramSessionBookingResponse> UpdateBookingAsync(
+        Guid coachId, Guid programSessionId, UpdateProgramSessionBookingRequest request, CancellationToken ct)
+    {
+        // Ownership folded into the query filter — never 403.
+        var programSession = await db.ProgramSessions
+            .FirstOrDefaultAsync(ps => ps.ProgramSessionId == programSessionId && ps.ProgramSessionCoachId == coachId, ct)
+            ?? throw new NotFoundException($"Program session {programSessionId} not found.");
+
+        if (request.SessionId is { } sessionId)
+        {
+            var session = await db.Sessions
+                .FirstOrDefaultAsync(s => s.SessionId == sessionId && s.SessionCoachId == coachId, ct)
+                ?? throw new NotFoundException($"Session {sessionId} not found.");
+
+            // The session's member (individual) or participant list (group) must include the
+            // program session's member — via V_SESSION_MEMBERS, same unified path as Lot 6.4.
+            // A mismatch is an ownership-adjacent failure, not a data problem: 404, never 403.
+            var sessionHasMember = await db.SessionMembers
+                .AnyAsync(v => v.SessionId == sessionId && v.MemberId == programSession.ProgramSessionMemberId, ct);
+            if (!sessionHasMember)
+                throw new NotFoundException($"Session {sessionId} not found.");
+
+            var sessionOfferTypeWire = EnumMappings.OfferTypeMapping.ToWire(session.SessionOfferType);
+            if (sessionOfferTypeWire != programSession.ProgramSessionType)
+                throw new ConflictException(
+                    "Session and program session types do not match.",
+                    new { sessionType = sessionOfferTypeWire, programSessionType = programSession.ProgramSessionType });
+
+            // Defensive: IX_PROGRAM_SESSIONS_BOOKING_MEMBER is unique on (SESSION_ID, MEMBER_ID).
+            // Catch the conflict here with a clear 409 rather than let a raw constraint violation
+            // surface as 500 — this member may already have a different program session linked to
+            // that same booking (e.g. a duplicate correction attempt).
+            var alreadyLinked = await db.ProgramSessions.AnyAsync(ps =>
+                ps.ProgramSessionId != programSessionId &&
+                ps.ProgramSessionSessionId == sessionId &&
+                ps.ProgramSessionMemberId == programSession.ProgramSessionMemberId, ct);
+            if (alreadyLinked)
+                throw new ConflictException("This member already has a program session linked to that booking.");
+
+            programSession.ProgramSessionSessionId = sessionId;
+        }
+        else
+        {
+            // Detach only clears the link — the booking itself (SESSIONS row, voucher, participant
+            // registration) is left completely untouched.
+            programSession.ProgramSessionSessionId = null;
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        return new ProgramSessionBookingResponse(
+            programSession.ProgramSessionId,
+            programSession.ProgramSessionSessionId,
+            programSession.ProgramSessionName,
+            programSession.ProgramSessionType,
+            EnumMappings.ProgramSessionStatusMapping.ToWire(programSession.ProgramSessionStatus));
+    }
+
     // ── Member-side ────────────────────────────────────────────────────────────
 
     public async Task<ProgramResponse> GetCurrentForMemberAsync(Guid memberId, CancellationToken ct)
@@ -350,12 +410,28 @@ public class ProgramService(
             ? await db.Exercises.AsNoTracking().Where(e => exerciseIds.Contains(e.ExerciseId)).ToDictionaryAsync(e => e.ExerciseId, ct)
             : new Dictionary<Guid, Exercise>();
 
-        return AssembleTree(program, blocks, sessions, circuits, exercises, exerciseDetails);
+        // AUTHORITY RULE (Lot 6.5): once a session is linked, SESSIONS.SESSION_SCHEDULED_AT is the
+        // authoritative date — the computed formula is ignored for it. One extra query, only when
+        // at least one session in this tree is actually linked (the common case of a freshly
+        // assigned, all-PLANNED program stays at the original 6 queries).
+        var linkedSessionIds = sessions
+            .Where(s => s.ProgramSessionSessionId.HasValue)
+            .Select(s => s.ProgramSessionSessionId!.Value)
+            .Distinct()
+            .ToList();
+        var sessionDatesById = linkedSessionIds.Count > 0
+            ? await db.Sessions.AsNoTracking()
+                .Where(s => linkedSessionIds.Contains(s.SessionId))
+                .ToDictionaryAsync(s => s.SessionId, s => s.SessionScheduledAt, ct)
+            : new Dictionary<Guid, DateTime>();
+
+        return AssembleTree(program, blocks, sessions, circuits, exercises, exerciseDetails, sessionDatesById);
     }
 
     private static ProgramResponse AssembleTree(
         Program program, List<ProgramBlock> blocks, List<ProgramSession> sessions,
-        List<ProgramCircuit> circuits, List<ProgramExercise> exercises, Dictionary<Guid, Exercise> exerciseDetails)
+        List<ProgramCircuit> circuits, List<ProgramExercise> exercises, Dictionary<Guid, Exercise> exerciseDetails,
+        IReadOnlyDictionary<Guid, DateTime> sessionDatesById)
     {
         // Dictionary<Guid?, T> rejects a null key at runtime even though the CLR type allows it,
         // so the "no parent" (root) group is keyed on Guid.Empty instead of null.
@@ -408,7 +484,7 @@ public class ProgramService(
                 ? list.Select(s => new ProgramSessionResponse(
                     s.ProgramSessionId, s.ProgramSessionName, s.ProgramSessionType, s.ProgramSessionDayOfWeek,
                     s.ProgramSessionPosition, EnumMappings.ProgramSessionStatusMapping.ToWire(s.ProgramSessionStatus),
-                    ComputeSessionDate(program, block.ProgramBlockWeekNumber, s.ProgramSessionDayOfWeek, s.ProgramSessionSessionId),
+                    ComputeSessionDate(program, block.ProgramBlockWeekNumber, s.ProgramSessionDayOfWeek, s.ProgramSessionSessionId, sessionDatesById),
                     s.ProgramSessionCompletedDate, s.ProgramSessionMemberFeedback, s.ProgramSessionCoachNote,
                     BuildCircuits(s.ProgramSessionId))).ToList()
                 : [];
@@ -440,16 +516,15 @@ public class ProgramService(
     // startDate + (weekNumber - 1 + weekOffset) * 7 + (dayOfWeek - 1). weekNumber comes from the
     // parent MICROCYCLE block (sessions only ever exist under MICROCYCLE blocks — enforced by
     // ProgramTemplateBodyValidator and the PROGRAM_BLOCKS CHECK constraints — so it is always set).
-    // Nothing is stored; this is recomputed on every read.
-    private static DateOnly ComputeSessionDate(Program program, int? weekNumber, int dayOfWeek, Guid? linkedSessionId)
+    // Nothing is stored; this is recomputed on every read — EXCEPT when the session is linked to a
+    // booking (Lot 6.5): AUTHORITY RULE — SESSIONS.SESSION_SCHEDULED_AT then wins outright, and the
+    // formula below is never evaluated for it. Never copy one into the other.
+    private static DateOnly ComputeSessionDate(
+        Program program, int? weekNumber, int dayOfWeek, Guid? linkedSessionId,
+        IReadOnlyDictionary<Guid, DateTime> sessionDatesById)
     {
-        // Hook for Lot 6.5: once PROGRAM_SESSION_SESSION_ID is set, the authoritative date should
-        // come from SESSIONS.SESSION_SCHEDULED_AT instead of this computation. Not implemented yet
-        // — PROGRAM_SESSION_SESSION_ID is never set before Lot 6.5, so this branch never fires.
-        if (linkedSessionId is not null)
-        {
-            // TODO (Lot 6.5): resolve the date from SESSIONS via PROGRAM_SESSION_SESSION_ID.
-        }
+        if (linkedSessionId is { } sessionId && sessionDatesById.TryGetValue(sessionId, out var scheduledAt))
+            return DateOnly.FromDateTime(scheduledAt);
 
         return program.ProgramStartDate.AddDays((weekNumber!.Value - 1 + program.ProgramWeekOffset) * 7 + (dayOfWeek - 1));
     }

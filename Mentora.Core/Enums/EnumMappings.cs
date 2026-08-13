@@ -352,6 +352,26 @@ public static class EnumMappings
         }
     }
 
+    public static class MissedSessionBehaviorMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["SKIP", "SHIFT"]);
+
+        public static MissedSessionBehavior Parse(string value)
+        {
+            if (value == "SKIP")  return MissedSessionBehavior.Skip;
+            if (value == "SHIFT") return MissedSessionBehavior.Shift;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MissedSessionBehavior wire value.");
+        }
+
+        public static string ToWire(MissedSessionBehavior value)
+        {
+            if (value == MissedSessionBehavior.Skip)  return "SKIP";
+            if (value == MissedSessionBehavior.Shift) return "SHIFT";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MissedSessionBehavior enum value.");
+        }
+    }
+
     public static class SessionParticipantStatusMapping
     {
         public static readonly ReadOnlyCollection<string> WireValues =

@@ -3,8 +3,8 @@ namespace Mentora.Core.DTOs.Program;
 /// <param name="Date">
 /// Computed: startDate + (weekNumber - 1 + weekOffset) * 7 + (dayOfWeek - 1), where weekNumber
 /// comes from the parent MICROCYCLE block. Nothing is stored — recomputed on every read.
-/// When the session is later linked to a booked SESSIONS row (Lot 6.5), that row's own date
-/// becomes authoritative instead; that path is not implemented yet.
+/// AUTHORITY RULE: once this session is linked to a booked SESSIONS row, that row's own
+/// SESSION_SCHEDULED_AT becomes authoritative instead, and this formula is never evaluated for it.
 /// </param>
 public record ProgramSessionResponse(
     Guid ProgramSessionId,

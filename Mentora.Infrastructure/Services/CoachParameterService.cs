@@ -1,6 +1,7 @@
 using FluentValidation;
 using Mentora.Core.DTOs.Lot2;
 using Mentora.Core.Entities;
+using Mentora.Core.Enums;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Infrastructure.Persistence;
@@ -64,6 +65,7 @@ public class CoachParameterService(
         p.CoachParameterLateCancellationRefunds       = request.LateCancellationRefunds;
         p.CoachParameterIsAcceptingNewBookings        = request.IsAcceptingNewBookings;
         p.CoachParameterDefaultSessionDurationMinutes = request.DefaultSessionDurationMinutes;
+        p.CoachParameterMissedSessionBehavior         = EnumMappings.MissedSessionBehaviorMapping.Parse(request.MissedSessionBehavior);
         p.CoachParameterLanguage                      = request.Language.ToUpperInvariant();
         p.CoachParameterNotifMessages                 = request.NotifMessages;
         p.CoachParameterNotifNewBooking               = request.NotifNewBooking;
@@ -109,6 +111,7 @@ public class CoachParameterService(
             LateCancellationRefunds:       p.CoachParameterLateCancellationRefunds,
             IsAcceptingNewBookings:        p.CoachParameterIsAcceptingNewBookings,
             DefaultSessionDurationMinutes: p.CoachParameterDefaultSessionDurationMinutes,
+            MissedSessionBehavior:         EnumMappings.MissedSessionBehaviorMapping.ToWire(p.CoachParameterMissedSessionBehavior),
             Language:                      p.CoachParameterLanguage,
             NotifMessages:                 p.CoachParameterNotifMessages,
             NotifNewBooking:               p.CoachParameterNotifNewBooking,

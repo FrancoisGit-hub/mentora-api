@@ -15,6 +15,7 @@ public record CoachParameterDto(
     bool LateCancellationRefunds,
     bool IsAcceptingNewBookings,
     int DefaultSessionDurationMinutes,
+    string MissedSessionBehavior,
     // prefs
     string Language,
     bool NotifMessages,

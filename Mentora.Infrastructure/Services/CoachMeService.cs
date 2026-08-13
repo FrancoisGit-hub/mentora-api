@@ -44,14 +44,12 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             .Select(mc => ToMemberSummaryDto(mc))
             .ToList();
 
-        // Query 3 — upcoming sessions in the next 7 days. Individual sessions only: this widget's
-        // DTO shows a single member per row, which a group session (many participants, no single
-        // SessionMemberId) cannot fill — deliberately excluded rather than crashing on a null
-        // Member navigation. Group-course visibility on the dashboard is not in scope for Lot 6.4.
+        // Query 3 — upcoming sessions in the next 7 days, individual AND group (Lot 6.5 fixes the
+        // Lot 6.4 gap: a group session used to be excluded here because the DTO could only
+        // represent one member).
         var upcomingSessions = await db.Sessions
             .Include(s => s.Member)
             .Where(s => s.SessionCoachId == coachId
-                     && s.SessionMemberId != null
                      && s.SessionStatus == SessionStatus.Scheduled
                      && s.SessionScheduledAt > now
                      && s.SessionScheduledAt <= sevenDaysEnd)
@@ -59,8 +57,20 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             .AsNoTracking()
             .ToListAsync(ct);
 
+        // Query 3b — participant counts for any group sessions in the window above, batched (no
+        // per-row query). Skipped entirely when the widget has no group session to show.
+        var groupSessionIds = upcomingSessions.Where(s => s.SessionMemberId is null).Select(s => s.SessionId).ToList();
+        var participantCountBySession = groupSessionIds.Count > 0
+            ? await db.SessionParticipants
+                .Where(p => groupSessionIds.Contains(p.SessionParticipantSessionId)
+                         && p.SessionParticipantStatus != SessionParticipantStatus.Cancelled)
+                .GroupBy(p => p.SessionParticipantSessionId)
+                .Select(g => new { SessionId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.SessionId, x => x.Count, ct)
+            : new Dictionary<Guid, int>();
+
         var upcomingSessionDtos = upcomingSessions
-            .Select(s => ToUpcomingSessionDto(s))
+            .Select(s => ToUpcomingSessionDto(s, participantCountBySession))
             .ToList();
 
         // Query 4 — published offers
@@ -139,26 +149,26 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             Email:     mc.Member.User.UserEmail,
             Phone:     mc.Member.MemberPhone);
 
-    // Individual-only by construction — the caller's query already filters SessionMemberId != null
-    // (group sessions are excluded from this dashboard widget), so both are guaranteed present.
-    private static CoachUpcomingSessionDto ToUpcomingSessionDto(Session s)
+    private static CoachUpcomingSessionDto ToUpcomingSessionDto(
+        Session s, IReadOnlyDictionary<Guid, int> participantCountBySession)
     {
-        var memberId = s.SessionMemberId
-            ?? throw new InvalidOperationException(
-                $"Session {s.SessionId} has no member — the caller's query should have excluded it.");
-        var member = s.Member
-            ?? throw new InvalidOperationException(
-                $"Session {s.SessionId} has a member id but no loaded Member navigation.");
+        var isGroup = s.SessionMemberId is null;
+        var participantCount = isGroup ? participantCountBySession.GetValueOrDefault(s.SessionId, 0) : (int?)null;
+        var title = isGroup
+            ? $"Cours collectif ({participantCount} participant{(participantCount == 1 ? "" : "s")})"
+            : $"{s.Member?.MemberFirstName} {s.Member?.MemberLastName}".Trim();
 
         return new(
-            SessionId:       s.SessionId,
-            MemberId:        memberId,
-            MemberFirstName: member.MemberFirstName,
-            MemberLastName:  member.MemberLastName,
-            ScheduledAt:     s.SessionScheduledAt,
-            DurationMinutes: s.SessionDurationMinutes,
-            OfferType:       EnumMappings.OfferTypeMapping.ToWire(s.SessionOfferType),
-            VisioUrl:        s.SessionVisioUrl);
+            SessionId:        s.SessionId,
+            MemberId:         s.SessionMemberId,
+            MemberFirstName:  s.Member?.MemberFirstName,
+            MemberLastName:   s.Member?.MemberLastName,
+            Title:            title,
+            ParticipantCount: participantCount,
+            ScheduledAt:      s.SessionScheduledAt,
+            DurationMinutes:  s.SessionDurationMinutes,
+            OfferType:        EnumMappings.OfferTypeMapping.ToWire(s.SessionOfferType),
+            VisioUrl:         s.SessionVisioUrl);
     }
 
     private static ProductResponse ToProductResponse(Product p) => new(

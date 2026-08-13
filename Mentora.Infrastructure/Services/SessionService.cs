@@ -126,6 +126,9 @@ public class SessionService(
             voucher.ReservedSessionId = session.SessionId;
             voucher.UpdatedDate       = DateTime.UtcNow;
 
+            // Best-effort convenience link — never blocks the booking (see LinkToProgramSessionAsync).
+            await LinkToProgramSessionAsync(memberId, session, ct);
+
             await db.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
@@ -476,7 +479,15 @@ public class SessionService(
             .AsNoTracking()
             .ToListAsync(ct);
 
-        return participants.Select(ToParticipantResponse).ToList();
+        // One extra query for the whole list, not per row — IX_PROGRAM_SESSIONS_BOOKING_MEMBER
+        // guarantees at most one row per (session, member).
+        var programSessionIdByMember = await db.ProgramSessions
+            .Where(ps => ps.ProgramSessionSessionId == sessionId)
+            .ToDictionaryAsync(ps => ps.ProgramSessionMemberId, ps => (Guid?)ps.ProgramSessionId, ct);
+
+        return participants
+            .Select(p => ToParticipantResponse(p, programSessionIdByMember.GetValueOrDefault(p.SessionParticipantMemberId)))
+            .ToList();
     }
 
     public async Task<SessionParticipantResponse> RegisterParticipantAsync(
@@ -566,6 +577,9 @@ public class SessionService(
         voucher.ReservedSessionId = sessionId;
         voucher.UpdatedDate       = now;
 
+        // Best-effort convenience link — never blocks the registration (see LinkToProgramSessionAsync).
+        await LinkToProgramSessionAsync(request.MemberId, session, ct);
+
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
@@ -606,6 +620,53 @@ public class SessionService(
         logger.LogInformation(
             "Member {MemberId} unregistered from group session {SessionId} by coach {CoachId}.",
             memberId, sessionId, coachId);
+    }
+
+    // ── Program-session linking (Lot 6.5) ─────────────────────────────────────────
+
+    // Called from ReserveAsync and RegisterParticipantAsync, inside their existing transaction.
+    // A booking must NEVER fail because of program matching: "no active program" and "no
+    // candidate" are both normal, silent no-ops here, never exceptions. Only a genuine
+    // infrastructure failure (DB down, etc.) would propagate past this method, same as any other
+    // query in the surrounding transaction.
+    private async Task LinkToProgramSessionAsync(Guid memberId, Session session, CancellationToken ct)
+    {
+        // a. The member must have an ACTIVE program, else do nothing.
+        var program = await db.Programs
+            .FirstOrDefaultAsync(p => p.ProgramMemberId == memberId && p.ProgramStatus == ProgramStatus.Active, ct);
+        if (program is null)
+            return;
+
+        var offerTypeWire = EnumMappings.OfferTypeMapping.ToWire(session.SessionOfferType);
+
+        // b. Candidates: PLANNED, unlinked, this member, matching type.
+        var candidates = await (
+            from ps in db.ProgramSessions
+            join pb in db.ProgramBlocks on ps.ProgramSessionBlockId equals pb.ProgramBlockId
+            where ps.ProgramSessionProgramId == program.ProgramId
+               && ps.ProgramSessionMemberId == memberId
+               && ps.ProgramSessionStatus == ProgramSessionStatus.Planned
+               && ps.ProgramSessionSessionId == null
+               && ps.ProgramSessionType == offerTypeWire
+            select new { ProgramSession = ps, pb.ProgramBlockWeekNumber })
+            .ToListAsync(ct);
+
+        if (candidates.Count == 0)
+            return;
+
+        // c. Earliest computed date, then position — same formula as
+        // ProgramService.ComputeSessionDate (StartDate + (week-1+offset)*7 + (dayOfWeek-1)).
+        var best = candidates
+            .OrderBy(c => program.ProgramStartDate.AddDays(
+                (c.ProgramBlockWeekNumber!.Value - 1 + program.ProgramWeekOffset) * 7 +
+                (c.ProgramSession.ProgramSessionDayOfWeek - 1)))
+            .ThenBy(c => c.ProgramSession.ProgramSessionPosition)
+            .First();
+
+        // d. Link. IX_PROGRAM_SESSIONS_BOOKING_MEMBER is unique on (SESSION_ID, MEMBER_ID), not
+        // on SESSION_ID alone — several participants of the same group session each link their
+        // own program session to it.
+        best.ProgramSession.ProgramSessionSessionId = session.SessionId;
     }
 
     // ── Private helpers ─────────────────────────────────────────────────────────
@@ -721,7 +782,7 @@ public class SessionService(
                 (s.SessionOfferType == OfferType.PresentielGroupe || s.SessionOfferType == OfferType.VisioGroupe), ct)
             ?? throw new NotFoundException("Group session not found.");
 
-    private static SessionParticipantResponse ToParticipantResponse(SessionParticipant p) => new(
+    private static SessionParticipantResponse ToParticipantResponse(SessionParticipant p, Guid? programSessionId) => new(
         p.SessionParticipantId,
         p.SessionParticipantSessionId,
         p.SessionParticipantMemberId,
@@ -729,6 +790,7 @@ public class SessionService(
         p.Member.MemberLastName,
         p.SessionParticipantVoucherId,
         EnumMappings.SessionParticipantStatusMapping.ToWire(p.SessionParticipantStatus),
+        programSessionId,
         p.SessionParticipantCreatedDate,
         p.SessionParticipantUpdatedDate);
 
@@ -738,7 +800,14 @@ public class SessionService(
             .Include(p => p.Member)
             .AsNoTracking()
             .FirstAsync(p => p.SessionParticipantId == participantId, ct);
-        return ToParticipantResponse(participant);
+
+        var programSessionId = await db.ProgramSessions
+            .Where(ps => ps.ProgramSessionSessionId == participant.SessionParticipantSessionId
+                      && ps.ProgramSessionMemberId == participant.SessionParticipantMemberId)
+            .Select(ps => (Guid?)ps.ProgramSessionId)
+            .FirstOrDefaultAsync(ct);
+
+        return ToParticipantResponse(participant, programSessionId);
     }
 
     private static IQueryable<Session> ApplyStatusFilter(

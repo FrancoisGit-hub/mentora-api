@@ -1,3 +1,5 @@
+using Mentora.Core.Enums;
+
 namespace Mentora.Core.Entities;
 
 public class CoachParameter
@@ -15,6 +17,11 @@ public class CoachParameter
     public bool CoachParameterLateCancellationRefunds { get; set; } = false;
     public bool CoachParameterIsAcceptingNewBookings { get; set; } = true;
     public int CoachParameterDefaultSessionDurationMinutes { get; set; } = 60;
+    // C# default MUST match the DB default ('SKIP') — the same bug already hit CoachParameter
+    // once (an in-memory entity built via `new CoachParameter { ... }` never round-trips through
+    // Postgres's column default, so a mismatch here silently disagrees with every freshly-created
+    // row read back).
+    public MissedSessionBehavior CoachParameterMissedSessionBehavior { get; set; } = MissedSessionBehavior.Skip;
     public DateTime CoachParameterCreatedDate { get; set; }
     public DateTime CoachParameterUpdatedDate { get; set; }
 

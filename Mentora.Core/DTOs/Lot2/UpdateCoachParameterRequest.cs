@@ -14,6 +14,7 @@ public record UpdateCoachParameterRequest(
     bool LateCancellationRefunds,
     bool IsAcceptingNewBookings,
     int DefaultSessionDurationMinutes,
+    string MissedSessionBehavior,
     // prefs
     string Language,
     bool NotifMessages,
