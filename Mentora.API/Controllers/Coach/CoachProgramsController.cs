@@ -6,18 +6,24 @@ using Microsoft.AspNetCore.Mvc;
 namespace Mentora.API.Controllers.Coach;
 
 /// <summary>Manages programs assigned by the authenticated coach to their members.</summary>
+/// <remarks>
+/// Routed under "training-programs", not "programs": the latter collides with
+/// OfferProgramsController's "api/v1/coach/programs" (a Lot 2 route already live in production).
+/// This controller's own routes never shipped, so they were free to move — see the Lot 6.3
+/// route-collision fix.
+/// </remarks>
 [ApiController]
 [Route("api/v1/coach")]
 [Authorize(Policy = "CoachOnly")]
 [ApiExplorerSettings(GroupName = "coach")]
-[Tags("Coach — Programs")]
+[Tags("Coach — Training programs")]
 public class CoachProgramsController(IProgramService programService) : ControllerBase
 {
     /// <summary>Lists program headers (no tree) for a member linked to the authenticated coach.</summary>
     /// <param name="memberId">Unique identifier of the member.</param>
     /// <param name="includeArchived">When <c>true</c>, includes archived programs. Defaults to <c>false</c>.</param>
     /// <param name="ct">Cancellation token.</param>
-    [HttpGet("members/{memberId:guid}/programs")]
+    [HttpGet("members/{memberId:guid}/training-programs")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -33,7 +39,7 @@ public class CoachProgramsController(IProgramService programService) : Controlle
     /// <summary>Returns a single program's full tree, owned by the authenticated coach.</summary>
     /// <param name="programId">Unique identifier of the program.</param>
     /// <param name="ct">Cancellation token.</param>
-    [HttpGet("programs/{programId:guid}")]
+    [HttpGet("training-programs/{programId:guid}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -54,7 +60,7 @@ public class CoachProgramsController(IProgramService programService) : Controlle
     /// <param name="request">The assignment payload.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The newly created program and the id of the program it replaced, if any.</returns>
-    [HttpPost("members/{memberId:guid}/programs")]
+    [HttpPost("members/{memberId:guid}/training-programs")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -66,7 +72,7 @@ public class CoachProgramsController(IProgramService programService) : Controlle
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
         var result  = await programService.AssignAsync(coachId, memberId, request, ct);
         return Created(
-            $"/api/v1/coach/programs/{result.Program.ProgramId}",
+            $"/api/v1/coach/training-programs/{result.Program.ProgramId}",
             new { success = true, data = result, error = (string?)null, statusCode = 201 });
     }
 
@@ -77,7 +83,7 @@ public class CoachProgramsController(IProgramService programService) : Controlle
     /// <param name="programId">Unique identifier of the program to update.</param>
     /// <param name="request">The replacement program data.</param>
     /// <param name="ct">Cancellation token.</param>
-    [HttpPut("programs/{programId:guid}")]
+    [HttpPut("training-programs/{programId:guid}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -94,7 +100,7 @@ public class CoachProgramsController(IProgramService programService) : Controlle
     /// <summary>Archives a program owned by the authenticated coach. Never a row delete.</summary>
     /// <param name="programId">Unique identifier of the program to archive.</param>
     /// <param name="ct">Cancellation token.</param>
-    [HttpDelete("programs/{programId:guid}")]
+    [HttpDelete("training-programs/{programId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
