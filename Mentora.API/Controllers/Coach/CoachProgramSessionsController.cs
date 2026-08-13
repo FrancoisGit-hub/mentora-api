@@ -39,4 +39,33 @@ public class CoachProgramSessionsController(IProgramService programService) : Co
         var result  = await programService.UpdateBookingAsync(coachId, programSessionId, request, ct);
         return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
     }
+
+    /// <summary>
+    /// Records the coach's own completion entry for a program session — used when the coach, not
+    /// the member, records the loads (e.g. during a PRESENTIEL session). Full replacement: any
+    /// exercise omitted from the payload has its actuals cleared. Never touches the prescribed
+    /// columns.
+    /// </summary>
+    /// <param name="programSessionId">Unique identifier of the program session.</param>
+    /// <param name="request">The completion record. CoachNote is applied here (member requests ignore it).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <remarks>
+    /// 404 if the program session isn't the coach's, or the MEMBER_COACHES link no longer exists —
+    /// never 403. 409 if the program is not ACTIVE. 422 for an out-of-session exercise id, an
+    /// out-of-range RPE, or actualWeightKg on a non-KG exercise.
+    /// </remarks>
+    [HttpPut("{programSessionId:guid}/completion")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> UpdateCompletion(
+        Guid programSessionId, [FromBody] UpdateProgramSessionCompletionRequest request, CancellationToken ct)
+    {
+        var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
+        var result  = await programService.UpdateCompletionByCoachAsync(coachId, programSessionId, request, ct);
+        return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
+    }
 }

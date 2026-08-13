@@ -22,8 +22,17 @@ public interface IProgramService
     Task<ProgramSessionBookingResponse> UpdateBookingAsync(
         Guid coachId, Guid programSessionId, UpdateProgramSessionBookingRequest request, CancellationToken ct);
 
+    // Coach-side — completion (Lot 6.6). Records loads on behalf of the member (e.g. during a
+    // PRESENTIEL session) and may set CoachNote.
+    Task<ProgramSessionResponse> UpdateCompletionByCoachAsync(
+        Guid coachId, Guid programSessionId, UpdateProgramSessionCompletionRequest request, CancellationToken ct);
+
     // Member-side
     Task<ProgramResponse> GetCurrentForMemberAsync(Guid memberId, CancellationToken ct);
 
     Task<ProgramResponse> GetByIdForMemberAsync(Guid memberId, Guid programId, CancellationToken ct);
+
+    // Member-side — completion (Lot 6.6)
+    Task<ProgramSessionResponse> UpdateCompletionByMemberAsync(
+        Guid memberId, Guid programSessionId, UpdateProgramSessionCompletionRequest request, CancellationToken ct);
 }

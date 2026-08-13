@@ -145,15 +145,18 @@ public class AgendaService(
                 .ToDictionaryAsync(x => x.SessionId, x => x.Count, ct)
             : new Dictionary<Guid, int>();
 
-        // Linked program session, batched:
+        // Linked program session — id and its own CompletedDate together, batched, no extra round
+        // trip beyond what Lot 6.5 already made:
         //  - individual bookings: at most one row per session (single member).
         //  - group bookings, member agenda only: this member's own row, if any.
-        var programSessionIdBySession = new Dictionary<Guid, Guid>();
+        var linkedInfoBySession = new Dictionary<Guid, (Guid ProgramSessionId, DateTime? CompletedDate)>();
         if (individualSessionIds.Count > 0)
         {
-            programSessionIdBySession = await db.ProgramSessions
+            linkedInfoBySession = await db.ProgramSessions
                 .Where(ps => ps.ProgramSessionSessionId != null && individualSessionIds.Contains(ps.ProgramSessionSessionId!.Value))
-                .ToDictionaryAsync(ps => ps.ProgramSessionSessionId!.Value, ps => ps.ProgramSessionId, ct);
+                .ToDictionaryAsync(
+                    ps => ps.ProgramSessionSessionId!.Value,
+                    ps => (ps.ProgramSessionId, ps.ProgramSessionCompletedDate), ct);
         }
         if (forMemberId is { } memberIdFilter && groupSessionIds.Count > 0)
         {
@@ -161,9 +164,11 @@ public class AgendaService(
                 .Where(ps => ps.ProgramSessionSessionId != null
                           && groupSessionIds.Contains(ps.ProgramSessionSessionId!.Value)
                           && ps.ProgramSessionMemberId == memberIdFilter)
-                .ToDictionaryAsync(ps => ps.ProgramSessionSessionId!.Value, ps => ps.ProgramSessionId, ct);
-            foreach (var (sessionId, programSessionId) in ownGroupLinks)
-                programSessionIdBySession[sessionId] = programSessionId;
+                .ToDictionaryAsync(
+                    ps => ps.ProgramSessionSessionId!.Value,
+                    ps => (ps.ProgramSessionId, ps.ProgramSessionCompletedDate), ct);
+            foreach (var (sessionId, info) in ownGroupLinks)
+                linkedInfoBySession[sessionId] = info;
         }
 
         return bookings.Select(b =>
@@ -180,9 +185,10 @@ public class AgendaService(
                 title = coachNamesById.GetValueOrDefault(b.SessionCoachId, "(unavailable)");
 
             // Group booking on the coach's own agenda: no single program session to point to.
-            var programSessionId = (isGroup && forMemberId is null)
-                ? null
-                : programSessionIdBySession.TryGetValue(b.SessionId, out var psId) ? psId : (Guid?)null;
+            (Guid ProgramSessionId, DateTime? CompletedDate)? linkedInfo =
+                (isGroup && forMemberId is null)
+                    ? null
+                    : linkedInfoBySession.TryGetValue(b.SessionId, out var info) ? info : null;
 
             return new AgendaEntryResponse(
                 Date:              b.SessionScheduledAt, // AUTHORITY RULE — never the computed formula
@@ -190,10 +196,11 @@ public class AgendaService(
                 Title:             title,
                 Status:            EnumMappings.SessionStatusMapping.ToWire(ComputeEffectiveStatus(b)),
                 IsBooked:          true,
-                ProgramSessionId:  programSessionId,
+                ProgramSessionId:  linkedInfo?.ProgramSessionId,
                 SessionId:         b.SessionId,
                 ParticipantCount:  participantCount,
-                IsOverdue:         false);
+                IsOverdue:         false,
+                CompletedDate:     linkedInfo?.CompletedDate);
         }).ToList();
     }
 
@@ -265,7 +272,8 @@ public class AgendaService(
                     ProgramSessionId:  ps.ProgramSessionId,
                     SessionId:         null,
                     ParticipantCount:  null,
-                    IsOverdue:         isOverdue));
+                    IsOverdue:         isOverdue,
+                    CompletedDate:     ps.ProgramSessionCompletedDate));
             }
         }
 

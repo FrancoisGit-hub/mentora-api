@@ -15,7 +15,8 @@ namespace Mentora.Infrastructure.Services;
 public class ProgramService(
     MentoraDbContext db,
     IValidator<ProgramTemplateBody> bodyValidator,
-    IValidator<UpdateProgramRequest> updateValidator) : IProgramService
+    IValidator<UpdateProgramRequest> updateValidator,
+    IValidator<UpdateProgramSessionCompletionRequest> completionValidator) : IProgramService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -279,6 +280,30 @@ public class ProgramService(
             EnumMappings.ProgramSessionStatusMapping.ToWire(programSession.ProgramSessionStatus));
     }
 
+    // ── Coach-side — completion (Lot 6.6) ─────────────────────────────────────────
+
+    public async Task<ProgramSessionResponse> UpdateCompletionByCoachAsync(
+        Guid coachId, Guid programSessionId, UpdateProgramSessionCompletionRequest request, CancellationToken ct)
+    {
+        await completionValidator.ValidateAndThrowAsync(request, ct);
+
+        // Ownership folded into the query filter — never 403.
+        var programSession = await db.ProgramSessions
+            .FirstOrDefaultAsync(ps => ps.ProgramSessionId == programSessionId && ps.ProgramSessionCoachId == coachId, ct)
+            ?? throw new NotFoundException($"Program session {programSessionId} not found.");
+
+        // The MEMBER_COACHES link must exist too — a coach can still own old PROGRAM_SESSIONS rows
+        // for a member who has since been unlinked, and that must 404 the same as a foreign one.
+        var isLinked = await db.MemberCoaches
+            .AnyAsync(mc => mc.MemberId == programSession.ProgramSessionMemberId && mc.CoachId == coachId, ct);
+        if (!isLinked)
+            throw new NotFoundException($"Program session {programSessionId} not found.");
+
+        await EnsureProgramActiveAsync(programSession.ProgramSessionProgramId, ct);
+
+        return await ApplyCompletionAsync(programSession, request, allowCoachNote: true, ct);
+    }
+
     // ── Member-side ────────────────────────────────────────────────────────────
 
     public async Task<ProgramResponse> GetCurrentForMemberAsync(Guid memberId, CancellationToken ct)
@@ -297,6 +322,165 @@ public class ProgramService(
             ?? throw new NotFoundException($"Program {programId} not found.");
 
         return await BuildResponseAsync(program, ct);
+    }
+
+    // ── Member-side — completion (Lot 6.6) ────────────────────────────────────────
+
+    public async Task<ProgramSessionResponse> UpdateCompletionByMemberAsync(
+        Guid memberId, Guid programSessionId, UpdateProgramSessionCompletionRequest request, CancellationToken ct)
+    {
+        await completionValidator.ValidateAndThrowAsync(request, ct);
+
+        // Ownership folded into the query filter — never 403.
+        var programSession = await db.ProgramSessions
+            .FirstOrDefaultAsync(ps => ps.ProgramSessionId == programSessionId && ps.ProgramSessionMemberId == memberId, ct)
+            ?? throw new NotFoundException($"Program session {programSessionId} not found.");
+
+        await EnsureProgramActiveAsync(programSession.ProgramSessionProgramId, ct);
+
+        return await ApplyCompletionAsync(programSession, request, allowCoachNote: false, ct);
+    }
+
+    // ── Completion — shared by both endpoints (Lot 6.6) ───────────────────────────
+
+    private async Task EnsureProgramActiveAsync(Guid programId, CancellationToken ct)
+    {
+        var status = await db.Programs
+            .Where(p => p.ProgramId == programId)
+            .Select(p => p.ProgramStatus)
+            .FirstAsync(ct);
+
+        if (status != ProgramStatus.Active)
+            throw new ConflictException(
+                "This program is not active — completions can only be recorded on an active program.",
+                new { programStatus = EnumMappings.ProgramStatusMapping.ToWire(status) });
+    }
+
+    // One method taking the already-ownership-resolved ProgramSession, shared by both the coach
+    // and member entry points above — they differ only in how they resolve and check ownership.
+    private async Task<ProgramSessionResponse> ApplyCompletionAsync(
+        ProgramSession programSession, UpdateProgramSessionCompletionRequest request, bool allowCoachNote, CancellationToken ct)
+    {
+        // c. Resolve every exercise belonging to this session in ONE query. This is also the full
+        // set that full-replacement operates over: anything not in the payload gets cleared below.
+        var sessionExercises = await (
+            from pe in db.ProgramExercises
+            join pc in db.ProgramCircuits on pe.ProgramExerciseCircuitId equals pc.ProgramCircuitId
+            where pc.ProgramCircuitProgramSessionId == programSession.ProgramSessionId
+            select pe).ToListAsync(ct);
+
+        var validIds = sessionExercises.Select(e => e.ProgramExerciseId).ToHashSet();
+        var payloadByExerciseId = request.Exercises.ToDictionary(e => e.ProgramExerciseId);
+
+        var invalidIds = payloadByExerciseId.Keys.Where(id => !validIds.Contains(id)).ToList();
+        if (invalidIds.Count > 0)
+            throw new ValidationException(invalidIds.Select(id => new FluentValidation.Results.ValidationFailure(
+                nameof(UpdateProgramSessionCompletionRequest.Exercises),
+                $"ProgramExerciseId {id} does not belong to this program session.")));
+
+        // e. actualWeightKg only allowed when LoadType is KG.
+        var loadTypeFailures = sessionExercises
+            .Where(e => payloadByExerciseId.TryGetValue(e.ProgramExerciseId, out var input)
+                     && input.ActualWeightKg is not null
+                     && e.ProgramExerciseLoadType != "KG")
+            .Select(e => new FluentValidation.Results.ValidationFailure(
+                nameof(UpdateProgramSessionCompletionRequest.Exercises),
+                $"ProgramExerciseId {e.ProgramExerciseId}: actualWeightKg is only allowed when LoadType is KG " +
+                $"(this exercise is {e.ProgramExerciseLoadType})."))
+            .ToList();
+        if (loadTypeFailures.Count > 0)
+            throw new ValidationException(loadTypeFailures);
+
+        // g. THE PRESCRIBED COLUMNS ARE NEVER TOUCHED BELOW — only ACTUAL_* and the per-exercise
+        // MEMBER_FEEDBACK are written. The gap between prescribed and actual is the whole point of
+        // this lot; see also BuildExerciseResponses, which reads both side by side.
+        foreach (var exercise in sessionExercises)
+        {
+            if (payloadByExerciseId.TryGetValue(exercise.ProgramExerciseId, out var input))
+            {
+                exercise.ProgramExerciseActualSets     = input.ActualSets;
+                exercise.ProgramExerciseActualReps     = input.ActualReps;
+                exercise.ProgramExerciseActualWeightKg = input.ActualWeightKg;
+                exercise.ProgramExerciseActualRpe      = input.ActualRpe;
+                exercise.ProgramExerciseMemberFeedback = input.MemberFeedback;
+            }
+            else
+            {
+                // Full replacement: an exercise omitted from the payload has its actuals cleared,
+                // not left alone.
+                exercise.ProgramExerciseActualSets     = null;
+                exercise.ProgramExerciseActualReps     = null;
+                exercise.ProgramExerciseActualWeightKg = null;
+                exercise.ProgramExerciseActualRpe      = null;
+                exercise.ProgramExerciseMemberFeedback = null;
+            }
+        }
+
+        var status = EnumMappings.ProgramSessionStatusMapping.Parse(request.Status);
+        programSession.ProgramSessionStatus = status;
+        // f. DONE stamps COMPLETED_DATE; PLANNED/SKIPPED clear it — but never touch the actuals
+        // above. Undoing a completion must never destroy what the member typed.
+        programSession.ProgramSessionCompletedDate = status == ProgramSessionStatus.Done ? DateTime.UtcNow : null;
+        programSession.ProgramSessionMemberFeedback = request.MemberFeedback;
+        if (allowCoachNote)
+            programSession.ProgramSessionCoachNote = request.CoachNote;
+
+        await db.SaveChangesAsync(ct);
+
+        return await BuildSessionResponseAsync(programSession, ct);
+    }
+
+    // Single-session counterpart to BuildResponseAsync/AssembleTree, reusing the same
+    // BuildCircuitResponses/BuildExerciseResponses helpers — the completion endpoints return just
+    // the session that changed, not the whole program tree.
+    private async Task<ProgramSessionResponse> BuildSessionResponseAsync(ProgramSession programSession, CancellationToken ct)
+    {
+        var program = await db.Programs.AsNoTracking()
+            .FirstAsync(p => p.ProgramId == programSession.ProgramSessionProgramId, ct);
+        var block = await db.ProgramBlocks.AsNoTracking()
+            .FirstAsync(b => b.ProgramBlockId == programSession.ProgramSessionBlockId, ct);
+
+        var circuits = await db.ProgramCircuits.AsNoTracking()
+            .Where(c => c.ProgramCircuitProgramSessionId == programSession.ProgramSessionId)
+            .ToListAsync(ct);
+        var circuitIds = circuits.Select(c => c.ProgramCircuitId).ToList();
+        var exercises = circuitIds.Count > 0
+            ? await db.ProgramExercises.AsNoTracking().Where(e => circuitIds.Contains(e.ProgramExerciseCircuitId)).ToListAsync(ct)
+            : [];
+
+        var exerciseIds = exercises.Select(e => e.ProgramExerciseExerciseId).Distinct().ToList();
+        var exerciseDetails = exerciseIds.Count > 0
+            ? await db.Exercises.AsNoTracking().Where(e => exerciseIds.Contains(e.ExerciseId)).ToDictionaryAsync(e => e.ExerciseId, ct)
+            : new Dictionary<Guid, Exercise>();
+
+        var lastPerformedByExercise = await ResolveLastPerformedAsync(
+            exercises.Select(e => e.ProgramExerciseId).ToList(), ct);
+
+        var sessionDatesById = new Dictionary<Guid, DateTime>();
+        if (programSession.ProgramSessionSessionId is { } linkedId)
+        {
+            var scheduledAt = await db.Sessions.AsNoTracking()
+                .Where(s => s.SessionId == linkedId)
+                .Select(s => s.SessionScheduledAt)
+                .FirstOrDefaultAsync(ct);
+            sessionDatesById[linkedId] = scheduledAt;
+        }
+
+        var circuitsBySession  = circuits.ToLookup(c => c.ProgramCircuitProgramSessionId);
+        var exercisesByCircuit = exercises.ToLookup(e => e.ProgramExerciseCircuitId);
+
+        return new ProgramSessionResponse(
+            programSession.ProgramSessionId,
+            programSession.ProgramSessionName,
+            programSession.ProgramSessionType,
+            programSession.ProgramSessionDayOfWeek,
+            programSession.ProgramSessionPosition,
+            EnumMappings.ProgramSessionStatusMapping.ToWire(programSession.ProgramSessionStatus),
+            ComputeSessionDate(program, block.ProgramBlockWeekNumber, programSession.ProgramSessionDayOfWeek, programSession.ProgramSessionSessionId, sessionDatesById),
+            programSession.ProgramSessionCompletedDate,
+            programSession.ProgramSessionMemberFeedback,
+            programSession.ProgramSessionCoachNote,
+            BuildCircuitResponses(programSession.ProgramSessionId, circuitsBySession, exercisesByCircuit, exerciseDetails, lastPerformedByExercise));
     }
 
     // ── Validation ─────────────────────────────────────────────────────────────
@@ -425,59 +609,26 @@ public class ProgramService(
                 .ToDictionaryAsync(s => s.SessionId, s => s.SessionScheduledAt, ct)
             : new Dictionary<Guid, DateTime>();
 
-        return AssembleTree(program, blocks, sessions, circuits, exercises, exerciseDetails, sessionDatesById);
+        // LAST PERFORMED (Lot 6.6): one extra query for the whole tree, resolving every exercise's
+        // most recent DONE record in one round trip — see ResolveLastPerformedAsync.
+        var lastPerformedByExercise = await ResolveLastPerformedAsync(
+            exercises.Select(e => e.ProgramExerciseId).ToList(), ct);
+
+        return AssembleTree(program, blocks, sessions, circuits, exercises, exerciseDetails, sessionDatesById, lastPerformedByExercise);
     }
 
     private static ProgramResponse AssembleTree(
         Program program, List<ProgramBlock> blocks, List<ProgramSession> sessions,
         List<ProgramCircuit> circuits, List<ProgramExercise> exercises, Dictionary<Guid, Exercise> exerciseDetails,
-        IReadOnlyDictionary<Guid, DateTime> sessionDatesById)
+        IReadOnlyDictionary<Guid, DateTime> sessionDatesById,
+        IReadOnlyDictionary<Guid, LastPerformedResponse> lastPerformedByExercise)
     {
         // Dictionary<Guid?, T> rejects a null key at runtime even though the CLR type allows it,
         // so the "no parent" (root) group is keyed on Guid.Empty instead of null.
         var blocksByParent     = blocks.GroupBy(b => b.ProgramBlockParentId ?? Guid.Empty).ToDictionary(g => g.Key, g => g.OrderBy(b => b.ProgramBlockPosition).ToList());
         var sessionsByBlock    = sessions.GroupBy(s => s.ProgramSessionBlockId).ToDictionary(g => g.Key, g => g.OrderBy(s => s.ProgramSessionPosition).ToList());
-        var circuitsBySession  = circuits.GroupBy(c => c.ProgramCircuitProgramSessionId).ToDictionary(g => g.Key, g => g.OrderBy(c => c.ProgramCircuitPosition).ToList());
-        var exercisesByCircuit = exercises.GroupBy(e => e.ProgramExerciseCircuitId).ToDictionary(g => g.Key, g => g.OrderBy(e => e.ProgramExercisePosition).ToList());
-
-        List<ProgramExerciseResponse> BuildExercises(Guid circuitId) =>
-            exercisesByCircuit.TryGetValue(circuitId, out var list)
-                ? list.Select(e =>
-                {
-                    exerciseDetails.TryGetValue(e.ProgramExerciseExerciseId, out var detail);
-                    return new ProgramExerciseResponse(
-                        e.ProgramExerciseId,
-                        e.ProgramExerciseExerciseId,
-                        detail?.ExerciseName ?? "(unavailable)",
-                        detail?.ExerciseInstructions,
-                        detail?.ExerciseVideoUrl,
-                        detail?.ExerciseImageUrl,
-                        detail is not null ? EnumMappings.MuscleGroupMapping.ToWire(detail.ExerciseMuscleGroup) : "(unavailable)",
-                        detail is not null ? EnumMappings.EquipmentMapping.ToWire(detail.ExerciseEquipment) : "(unavailable)",
-                        e.ProgramExercisePosition,
-                        e.ProgramExerciseLoadType,
-                        e.ProgramExerciseCustomNote,
-                        e.ProgramExercisePrescribedSets,
-                        e.ProgramExercisePrescribedReps,
-                        e.ProgramExercisePrescribedWeightKg,
-                        e.ProgramExerciseRestSeconds,
-                        e.ProgramExerciseWorkSeconds,
-                        e.ProgramExerciseRestWorkSeconds,
-                        e.ProgramExerciseActualSets,
-                        e.ProgramExerciseActualReps,
-                        e.ProgramExerciseActualWeightKg,
-                        e.ProgramExerciseActualRpe,
-                        e.ProgramExerciseMemberFeedback);
-                }).ToList()
-                : [];
-
-        List<ProgramCircuitResponse> BuildCircuits(Guid sessionId) =>
-            circuitsBySession.TryGetValue(sessionId, out var list)
-                ? list.Select(c => new ProgramCircuitResponse(
-                    c.ProgramCircuitId, c.ProgramCircuitName, c.ProgramCircuitPosition, c.ProgramCircuitMode,
-                    c.ProgramCircuitRounds, c.ProgramCircuitRestBetweenRoundsSeconds, c.ProgramCircuitNote,
-                    BuildExercises(c.ProgramCircuitId))).ToList()
-                : [];
+        var circuitsBySession  = circuits.ToLookup(c => c.ProgramCircuitProgramSessionId);
+        var exercisesByCircuit = exercises.ToLookup(e => e.ProgramExerciseCircuitId);
 
         List<ProgramSessionResponse> BuildSessions(ProgramBlock block) =>
             sessionsByBlock.TryGetValue(block.ProgramBlockId, out var list)
@@ -486,7 +637,7 @@ public class ProgramService(
                     s.ProgramSessionPosition, EnumMappings.ProgramSessionStatusMapping.ToWire(s.ProgramSessionStatus),
                     ComputeSessionDate(program, block.ProgramBlockWeekNumber, s.ProgramSessionDayOfWeek, s.ProgramSessionSessionId, sessionDatesById),
                     s.ProgramSessionCompletedDate, s.ProgramSessionMemberFeedback, s.ProgramSessionCoachNote,
-                    BuildCircuits(s.ProgramSessionId))).ToList()
+                    BuildCircuitResponses(s.ProgramSessionId, circuitsBySession, exercisesByCircuit, exerciseDetails, lastPerformedByExercise))).ToList()
                 : [];
 
         List<ProgramBlockResponse> BuildBlocks(Guid? parentId) =>
@@ -527,6 +678,109 @@ public class ProgramService(
             return DateOnly.FromDateTime(scheduledAt);
 
         return program.ProgramStartDate.AddDays((weekNumber!.Value - 1 + program.ProgramWeekOffset) * 7 + (dayOfWeek - 1));
+    }
+
+    // ── Circuit/exercise response building (shared by the whole-tree assembly and the single-
+    // session response the completion endpoints return — Lot 6.6) ──────────────────────────────
+
+    private static List<ProgramExerciseResponse> BuildExerciseResponses(
+        Guid circuitId, ILookup<Guid, ProgramExercise> exercisesByCircuit, IReadOnlyDictionary<Guid, Exercise> exerciseDetails,
+        IReadOnlyDictionary<Guid, LastPerformedResponse> lastPerformedByExercise) =>
+        exercisesByCircuit[circuitId]
+            .OrderBy(e => e.ProgramExercisePosition)
+            .Select(e =>
+            {
+                exerciseDetails.TryGetValue(e.ProgramExerciseExerciseId, out var detail);
+                lastPerformedByExercise.TryGetValue(e.ProgramExerciseId, out var lastPerformed);
+                return new ProgramExerciseResponse(
+                    e.ProgramExerciseId,
+                    e.ProgramExerciseExerciseId,
+                    detail?.ExerciseName ?? "(unavailable)",
+                    detail?.ExerciseInstructions,
+                    detail?.ExerciseVideoUrl,
+                    detail?.ExerciseImageUrl,
+                    detail is not null ? EnumMappings.MuscleGroupMapping.ToWire(detail.ExerciseMuscleGroup) : "(unavailable)",
+                    detail is not null ? EnumMappings.EquipmentMapping.ToWire(detail.ExerciseEquipment) : "(unavailable)",
+                    e.ProgramExercisePosition,
+                    e.ProgramExerciseLoadType,
+                    e.ProgramExerciseCustomNote,
+                    e.ProgramExercisePrescribedSets,
+                    e.ProgramExercisePrescribedReps,
+                    e.ProgramExercisePrescribedWeightKg,
+                    e.ProgramExerciseRestSeconds,
+                    e.ProgramExerciseWorkSeconds,
+                    e.ProgramExerciseRestWorkSeconds,
+                    // THE PRESCRIBED COLUMNS ABOVE ARE NEVER WRITTEN BY THE COMPLETION ENDPOINTS —
+                    // only read here, alongside the actuals below. The gap between the two is the
+                    // whole point of this lot.
+                    e.ProgramExerciseActualSets,
+                    e.ProgramExerciseActualReps,
+                    e.ProgramExerciseActualWeightKg,
+                    e.ProgramExerciseActualRpe,
+                    e.ProgramExerciseMemberFeedback,
+                    lastPerformed);
+            }).ToList();
+
+    private static List<ProgramCircuitResponse> BuildCircuitResponses(
+        Guid sessionId, ILookup<Guid, ProgramCircuit> circuitsBySession, ILookup<Guid, ProgramExercise> exercisesByCircuit,
+        IReadOnlyDictionary<Guid, Exercise> exerciseDetails, IReadOnlyDictionary<Guid, LastPerformedResponse> lastPerformedByExercise) =>
+        circuitsBySession[sessionId]
+            .OrderBy(c => c.ProgramCircuitPosition)
+            .Select(c => new ProgramCircuitResponse(
+                c.ProgramCircuitId, c.ProgramCircuitName, c.ProgramCircuitPosition, c.ProgramCircuitMode,
+                c.ProgramCircuitRounds, c.ProgramCircuitRestBetweenRoundsSeconds, c.ProgramCircuitNote,
+                BuildExerciseResponses(c.ProgramCircuitId, exercisesByCircuit, exerciseDetails, lastPerformedByExercise)))
+            .ToList();
+
+    // Most recent DONE record of the SAME EXERCISE_ID by the SAME member, across any program,
+    // excluding the occurrence's own session — resolved for every requested ProgramExercise in ONE
+    // query. `occurrences` (ProgramExercise joined to its owning ProgramSession) is reused as both
+    // the outer set (the rows we need lastPerformed for) and, correlated per row, the inner
+    // candidate set — EF Core composes this into a single SQL statement with a scalar correlated
+    // subquery per outer row (Postgres's LATERAL-equivalent), never one round trip per exercise.
+    private async Task<Dictionary<Guid, LastPerformedResponse>> ResolveLastPerformedAsync(
+        List<Guid> programExerciseIds, CancellationToken ct)
+    {
+        if (programExerciseIds.Count == 0)
+            return new Dictionary<Guid, LastPerformedResponse>();
+
+        var occurrences =
+            from pe in db.ProgramExercises
+            join pc in db.ProgramCircuits on pe.ProgramExerciseCircuitId equals pc.ProgramCircuitId
+            join ps in db.ProgramSessions on pc.ProgramCircuitProgramSessionId equals ps.ProgramSessionId
+            select new { pe, ps };
+
+        var rows = await occurrences
+            .Where(x => programExerciseIds.Contains(x.pe.ProgramExerciseId))
+            .Select(x => new
+            {
+                x.pe.ProgramExerciseId,
+                Last = occurrences
+                    .Where(y => y.pe.ProgramExerciseExerciseId == x.pe.ProgramExerciseExerciseId
+                             && y.ps.ProgramSessionMemberId == x.ps.ProgramSessionMemberId
+                             && y.ps.ProgramSessionStatus == ProgramSessionStatus.Done
+                             && y.ps.ProgramSessionId != x.ps.ProgramSessionId)
+                    .OrderByDescending(y => y.ps.ProgramSessionCompletedDate)
+                    .Select(y => new
+                    {
+                        Date = y.ps.ProgramSessionCompletedDate,
+                        y.pe.ProgramExerciseActualSets,
+                        y.pe.ProgramExerciseActualReps,
+                        y.pe.ProgramExerciseActualWeightKg,
+                        y.pe.ProgramExerciseActualRpe
+                    })
+                    .FirstOrDefault()
+            })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        return rows
+            .Where(r => r.Last is not null)
+            .ToDictionary(
+                r => r.ProgramExerciseId,
+                r => new LastPerformedResponse(
+                    r.Last!.Date!.Value, r.Last.ProgramExerciseActualSets, r.Last.ProgramExerciseActualReps,
+                    r.Last.ProgramExerciseActualWeightKg, r.Last.ProgramExerciseActualRpe));
     }
 
     private static ProgramHeaderResponse ToHeaderResponse(Program p) => new(

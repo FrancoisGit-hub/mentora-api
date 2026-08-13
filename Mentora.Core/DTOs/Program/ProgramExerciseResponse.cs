@@ -27,5 +27,6 @@ public record ProgramExerciseResponse(
     int? ActualReps,
     decimal? ActualWeightKg,
     int? ActualRpe,
-    string? MemberFeedback
+    string? MemberFeedback,
+    LastPerformedResponse? LastPerformed
 );

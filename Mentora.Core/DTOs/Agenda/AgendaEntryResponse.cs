@@ -19,7 +19,16 @@ namespace Mentora.Core.DTOs.Agenda;
 /// </param>
 /// <param name="SessionId">The linked booking, when this entry is booked.</param>
 /// <param name="ParticipantCount">Group bookings only: the number of active (non-cancelled) participants.</param>
-/// <param name="IsOverdue">Standalone entries only: true when the computed date is in the past and the status is still PLANNED.</param>
+/// <param name="IsOverdue">
+/// Standalone entries only: true when the computed date is in the past and the status is still
+/// PLANNED. Goes false the moment a session reaches DONE (Lot 6.6). Always false for a booked
+/// entry — its own Status (SCHEDULED/COMPLETED/CANCELLED) already conveys that.
+/// </param>
+/// <param name="CompletedDate">
+/// PROGRAM_SESSION_COMPLETED_DATE — for a standalone entry, its own; for a booked entry with a
+/// linked program session, that session's (null for a group booking on the coach's agenda, same
+/// reasoning as ProgramSessionId — no single link to show).
+/// </param>
 public record AgendaEntryResponse(
     DateTime Date,
     string Type,
@@ -29,4 +38,5 @@ public record AgendaEntryResponse(
     Guid? ProgramSessionId,
     Guid? SessionId,
     int? ParticipantCount,
-    bool IsOverdue);
+    bool IsOverdue,
+    DateTime? CompletedDate);
