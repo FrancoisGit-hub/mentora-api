@@ -56,6 +56,7 @@ public class ProductService(
             ProductSport           = EnumMappings.SportMapping.Parse(request.Sport),
             ProductLocation        = request.Location?.Trim(),
             ProductTags            = NormalizeTags(request.Tags),
+            ProductMaxParticipants = request.MaxParticipants,
             ProductStatus          = ProductStatus.Draft,
             ProductCreatedDate     = now,
             ProductUpdatedDate     = now,
@@ -98,6 +99,7 @@ public class ProductService(
         product.ProductSport           = EnumMappings.SportMapping.Parse(request.Sport);
         product.ProductLocation        = request.Location?.Trim();
         product.ProductTags            = NormalizeTags(request.Tags);
+        product.ProductMaxParticipants = request.MaxParticipants;
         product.OfferProgramId         = request.OfferProgramId;
         product.ProductUpdatedDate     = DateTime.UtcNow;
 
@@ -218,6 +220,7 @@ public class ProductService(
         p.OfferProgramId,
         p.CoachId,
         p.ProductCreatedDate,
-        p.ProductUpdatedDate
+        p.ProductUpdatedDate,
+        p.ProductMaxParticipants
     );
 }

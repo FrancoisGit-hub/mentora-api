@@ -27,6 +27,11 @@ namespace Mentora.Core.DTOs.Catalog;
 /// The program this product belongs to. Must be a valid, active <c>OfferProgram</c>
 /// owned by the authenticated coach; rejected with 400 otherwise.
 /// </param>
+/// <param name="MaxParticipants">
+/// Capacity for group offer types (<c>PRESENTIEL_GROUPE</c>). <c>null</c> means no limit. Not
+/// enforced at the database level; only meaningful for group offer types, but not validated as
+/// such — a solo product with a value here is simply ignored downstream.
+/// </param>
 public record ProductRequest(
     string Name,
     string? Description,
@@ -37,5 +42,6 @@ public record ProductRequest(
     string Sport,
     string? Location,
     List<string>? Tags,
-    Guid OfferProgramId
+    Guid OfferProgramId,
+    int? MaxParticipants = null
 );

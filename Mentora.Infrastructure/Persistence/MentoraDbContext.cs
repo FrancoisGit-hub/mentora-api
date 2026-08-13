@@ -27,6 +27,8 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<SessionVoucher> SessionVouchers => Set<SessionVoucher>();
     public DbSet<Session> Sessions => Set<Session>();
+    public DbSet<SessionParticipant> SessionParticipants => Set<SessionParticipant>();
+    public DbSet<SessionMemberRow> SessionMembers => Set<SessionMemberRow>();
     public DbSet<StripeWebhookEvent> StripeWebhookEvents => Set<StripeWebhookEvent>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();

@@ -14,6 +14,10 @@ public class Product
     public Sport ProductSport { get; set; } = Sport.Training;
     public string? ProductLocation { get; set; }
     public List<string>? ProductTags { get; set; }
+
+    // Group offer types only (PresentielGroupe / VisioGroupe); NULL means no limit. Not enforced
+    // at DB level — meaningless for solo offer types is a service-layer concern, not a constraint.
+    public int? ProductMaxParticipants { get; set; }
     public ProductStatus ProductStatus { get; set; } = ProductStatus.Draft;
     public DateTime ProductCreatedDate { get; set; }
     public DateTime ProductUpdatedDate { get; set; }

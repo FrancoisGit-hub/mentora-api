@@ -108,7 +108,7 @@ public class SessionSlotService(
                 on s.SessionSlotId equals sess.SessionSlotId into sessJoin
             from sess in sessJoin.DefaultIfEmpty()
             join m in db.Members
-                on sess.SessionMemberId equals m.MemberId into memberJoin
+                on sess.SessionMemberId equals (Guid?)m.MemberId into memberJoin
             from m in memberJoin.DefaultIfEmpty()
             orderby s.SessionSlotStartDate
             select new { Slot = s, Session = sess, Member = m })
@@ -267,11 +267,12 @@ public class SessionSlotService(
     private static OfferType ParseOfferType(string raw)
     {
         if (!Enum.TryParse<OfferType>(raw, ignoreCase: false, out var offerType))
-            throw new InvalidOperationException("Invalid offer type. Accepted values: Visio, PresentielSolo.");
-
-        if (offerType == OfferType.PresentielGroupe)
             throw new InvalidOperationException(
-                "PresentielGroupe is not available in V1. Accepted values: Visio, PresentielSolo.");
+                "Invalid offer type. Accepted values: Visio, PresentielSolo, PresentielGroupe.");
+
+        if (offerType == OfferType.VisioGroupe)
+            throw new InvalidOperationException(
+                "VisioGroupe is not available in V1. Accepted values: Visio, PresentielSolo, PresentielGroupe.");
 
         return offerType;
     }

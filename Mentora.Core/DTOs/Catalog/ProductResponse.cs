@@ -18,6 +18,7 @@ namespace Mentora.Core.DTOs.Catalog;
 /// <param name="CoachId">Identifier of the coach who owns this product.</param>
 /// <param name="CreatedDate">Timestamp when the product was created (UTC).</param>
 /// <param name="UpdatedDate">Timestamp of the last modification (UTC).</param>
+/// <param name="MaxParticipants">Capacity for group offer types. <c>null</c> means no limit.</param>
 public record ProductResponse(
     Guid ProductId,
     string Name,
@@ -33,5 +34,6 @@ public record ProductResponse(
     Guid OfferProgramId,
     Guid CoachId,
     DateTime CreatedDate,
-    DateTime UpdatedDate
+    DateTime UpdatedDate,
+    int? MaxParticipants
 );

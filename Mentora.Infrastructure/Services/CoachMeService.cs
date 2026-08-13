@@ -44,10 +44,14 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             .Select(mc => ToMemberSummaryDto(mc))
             .ToList();
 
-        // Query 3 — upcoming sessions in the next 7 days
+        // Query 3 — upcoming sessions in the next 7 days. Individual sessions only: this widget's
+        // DTO shows a single member per row, which a group session (many participants, no single
+        // SessionMemberId) cannot fill — deliberately excluded rather than crashing on a null
+        // Member navigation. Group-course visibility on the dashboard is not in scope for Lot 6.4.
         var upcomingSessions = await db.Sessions
             .Include(s => s.Member)
             .Where(s => s.SessionCoachId == coachId
+                     && s.SessionMemberId != null
                      && s.SessionStatus == SessionStatus.Scheduled
                      && s.SessionScheduledAt > now
                      && s.SessionScheduledAt <= sevenDaysEnd)
@@ -135,16 +139,27 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             Email:     mc.Member.User.UserEmail,
             Phone:     mc.Member.MemberPhone);
 
-    private static CoachUpcomingSessionDto ToUpcomingSessionDto(Session s) =>
-        new(
+    // Individual-only by construction — the caller's query already filters SessionMemberId != null
+    // (group sessions are excluded from this dashboard widget), so both are guaranteed present.
+    private static CoachUpcomingSessionDto ToUpcomingSessionDto(Session s)
+    {
+        var memberId = s.SessionMemberId
+            ?? throw new InvalidOperationException(
+                $"Session {s.SessionId} has no member — the caller's query should have excluded it.");
+        var member = s.Member
+            ?? throw new InvalidOperationException(
+                $"Session {s.SessionId} has a member id but no loaded Member navigation.");
+
+        return new(
             SessionId:       s.SessionId,
-            MemberId:        s.SessionMemberId,
-            MemberFirstName: s.Member.MemberFirstName,
-            MemberLastName:  s.Member.MemberLastName,
+            MemberId:        memberId,
+            MemberFirstName: member.MemberFirstName,
+            MemberLastName:  member.MemberLastName,
             ScheduledAt:     s.SessionScheduledAt,
             DurationMinutes: s.SessionDurationMinutes,
             OfferType:       EnumMappings.OfferTypeMapping.ToWire(s.SessionOfferType),
             VisioUrl:        s.SessionVisioUrl);
+    }
 
     private static ProductResponse ToProductResponse(Product p) => new(
         p.ProductId,
@@ -161,5 +176,6 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
         p.OfferProgramId,
         p.CoachId,
         p.ProductCreatedDate,
-        p.ProductUpdatedDate);
+        p.ProductUpdatedDate,
+        p.ProductMaxParticipants);
 }

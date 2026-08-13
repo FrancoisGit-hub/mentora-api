@@ -4,5 +4,6 @@ public enum OfferType
 {
     Visio,
     PresentielSolo,
-    PresentielGroupe  // Exists in model but not exposed in V1 — rejected at service validation layer
+    PresentielGroupe,
+    VisioGroupe  // Declared for schema completeness only — rejected at service validation layer in V1
 }

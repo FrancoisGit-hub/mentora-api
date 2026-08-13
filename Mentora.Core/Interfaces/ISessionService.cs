@@ -23,4 +23,14 @@ public interface ISessionService
         Guid? memberId, CancellationToken ct);
     Task<SessionResponse> GetForCoachAsync(
         Guid coachId, Guid sessionId, CancellationToken ct);
+
+    // Coach-side — group sessions (Lot 6.4)
+    Task<SessionResponse> CreateGroupSessionAsync(
+        Guid coachId, CreateGroupSessionRequest request, CancellationToken ct);
+    Task<IReadOnlyList<SessionParticipantResponse>> ListParticipantsAsync(
+        Guid coachId, Guid sessionId, CancellationToken ct);
+    Task<SessionParticipantResponse> RegisterParticipantAsync(
+        Guid coachId, Guid sessionId, RegisterParticipantRequest request, CancellationToken ct);
+    Task UnregisterParticipantAsync(
+        Guid coachId, Guid sessionId, Guid memberId, CancellationToken ct);
 }

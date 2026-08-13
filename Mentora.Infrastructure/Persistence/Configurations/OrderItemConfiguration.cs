@@ -95,6 +95,7 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         if (v == OfferType.Visio)            return "VISIO";
         if (v == OfferType.PresentielSolo)   return "PRESENTIEL_SOLO";
         if (v == OfferType.PresentielGroupe) return "PRESENTIEL_GROUPE";
+        if (v == OfferType.VisioGroupe)      return "VISIO_GROUPE";
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType value.");
     }
 
@@ -103,6 +104,7 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         if (v == "VISIO")             return OfferType.Visio;
         if (v == "PRESENTIEL_SOLO")   return OfferType.PresentielSolo;
         if (v == "PRESENTIEL_GROUPE") return OfferType.PresentielGroupe;
+        if (v == "VISIO_GROUPE")      return OfferType.VisioGroupe;
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType DB value.");
     }
 

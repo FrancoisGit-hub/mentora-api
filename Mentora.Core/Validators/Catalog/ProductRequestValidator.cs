@@ -15,7 +15,13 @@ public class ProductRequestValidator : AbstractValidator<ProductRequest>
         RuleFor(x => x.OfferType)
             .NotEmpty()
             .Must(v => EnumMappings.OfferTypeMapping.WireValues.Contains(v))
-            .WithMessage($"OfferType must be one of: {string.Join(", ", EnumMappings.OfferTypeMapping.WireValues)}");
+            .WithMessage($"OfferType must be one of: {string.Join(", ", EnumMappings.OfferTypeMapping.WireValues)}")
+            .Must(v => v != "VISIO_GROUPE")
+            .WithMessage("VISIO_GROUPE is not available in V1.");
+
+        RuleFor(x => x.MaxParticipants)
+            .GreaterThan(0)
+            .When(x => x.MaxParticipants.HasValue);
 
         RuleFor(x => x.OfferNature)
             .MaximumLength(80)

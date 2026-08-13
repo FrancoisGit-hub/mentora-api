@@ -12,20 +12,25 @@ public static class EnumMappings
     public static class OfferTypeMapping
     {
         public static readonly ReadOnlyCollection<string> WireValues =
-            new(["VISIO", "PRESENTIEL_SOLO"]);
-        // PresentielGroupe is NOT exposed in V1
+            new(["VISIO", "PRESENTIEL_SOLO", "PRESENTIEL_GROUPE", "VISIO_GROUPE"]);
+        // VisioGroupe is declared here (round-trips on the wire) but rejected everywhere it could
+        // be written — ProductRequestValidator, SessionSlotService.ParseOfferType — see Lot 6.4.
 
         public static OfferType Parse(string value)
         {
-            if (value == "VISIO")          return OfferType.Visio;
-            if (value == "PRESENTIEL_SOLO") return OfferType.PresentielSolo;
+            if (value == "VISIO")             return OfferType.Visio;
+            if (value == "PRESENTIEL_SOLO")   return OfferType.PresentielSolo;
+            if (value == "PRESENTIEL_GROUPE") return OfferType.PresentielGroupe;
+            if (value == "VISIO_GROUPE")      return OfferType.VisioGroupe;
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown OfferType wire value.");
         }
 
         public static string ToWire(OfferType value)
         {
-            if (value == OfferType.Visio)          return "VISIO";
-            if (value == OfferType.PresentielSolo) return "PRESENTIEL_SOLO";
+            if (value == OfferType.Visio)             return "VISIO";
+            if (value == OfferType.PresentielSolo)    return "PRESENTIEL_SOLO";
+            if (value == OfferType.PresentielGroupe)  return "PRESENTIEL_GROUPE";
+            if (value == OfferType.VisioGroupe)       return "VISIO_GROUPE";
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown OfferType enum value.");
         }
     }
@@ -344,6 +349,30 @@ public static class EnumMappings
             if (value == ProgramStatus.Completed) return "COMPLETED";
             if (value == ProgramStatus.Archived)  return "ARCHIVED";
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramStatus enum value.");
+        }
+    }
+
+    public static class SessionParticipantStatusMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["REGISTERED", "ATTENDED", "NO_SHOW", "CANCELLED"]);
+
+        public static SessionParticipantStatus Parse(string value)
+        {
+            if (value == "REGISTERED") return SessionParticipantStatus.Registered;
+            if (value == "ATTENDED")   return SessionParticipantStatus.Attended;
+            if (value == "NO_SHOW")    return SessionParticipantStatus.NoShow;
+            if (value == "CANCELLED")  return SessionParticipantStatus.Cancelled;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown SessionParticipantStatus wire value.");
+        }
+
+        public static string ToWire(SessionParticipantStatus value)
+        {
+            if (value == SessionParticipantStatus.Registered) return "REGISTERED";
+            if (value == SessionParticipantStatus.Attended)   return "ATTENDED";
+            if (value == SessionParticipantStatus.NoShow)     return "NO_SHOW";
+            if (value == SessionParticipantStatus.Cancelled)  return "CANCELLED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown SessionParticipantStatus enum value.");
         }
     }
 

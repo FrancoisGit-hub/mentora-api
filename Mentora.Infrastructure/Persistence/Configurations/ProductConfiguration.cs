@@ -78,6 +78,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("PRODUCT_TAGS")
             .HasColumnType("jsonb");
 
+        builder.Property(e => e.ProductMaxParticipants)
+            .HasColumnName("PRODUCT_MAX_PARTICIPANTS");
+
         // ProductStatus — DRAFT / PUBLISHED / ARCHIVED
         var statusConverter = new ValueConverter<ProductStatus, string>(
             v => ProductStatusToDb(v),
@@ -128,6 +131,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         if (v == OfferType.Visio)            return "VISIO";
         if (v == OfferType.PresentielSolo)   return "PRESENTIEL_SOLO";
         if (v == OfferType.PresentielGroupe) return "PRESENTIEL_GROUPE";
+        if (v == OfferType.VisioGroupe)      return "VISIO_GROUPE";
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType value.");
     }
 
@@ -136,6 +140,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         if (v == "VISIO")             return OfferType.Visio;
         if (v == "PRESENTIEL_SOLO")   return OfferType.PresentielSolo;
         if (v == "PRESENTIEL_GROUPE") return OfferType.PresentielGroupe;
+        if (v == "VISIO_GROUPE")      return OfferType.VisioGroupe;
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType DB value.");
     }
 

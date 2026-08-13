@@ -17,26 +17,27 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
             .HasColumnName("SESSION_ID")
             .HasDefaultValueSql("gen_random_uuid()");
 
+        // Nullable — group sessions have no single voucher. See CK_SESSIONS_GROUP_HAS_NO_MEMBER.
         builder.Property(e => e.SessionVoucherId)
-            .HasColumnName("SESSION_VOUCHER_ID")
-            .IsRequired();
+            .HasColumnName("SESSION_VOUCHER_ID");
 
         builder.Property(e => e.SessionSlotId)
             .HasColumnName("SESSION_SLOT_ID")
             .IsRequired();
 
+        // Nullable — group sessions carry membership in SESSION_PARTICIPANTS instead. See
+        // CK_SESSIONS_GROUP_HAS_NO_MEMBER.
         builder.Property(e => e.SessionMemberId)
-            .HasColumnName("SESSION_MEMBER_ID")
-            .IsRequired();
+            .HasColumnName("SESSION_MEMBER_ID");
 
         builder.Property(e => e.SessionCoachId)
             .HasColumnName("SESSION_COACH_ID")
             .IsRequired();
 
-        // Weak reference — no FK; snapshot semantics (product may be archived)
+        // Weak reference — no FK; snapshot semantics (product may be archived). Nullable at the
+        // schema level, but always set in practice — see the entity's comment.
         builder.Property(e => e.SessionProductId)
-            .HasColumnName("SESSION_PRODUCT_ID")
-            .IsRequired();
+            .HasColumnName("SESSION_PRODUCT_ID");
 
         var offerTypeConverter = new ValueConverter<OfferType, string>(
             v => OfferTypeToDb(v),
@@ -65,6 +66,11 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(e => e.SessionScheduledAt)
             .HasColumnName("SESSION_SCHEDULED_AT")
             .IsRequired();
+
+        // Group sessions only — snapshotted from PRODUCT_MAX_PARTICIPANTS at creation. Null for
+        // individual sessions and for group sessions whose product has no limit.
+        builder.Property(e => e.SessionMaxParticipants)
+            .HasColumnName("SESSION_MAX_PARTICIPANTS");
 
         var statusConverter = new ValueConverter<SessionStatus, string>(
             v => SessionStatusToDb(v),
@@ -119,6 +125,7 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.HasOne(e => e.Voucher)
             .WithMany()
             .HasForeignKey(e => e.SessionVoucherId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Slot)
@@ -129,6 +136,7 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.HasOne(e => e.Member)
             .WithMany()
             .HasForeignKey(e => e.SessionMemberId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Coach)
@@ -142,6 +150,7 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         if (v == OfferType.Visio)            return "VISIO";
         if (v == OfferType.PresentielSolo)   return "PRESENTIEL_SOLO";
         if (v == OfferType.PresentielGroupe) return "PRESENTIEL_GROUPE";
+        if (v == OfferType.VisioGroupe)      return "VISIO_GROUPE";
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType value.");
     }
 
@@ -150,6 +159,7 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         if (v == "VISIO")             return OfferType.Visio;
         if (v == "PRESENTIEL_SOLO")   return OfferType.PresentielSolo;
         if (v == "PRESENTIEL_GROUPE") return OfferType.PresentielGroupe;
+        if (v == "VISIO_GROUPE")      return OfferType.VisioGroupe;
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OfferType DB value.");
     }
 
