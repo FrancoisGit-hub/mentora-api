@@ -1128,6 +1128,184 @@ function Invoke-Phase2Tail {
     Invoke-Api -Id 'P2.16' -Method POST -Path "/api/v1/coach/sessions/$groupSessionId/participants" -ActorKey 'COACH_B' -Expected 404 -Body @{ memberId = $Member1Id; voucherId = [guid]::NewGuid().ToString() } | Out-Null
     Invoke-Api -Id 'P2.17' -Method DELETE -Path "/api/v1/coach/sessions/$groupSessionId/participants/$Member1Id" -ActorKey 'COACH_B' -Expected 404 | Out-Null
 }
+
+# ===========================================================================
+# STEP A REGRESSION CHECKS (correction pass, 2026-09-14) - covers C1/C2/C3
+# from docs/review/tri-ecarts-lot6.md. Self-contained: builds its own
+# fixtures (SA.setup-*), does not read $Captured from earlier phases, so it
+# runs standalone regardless of what Phase 1-4/2/3 discovered or blocked on.
+#
+# APPEND-ONLY SECTION: a later correction pass gets its OWN labelled block
+# below this one (own function, own Add-Fixture DeleteOrder range starting
+# above 100) - do not merge new checks into Invoke-StepARegressionChecks.
+# ===========================================================================
+
+# Invoke-Api always JSON-encodes $Body from a PowerShell object, so it can't
+# send deliberately malformed JSON or a truly empty string body with a JSON
+# content-type. Same result/refresh handling as Invoke-Api, minus the encode.
+function Invoke-ApiRawBody {
+    param(
+        [Parameter(Mandatory)][string]$Id,
+        [Parameter(Mandatory)][string]$Method,
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$ActorKey,
+        [Parameter(Mandatory)]$Expected,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$RawBody
+    )
+    $expectedArr = @($Expected)
+    $uri = "$BaseUrl$Path"
+    $headers = @{ Authorization = "Bearer $($Tokens[$ActorKey])" }
+
+    $attempted401Refresh = $false
+    while ($true) {
+        $status = $null
+        try {
+            $resp = Invoke-WebRequest -Method $Method -Uri $uri -Headers $headers -ContentType 'application/json' -Body $RawBody -UseBasicParsing
+            $status = [int]$resp.StatusCode
+        } catch {
+            $webResp = $_.Exception.Response
+            if ($webResp) { try { $status = [int]$webResp.StatusCode } catch { $status = $null } }
+        }
+
+        if ($status -eq 401 -and -not $attempted401Refresh) {
+            $attempted401Refresh = $true
+            $refreshed = Invoke-Refresh -ActorKey $ActorKey
+            if ($refreshed) {
+                $headers['Authorization'] = "Bearer $($Tokens[$ActorKey])"
+                continue
+            }
+        }
+
+        $actualStr = if ($null -ne $status) { "$status" } else { 'ERROR (no response)' }
+        $resultStatus = if ($expectedArr -contains $status) { 'PASS' } else { 'FAIL' }
+        Add-Result -Id $Id -Method $Method -Path $Path -Actor $ActorKey -Expected ($expectedArr -join '/') -Actual $actualStr -Status $resultStatus
+        return
+    }
+}
+
+function Invoke-StepARegressionChecks {
+    Write-Host '--- STEP A REGRESSION CHECKS ---' -ForegroundColor Cyan
+
+    # Setup: two shared Mentora exercises (for the template body) + one private
+    # exercise owned by COACH_A (a resource COACH_B can legitimately try to hijack).
+    $exM = Invoke-Api -Id 'SA.setup-exercises' -Method GET -Path '/api/v1/coach/exercises?scope=MENTORA' -ActorKey 'COACH_A' -Expected 200 -Quiet
+    $mentoraExercises = @($exM.Data)
+    if ($mentoraExercises.Count -lt 2) {
+        $reason = 'fewer than 2 shared Mentora exercises visible to COACH_A'
+        foreach ($id in @('SA1', 'SA2', 'SA3', 'SA4', 'SA5', 'SA6', 'SA7', 'SA8', 'SA9', 'SA10')) {
+            Add-Blocked -Id $id -Method 'various' -Path '/api/v1/coach/program-templates' -Actor 'COACH_A' -Expected 'see check' -Reason $reason
+        }
+        return
+    }
+    $ex1 = Get-FirstProp -Obj $mentoraExercises[0] -Names @('id', 'exerciseId')
+    $ex2 = Get-FirstProp -Obj $mentoraExercises[1] -Names @('id', 'exerciseId')
+
+    $exABody = @{ name = "$FixturePrefix StepA Exercise (Coach A)"; muscleGroup = 'FULL_BODY'; equipment = 'BODYWEIGHT'; isPolyarticular = $false }
+    $rExA = Invoke-Api -Id 'SA.setup-exerciseA' -Method POST -Path '/api/v1/coach/exercises' -ActorKey 'COACH_A' -Expected 201 -Body $exABody -Quiet
+    $exerciseAId = $null
+    if ($rExA.Status -eq 201) {
+        $exerciseAId = Get-FirstProp -Obj $rExA.Data -Names @('id', 'exerciseId')
+        if ($exerciseAId) { Add-Fixture -Type 'EXERCISE' -FixtureId $exerciseAId -Owner 'COACH_A' -DeleteOrder 102 -Name $exABody.name }
+    }
+
+    # SA3 - valid homogeneous tree -> 201
+    $validBody = @{
+        name = "$FixturePrefix StepA Template"; description = 'Step A regression'; goal = 'GENERAL_FITNESS'; durationWeeks = 1
+        body = New-ProgramTemplateBody -ExerciseId1 $ex1 -ExerciseId2 $ex2
+    }
+    $rTpl = Invoke-Api -Id 'SA3' -Method POST -Path '/api/v1/coach/program-templates' -ActorKey 'COACH_A' -Expected 201 -Body $validBody
+    if ($rTpl.Status -ne 201) {
+        $reason = 'SA3 template creation did not return 201'
+        foreach ($id in @('SA1', 'SA2', 'SA5', 'SA6', 'SA7')) {
+            Add-Blocked -Id $id -Method 'various' -Path '/api/v1/coach/program-templates' -Actor 'COACH_A' -Expected 'see check' -Reason $reason
+        }
+    } else {
+        $stepATemplateId = Get-FirstProp -Obj $rTpl.Data -Names @('id', 'programTemplateId')
+        Add-Fixture -Type 'PROGRAM_TEMPLATE' -FixtureId $stepATemplateId -Owner 'COACH_A' -DeleteOrder 103 -Name $validBody.name
+
+        # SA1 - mixed STANDARD/INTERVAL fields on one circuit -> 422. This is the corrected,
+        # reliable version of P4.3b: workSeconds is set via direct hashtable key assignment,
+        # not Add-Member, so it actually reaches the wire (see the P4.3b fix above).
+        $mixedBody2 = @{
+            name = $validBody.name; description = $validBody.description; goal = $validBody.goal; durationWeeks = 1
+            body = New-ProgramTemplateBody -ExerciseId1 $ex1 -ExerciseId2 $ex2
+        }
+        $mixedBody2.body.blocks[0].blocks[0].blocks[0].sessions[0].circuits[0].mode = 'STANDARD'
+        $mixedBody2.body.blocks[0].blocks[0].blocks[0].sessions[0].circuits[0].exercises[0].workSeconds = 30
+        Invoke-Api -Id 'SA1' -Method PUT -Path "/api/v1/coach/program-templates/$stepATemplateId" -ActorKey 'COACH_A' -Expected 422 -Body $mixedBody2 | Out-Null
+
+        # SA2 - empty circuit -> 422 (no regression)
+        $emptyBody2 = @{
+            name = $validBody.name; description = $validBody.description; goal = $validBody.goal; durationWeeks = 1
+            body = New-ProgramTemplateBody -ExerciseId1 $ex1 -ExerciseId2 $ex2
+        }
+        $emptyBody2.body.blocks[0].blocks[0].blocks[0].sessions[0].circuits[0].exercises = @()
+        Invoke-Api -Id 'SA2' -Method PUT -Path "/api/v1/coach/program-templates/$stepATemplateId" -ActorKey 'COACH_A' -Expected 422 -Body $emptyBody2 | Out-Null
+
+        # Restore the template to its valid form before the SA5/assign steps below.
+        Invoke-Api -Id 'SA.restore-template' -Method PUT -Path "/api/v1/coach/program-templates/$stepATemplateId" -ActorKey 'COACH_A' -Expected 200 -Body $validBody -Quiet | Out-Null
+
+        # SA5 - PUT /coach/program-templates/{ownedByA}, foreign coach (COACH_B), invalid body -> 404
+        Invoke-Api -Id 'SA5' -Method PUT -Path "/api/v1/coach/program-templates/$stepATemplateId" -ActorKey 'COACH_B' -Expected 404 -Body @{ invalid = $true } | Out-Null
+
+        # Assign the template to MEMBER_1 to get a training program + program session owned by
+        # COACH_A, needed for SA6/SA7.
+        $startDate = (Get-Date).ToString('yyyy-MM-dd')
+        $rAssign = Invoke-Api -Id 'SA.setup-assign' -Method POST -Path "/api/v1/coach/members/$Member1Id/training-programs" -ActorKey 'COACH_A' -Expected 201 -Body @{ templateId = $stepATemplateId; startDate = $startDate } -Quiet
+        $stepAProgramId = $null
+        $stepAProgramSessionId = $null
+        if ($rAssign.Status -eq 201) {
+            $assignRoot = if ($rAssign.Data.program) { $rAssign.Data.program } else { $rAssign.Data }
+            $stepAProgramId = Get-FirstProp -Obj $assignRoot -Names @('id', 'programId')
+            if ($stepAProgramId) { Add-Fixture -Type 'PROGRAM' -FixtureId $stepAProgramId -Owner 'MEMBER_1 (via COACH_A)' -DeleteOrder 101 -Name "assigned from $($validBody.name)" }
+            foreach ($node in (Get-AllNodes -Obj $assignRoot)) {
+                $names = $node.PSObject.Properties.Name
+                if (-not $stepAProgramSessionId -and ($names -contains 'exercises') -and ($names -contains 'id' -or $names -contains 'programSessionId')) {
+                    $stepAProgramSessionId = Get-FirstProp -Obj $node -Names @('id', 'programSessionId')
+                }
+            }
+        }
+
+        # SA6 - PUT /coach/training-programs/{ownedByA}, foreign coach, invalid body -> 404
+        if ($stepAProgramId) {
+            Invoke-Api -Id 'SA6' -Method PUT -Path "/api/v1/coach/training-programs/$stepAProgramId" -ActorKey 'COACH_B' -Expected 404 -Body @{ invalid = $true } | Out-Null
+        } else {
+            Add-Blocked -Id 'SA6' -Method 'PUT' -Path '/api/v1/coach/training-programs/{id}' -Actor 'COACH_B' -Expected '404' -Reason 'SA.setup-assign did not return 201'
+        }
+
+        # SA7 - PUT /coach/program-sessions/{ownedByA}/completion, foreign coach, invalid body -> 404
+        if ($stepAProgramSessionId) {
+            Invoke-Api -Id 'SA7' -Method PUT -Path "/api/v1/coach/program-sessions/$stepAProgramSessionId/completion" -ActorKey 'COACH_B' -Expected 404 -Body @{ invalid = $true } | Out-Null
+        } else {
+            Add-Blocked -Id 'SA7' -Method 'PUT' -Path '/api/v1/coach/program-sessions/{id}/completion' -Actor 'COACH_B' -Expected '404' -Reason 'no program session id captured from SA.setup-assign'
+        }
+    }
+
+    # SA4 - PUT /coach/exercises/{ownedByA}, foreign coach (COACH_B), invalid body -> 404
+    # SA8 - PUT /coach/exercises/{ownedByA}, owner (COACH_A), invalid body -> 422 enveloped
+    # SA9 - PUT /coach/exercises/{ownedByA}, owner, malformed JSON -> clean 400 enveloped, not 500
+    # SA10 - PUT /coach/exercises/{ownedByA}, owner, empty body -> clean 400 enveloped, not 500
+    if ($exerciseAId) {
+        Invoke-Api -Id 'SA4' -Method PUT -Path "/api/v1/coach/exercises/$exerciseAId" -ActorKey 'COACH_B' -Expected 404 -Body @{ invalid = $true } | Out-Null
+        Invoke-Api -Id 'SA8' -Method PUT -Path "/api/v1/coach/exercises/$exerciseAId" -ActorKey 'COACH_A' -Expected 422 -Body @{ invalid = $true } | Out-Null
+        Invoke-ApiRawBody -Id 'SA9' -Method PUT -Path "/api/v1/coach/exercises/$exerciseAId" -ActorKey 'COACH_A' -Expected 400 -RawBody '{"invalid": true,,,}'
+        Invoke-ApiRawBody -Id 'SA10' -Method PUT -Path "/api/v1/coach/exercises/$exerciseAId" -ActorKey 'COACH_A' -Expected 400 -RawBody ''
+    } else {
+        $reason = 'SA.setup-exerciseA did not return 201'
+        Add-Blocked -Id 'SA4' -Method 'PUT' -Path '/api/v1/coach/exercises/{id}' -Actor 'COACH_B' -Expected '404' -Reason $reason
+        Add-Blocked -Id 'SA8' -Method 'PUT' -Path '/api/v1/coach/exercises/{id}' -Actor 'COACH_A' -Expected '422' -Reason $reason
+        Add-Blocked -Id 'SA9' -Method 'PUT' -Path '/api/v1/coach/exercises/{id}' -Actor 'COACH_A' -Expected '400' -Reason $reason
+        Add-Blocked -Id 'SA10' -Method 'PUT' -Path '/api/v1/coach/exercises/{id}' -Actor 'COACH_A' -Expected '400' -Reason $reason
+    }
+
+    # SA11 - GET conversation, unattached coach (COACH_B) -> 404
+    # SA12 - GET conversation, attached coach (COACH_A) -> 200
+    # SA13 - GET parameters, same unattached memberId, unattached coach -> 404 (no regression)
+    Invoke-Api -Id 'SA11' -Method GET -Path "/api/v1/coach/members/$Member1Id/conversation" -ActorKey 'COACH_B' -Expected 404 | Out-Null
+    Invoke-Api -Id 'SA12' -Method GET -Path "/api/v1/coach/members/$Member1Id/conversation" -ActorKey 'COACH_A' -Expected 200 | Out-Null
+    Invoke-Api -Id 'SA13' -Method GET -Path "/api/v1/coach/members/$Member1Id/parameters" -ActorKey 'COACH_B' -Expected 404 | Out-Null
+}
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -1141,6 +1319,7 @@ Invoke-Phase4
 Invoke-Phase2Main
 Invoke-Phase3
 Invoke-Phase2Tail
+Invoke-StepARegressionChecks
 
 Write-Host ''
 Write-Host '=== RESULTS ===' -ForegroundColor Cyan
