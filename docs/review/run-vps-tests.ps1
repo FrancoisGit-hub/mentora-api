@@ -118,6 +118,12 @@ $ManifestPath = Join-Path $ScriptDir "cleanup-manifest-$RunStamp.json"
 $CoachAId = 'cebb9b4d-00ee-4826-a8fe-58e8ab3b325b'
 $Member1Id = '25d5b053-d885-4887-b297-822d4341e7ff'
 
+# COACH_B / MEMBER_2 - the cross-tenant fixtures created in SQL direct and kept in the VPS DB
+# for the second pass (see "Fixtures conservees en base pour la seconde passe" in
+# docs/review/tri-ecarts-lot6.md). MEMBER_2 stays deliberately unattached to any coach.
+$CoachBId = 'b0000000-0000-4000-8000-000000000002'
+$Member2Id = 'b0000000-0000-4000-8000-000000000004'
+
 # ---------------------------------------------------------------------------
 # Token store (mutated in place on a successful refresh)
 # ---------------------------------------------------------------------------
@@ -1306,6 +1312,168 @@ function Invoke-StepARegressionChecks {
     Invoke-Api -Id 'SA13' -Method GET -Path "/api/v1/coach/members/$Member1Id/parameters" -ActorKey 'COACH_B' -Expected 404 | Out-Null
 }
 
+# ===========================================================================
+# STEP A-TER REGRESSION CHECKS (correction pass, 2026-09-14) - covers the four
+# 404-never-403 siblings left untouched by the C1/C2/C3 pass in
+# Invoke-StepARegressionChecks: ConversationService.GetOrCreateForMemberAsync,
+# ConversationService.ValidateAsync (backs GET/POST .../conversation/messages
+# and PATCH .../messages/read on both the coach and member side),
+# MemberCatalogService.GetCatalogAsync, and ProgramService's member-side
+# completion ordering (ownership must be checked before FluentValidation runs,
+# same fix already applied to the coach-side twin in bf51c45).
+#
+# Self-contained: builds its own program-session fixture (a fresh template
+# assigned to MEMBER_1), reuses the COACH_B/MEMBER_2 cross-tenant fixtures
+# above rather than creating new ones, and does not read $Captured from
+# earlier phases.
+#
+# APPEND-ONLY SECTION: a later correction pass gets its OWN labelled block
+# below this one (own function, own Add-Fixture DeleteOrder range starting
+# above 111) - do not merge new checks into this function either.
+# ===========================================================================
+
+function Invoke-StepATerRegressionChecks {
+    Write-Host '--- STEP A-TER REGRESSION CHECKS ---' -ForegroundColor Cyan
+
+    # GUARD - $CoachBId / $Member2Id are hardcoded VPS ids (see comment on their declaration
+    # above). A negative check ("this counterparty 404s") against an id that does not actually
+    # exist would 404 for the wrong reason and pass without proving anything - it proves nothing
+    # about tenant scoping, only that the row is absent. Confirm each one resolves to a REAL row
+    # by hitting its own self-profile endpoint (GetMe reads the id from the JWT claim, never from
+    # a path parameter) with that actor's own token, and comparing the id it returns to the
+    # hardcoded constant. If either does not resolve, every SAT check that depends on it is
+    # reported BLOCKED with the reason, not silently allowed to pass.
+    $coachBGuard = Invoke-Api -Id 'SAT.guard-coachB' -Method GET -Path '/api/v1/coach/me' -ActorKey 'COACH_B' -Expected 200 -Quiet
+    $coachBResolvedId = if ($coachBGuard.Status -eq 200) { Get-FirstProp -Obj $coachBGuard.Data.profile -Names @('coachId') } else { $null }
+    $coachBOk = [bool]($coachBResolvedId -and ($coachBResolvedId -ieq $CoachBId))
+
+    $member2Guard = Invoke-Api -Id 'SAT.guard-member2' -Method GET -Path '/api/v1/member/me' -ActorKey 'MEMBER_2' -Expected 200 -Quiet
+    $member2ResolvedId = if ($member2Guard.Status -eq 200) { Get-FirstProp -Obj $member2Guard.Data.profile -Names @('memberId') } else { $null }
+    $member2Ok = [bool]($member2ResolvedId -and ($member2ResolvedId -ieq $Member2Id))
+
+    if (-not $coachBOk) {
+        $reason = "CoachBId ($CoachBId) did not resolve to COACH_B's own row via GET /api/v1/coach/me (status=$($coachBGuard.Status), resolved id=$coachBResolvedId) - a 404 against a non-existent id proves nothing"
+        foreach ($id in @('SAT1', 'SAT3', 'SAT4', 'SAT7', 'SAT9')) {
+            Add-Blocked -Id $id -Method 'various' -Path 'member -> unrelated coach (CoachBId)' -Actor 'MEMBER_1' -Expected '404' -Reason $reason
+        }
+    }
+    if (-not $member2Ok) {
+        $reason = "Member2Id ($Member2Id) did not resolve to MEMBER_2's own row via GET /api/v1/member/me (status=$($member2Guard.Status), resolved id=$member2ResolvedId) - a 404 against a non-existent id proves nothing"
+        foreach ($id in @('SAT5', 'SAT6', 'SAT8', 'SAT11')) {
+            Add-Blocked -Id $id -Method 'various' -Path 'coach -> unrelated member (Member2Id)' -Actor 'COACH_A/MEMBER_2' -Expected '404' -Reason $reason
+        }
+    }
+
+    # SAT1/SAT2 - conversation, unrelated vs. attached coach, member side.
+    if ($coachBOk) { Invoke-Api -Id 'SAT1' -Method GET -Path "/api/v1/member/coaches/$CoachBId/conversation" -ActorKey 'MEMBER_1' -Expected 404 | Out-Null }
+    Invoke-Api -Id 'SAT2' -Method GET -Path "/api/v1/member/coaches/$CoachAId/conversation" -ActorKey 'MEMBER_1' -Expected 200 | Out-Null
+
+    # SAT3/SAT4 - conversation messages GET/POST, unrelated coach, member side.
+    if ($coachBOk) {
+        Invoke-Api -Id 'SAT3' -Method GET -Path "/api/v1/member/coaches/$CoachBId/conversation/messages" -ActorKey 'MEMBER_1' -Expected 404 | Out-Null
+        Invoke-Api -Id 'SAT4' -Method POST -Path "/api/v1/member/coaches/$CoachBId/conversation/messages" -ActorKey 'MEMBER_1' -Expected 404 -Body @{ content = "$FixturePrefix StepA-ter unrelated coach message" } | Out-Null
+    }
+
+    # SAT5/SAT6 - conversation messages GET/POST, unrelated member, coach side.
+    if ($member2Ok) {
+        Invoke-Api -Id 'SAT5' -Method GET -Path "/api/v1/coach/members/$Member2Id/conversation/messages" -ActorKey 'COACH_A' -Expected 404 | Out-Null
+        Invoke-Api -Id 'SAT6' -Method POST -Path "/api/v1/coach/members/$Member2Id/conversation/messages" -ActorKey 'COACH_A' -Expected 404 -Body @{ content = "$FixturePrefix StepA-ter unrelated member message" } | Out-Null
+    }
+
+    # SAT7/SAT8 - mark-as-read, unrelated counterparty, both sides.
+    if ($coachBOk) { Invoke-Api -Id 'SAT7' -Method PATCH -Path "/api/v1/member/coaches/$CoachBId/conversation/messages/read" -ActorKey 'MEMBER_1' -Expected 404 | Out-Null }
+    if ($member2Ok) { Invoke-Api -Id 'SAT8' -Method PATCH -Path "/api/v1/coach/members/$Member2Id/conversation/messages/read" -ActorKey 'COACH_A' -Expected 404 | Out-Null }
+
+    # SAT9/SAT10 - catalog, unrelated vs. attached coach, member side.
+    if ($coachBOk) { Invoke-Api -Id 'SAT9' -Method GET -Path "/api/v1/member/coaches/$CoachBId/catalog" -ActorKey 'MEMBER_1' -Expected 404 | Out-Null }
+    Invoke-Api -Id 'SAT10' -Method GET -Path "/api/v1/member/coaches/$CoachAId/catalog" -ActorKey 'MEMBER_1' -Expected 200 | Out-Null
+
+    # SAT11/SAT12/SAT13 - member completion ordering: ownership wins over body validation.
+    # Self-contained fixture: a fresh template assigned to MEMBER_1, giving a program session +
+    # exercise MEMBER_1 genuinely owns.
+    $exM = Invoke-Api -Id 'SAT.setup-exercises' -Method GET -Path '/api/v1/coach/exercises?scope=MENTORA' -ActorKey 'COACH_A' -Expected 200 -Quiet
+    $mentoraExercises = @($exM.Data)
+    if ($mentoraExercises.Count -lt 2) {
+        $reason = 'fewer than 2 shared Mentora exercises visible to COACH_A'
+        foreach ($id in @('SAT11', 'SAT12', 'SAT13')) {
+            Add-Blocked -Id $id -Method 'PUT' -Path '/api/v1/member/program-sessions/{id}/completion' -Actor 'MEMBER_1' -Expected 'see check' -Reason $reason
+        }
+        return
+    }
+    $ex1 = Get-FirstProp -Obj $mentoraExercises[0] -Names @('id', 'exerciseId')
+    $ex2 = Get-FirstProp -Obj $mentoraExercises[1] -Names @('id', 'exerciseId')
+
+    $satBody = @{
+        name = "$FixturePrefix StepA-ter Template"; description = 'Step A-ter regression'; goal = 'GENERAL_FITNESS'; durationWeeks = 1
+        body = New-ProgramTemplateBody -ExerciseId1 $ex1 -ExerciseId2 $ex2
+    }
+    $rTpl = Invoke-Api -Id 'SAT.setup-template' -Method POST -Path '/api/v1/coach/program-templates' -ActorKey 'COACH_A' -Expected 201 -Body $satBody -Quiet
+    if ($rTpl.Status -ne 201) {
+        $reason = 'SAT.setup-template did not return 201'
+        foreach ($id in @('SAT11', 'SAT12', 'SAT13')) {
+            Add-Blocked -Id $id -Method 'PUT' -Path '/api/v1/member/program-sessions/{id}/completion' -Actor 'MEMBER_1' -Expected 'see check' -Reason $reason
+        }
+        return
+    }
+    $satTemplateId = Get-FirstProp -Obj $rTpl.Data -Names @('id', 'programTemplateId')
+    Add-Fixture -Type 'PROGRAM_TEMPLATE' -FixtureId $satTemplateId -Owner 'COACH_A' -DeleteOrder 111 -Name $satBody.name
+
+    $startDate = (Get-Date).ToString('yyyy-MM-dd')
+    $rAssign = Invoke-Api -Id 'SAT.setup-assign' -Method POST -Path "/api/v1/coach/members/$Member1Id/training-programs" -ActorKey 'COACH_A' -Expected 201 -Body @{ templateId = $satTemplateId; startDate = $startDate } -Quiet
+    $satProgramSessionId = $null
+    $satProgramExerciseId = $null
+    if ($rAssign.Status -eq 201) {
+        $assignRoot = if ($rAssign.Data.program) { $rAssign.Data.program } else { $rAssign.Data }
+        $satProgramId = Get-FirstProp -Obj $assignRoot -Names @('id', 'programId')
+        if ($satProgramId) { Add-Fixture -Type 'PROGRAM' -FixtureId $satProgramId -Owner 'MEMBER_1 (via COACH_A)' -DeleteOrder 110 -Name "assigned from $($satBody.name)" }
+        foreach ($node in (Get-AllNodes -Obj $assignRoot)) {
+            $names = $node.PSObject.Properties.Name
+            if (($names -contains 'exercises') -and ($names -contains 'id' -or $names -contains 'programSessionId')) {
+                $candidateId = Get-FirstProp -Obj $node -Names @('id', 'programSessionId')
+                if ($candidateId -and -not $satProgramSessionId) { $satProgramSessionId = $candidateId }
+                $exNodes = @($node.exercises)
+                if ($exNodes.Count -gt 0 -and -not $satProgramExerciseId) {
+                    $satProgramExerciseId = Get-FirstProp -Obj $exNodes[0] -Names @('id', 'programExerciseId')
+                }
+            }
+        }
+    }
+
+    if (-not $satProgramSessionId) {
+        $reason = 'SAT.setup-assign did not return a program session id'
+        foreach ($id in @('SAT11', 'SAT12', 'SAT13')) {
+            Add-Blocked -Id $id -Method 'PUT' -Path '/api/v1/member/program-sessions/{id}/completion' -Actor 'MEMBER_1' -Expected 'see check' -Reason $reason
+        }
+        return
+    }
+
+    # SAT11 - MEMBER_2 (a different member entirely, unattached to any coach) hits MEMBER_1's own
+    # program session with an invalid body -> 404. Ownership (the query filter on
+    # ProgramSessionMemberId) must win before the body is ever validated.
+    # Guarded by $member2Ok: the top-of-function guard already reported SAT11 BLOCKED if
+    # Member2Id did not resolve to a real row - do not also run it (and overwrite that with a
+    # meaningless PASS/FAIL) here.
+    if ($member2Ok) {
+        Invoke-Api -Id 'SAT11' -Method PUT -Path "/api/v1/member/program-sessions/$satProgramSessionId/completion" -ActorKey 'MEMBER_2' -Expected 404 -Body @{ invalid = $true } | Out-Null
+    }
+
+    # SAT12 - MEMBER_1's own session, invalid body -> 422 enveloped (the validator does run once
+    # ownership has passed).
+    Invoke-Api -Id 'SAT12' -Method PUT -Path "/api/v1/member/program-sessions/$satProgramSessionId/completion" -ActorKey 'MEMBER_1' -Expected 422 -Body @{ invalid = $true } | Out-Null
+
+    # SAT13 - MEMBER_1's own session, valid body -> 200.
+    if ($satProgramExerciseId) {
+        $validCompletionBody = @{
+            status = 'DONE'
+            memberFeedback = "$FixturePrefix StepA-ter completion"
+            exercises = @(@{ programExerciseId = $satProgramExerciseId; actualSets = 3; actualReps = 10; actualRpe = 7 })
+        }
+        Invoke-Api -Id 'SAT13' -Method PUT -Path "/api/v1/member/program-sessions/$satProgramSessionId/completion" -ActorKey 'MEMBER_1' -Expected 200 -Body $validCompletionBody | Out-Null
+    } else {
+        Add-Blocked -Id 'SAT13' -Method 'PUT' -Path '/api/v1/member/program-sessions/{id}/completion' -Actor 'MEMBER_1' -Expected '200' -Reason 'no program exercise id captured from SAT.setup-assign'
+    }
+}
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -1320,6 +1488,7 @@ Invoke-Phase2Main
 Invoke-Phase3
 Invoke-Phase2Tail
 Invoke-StepARegressionChecks
+Invoke-StepATerRegressionChecks
 
 Write-Host ''
 Write-Host '=== RESULTS ===' -ForegroundColor Cyan
