@@ -281,9 +281,8 @@ public class AgendaService(
     }
 
     // Count of fully-elapsed weeks (1..DurationWeeks) with zero DONE sessions, capped at
-    // DurationWeeks. Until Lot 6.6 ships session completion, nothing can ever reach DONE, so every
-    // fully-elapsed week counts as empty — this will hit the cap once enough real time has passed
-    // since ProgramStartDate. Expected, not a bug: there's no way to mark a session DONE yet.
+    // DurationWeeks. A week counts as empty only once it has fully elapsed with no session marked
+    // DONE (via Lot 6.6's completion endpoints) — a week still in progress is never counted.
     private static int ComputeShiftWeeks(Program program, HashSet<int> weeksWithDone, DateOnly today)
     {
         var shiftWeeks = 0;

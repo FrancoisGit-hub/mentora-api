@@ -4,9 +4,10 @@ namespace Mentora.Core.DTOs.Catalog;
 /// <param name="Name">Display name of the product. Required; max 120 characters.</param>
 /// <param name="Description">Optional marketing description. Max 2 000 characters.</param>
 /// <param name="OfferType">
-/// Delivery format. Accepted values: <c>VISIO</c> (remote video session) or
-/// <c>PRESENTIEL_SOLO</c> (in-person one-to-one).
-/// <c>PRESENTIEL_GROUPE</c> is reserved for V2 and is currently rejected by validation.
+/// Delivery format. Accepted values: <c>VISIO</c> (remote video session),
+/// <c>PRESENTIEL_SOLO</c> (in-person one-to-one), or <c>PRESENTIEL_GROUPE</c> (in-person
+/// group session — required for group-session products). <c>VISIO_GROUPE</c> is reserved
+/// for V2 and is currently rejected by validation.
 /// </param>
 /// <param name="OfferNature">
 /// Free-text label describing the offer nature (e.g. <c>CLASSIQUE</c>, <c>PREMIUM</c>).
