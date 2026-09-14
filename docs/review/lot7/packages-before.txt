@@ -1,0 +1,132 @@
+﻿Le projet 'Mentora.API' a les références de package suivantes
+   [net8.0]: 
+   Package de niveau supérieur                           Demandé   Résolu
+   > FluentValidation.DependencyInjectionExtensions      12.1.1    12.1.1
+   > Microsoft.AspNetCore.Authentication.JwtBearer       8.0.0     8.0.0 
+   > Microsoft.EntityFrameworkCore.Design                8.0.0     8.0.0 
+   > Swashbuckle.AspNetCore                              6.5.0     6.5.0 
+
+   Package transitif                                            Résolu
+   > BCrypt.Net-Next                                            4.0.3 
+   > BouncyCastle.Cryptography                                  2.6.2 
+   > FluentValidation                                           12.1.1
+   > Humanizer.Core                                             2.14.1
+   > MailKit                                                    4.17.0
+   > Microsoft.Bcl.AsyncInterfaces                              6.0.0 
+   > Microsoft.CodeAnalysis.Analyzers                           3.3.3 
+   > Microsoft.CodeAnalysis.Common                              4.5.0 
+   > Microsoft.CodeAnalysis.CSharp                              4.5.0 
+   > Microsoft.CodeAnalysis.CSharp.Workspaces                   4.5.0 
+   > Microsoft.CodeAnalysis.Workspaces.Common                   4.5.0 
+   > Microsoft.EntityFrameworkCore                              8.0.0 
+   > Microsoft.EntityFrameworkCore.Abstractions                 8.0.0 
+   > Microsoft.EntityFrameworkCore.Analyzers                    8.0.0 
+   > Microsoft.EntityFrameworkCore.Relational                   8.0.0 
+   > Microsoft.Extensions.ApiDescription.Server                 6.0.5 
+   > Microsoft.Extensions.Caching.Abstractions                  8.0.0 
+   > Microsoft.Extensions.Caching.Memory                        8.0.0 
+   > Microsoft.Extensions.Configuration.Abstractions            8.0.0 
+   > Microsoft.Extensions.DependencyInjection                   8.0.0 
+   > Microsoft.Extensions.DependencyInjection.Abstractions      8.0.0 
+   > Microsoft.Extensions.DependencyModel                       8.0.0 
+   > Microsoft.Extensions.Logging                               8.0.0 
+   > Microsoft.Extensions.Logging.Abstractions                  8.0.0 
+   > Microsoft.Extensions.Options                               8.0.0 
+   > Microsoft.Extensions.Primitives                            8.0.0 
+   > Microsoft.IdentityModel.Abstractions                       7.0.3 
+   > Microsoft.IdentityModel.JsonWebTokens                      7.0.3 
+   > Microsoft.IdentityModel.Logging                            7.0.3 
+   > Microsoft.IdentityModel.Protocols                          7.0.3 
+   > Microsoft.IdentityModel.Protocols.OpenIdConnect            7.0.3 
+   > Microsoft.IdentityModel.Tokens                             7.0.3 
+   > Microsoft.OpenApi                                          1.2.3 
+   > MimeKit                                                    4.17.0
+   > Mono.TextTemplating                                        2.2.1 
+   > Npgsql                                                     8.0.0 
+   > Npgsql.EntityFrameworkCore.PostgreSQL                      8.0.0 
+   > Swashbuckle.AspNetCore.Swagger                             6.5.0 
+   > Swashbuckle.AspNetCore.SwaggerGen                          6.5.0 
+   > Swashbuckle.AspNetCore.SwaggerUI                           6.5.0 
+   > System.CodeDom                                             4.4.0 
+   > System.Collections.Immutable                               6.0.0 
+   > System.Composition                                         6.0.0 
+   > System.Composition.AttributedModel                         6.0.0 
+   > System.Composition.Convention                              6.0.0 
+   > System.Composition.Hosting                                 6.0.0 
+   > System.Composition.Runtime                                 6.0.0 
+   > System.Composition.TypedParts                              6.0.0 
+   > System.Formats.Asn1                                        8.0.1 
+   > System.IdentityModel.Tokens.Jwt                            7.0.3 
+   > System.IO.Pipelines                                        6.0.3 
+   > System.Reflection.Metadata                                 6.0.1 
+   > System.Runtime.CompilerServices.Unsafe                     6.0.0 
+   > System.Security.Cryptography.Pkcs                          8.0.1 
+   > System.Text.Encoding.CodePages                             6.0.0 
+   > System.Text.Encodings.Web                                  8.0.0 
+   > System.Text.Json                                           8.0.0 
+   > System.Threading.Channels                                  6.0.0 
+
+Le projet 'Mentora.Core' a les références de package suivantes
+   [net8.0]: 
+   Package de niveau supérieur      Demandé   Résolu
+   > FluentValidation               12.1.1    12.1.1
+
+Le projet 'Mentora.Infrastructure' a les références de package suivantes
+   [net8.0]: 
+   Package de niveau supérieur                  Demandé   Résolu
+   > BCrypt.Net-Next                            4.0.3     4.0.3 
+   > MailKit                                    4.17.0    4.17.0
+   > Microsoft.EntityFrameworkCore              8.0.0     8.0.0 
+   > Npgsql.EntityFrameworkCore.PostgreSQL      8.0.0     8.0.0 
+   > System.IdentityModel.Tokens.Jwt            7.0.3     7.0.3 
+
+   Package transitif                                            Résolu
+   > BouncyCastle.Cryptography                                  2.6.2 
+   > FluentValidation                                           12.1.1
+   > Microsoft.EntityFrameworkCore.Abstractions                 8.0.0 
+   > Microsoft.EntityFrameworkCore.Analyzers                    8.0.0 
+   > Microsoft.EntityFrameworkCore.Relational                   8.0.0 
+   > Microsoft.Extensions.Caching.Abstractions                  8.0.0 
+   > Microsoft.Extensions.Caching.Memory                        8.0.0 
+   > Microsoft.Extensions.Configuration.Abstractions            8.0.0 
+   > Microsoft.Extensions.DependencyInjection                   8.0.0 
+   > Microsoft.Extensions.DependencyInjection.Abstractions      8.0.0 
+   > Microsoft.Extensions.Logging                               8.0.0 
+   > Microsoft.Extensions.Logging.Abstractions                  8.0.0 
+   > Microsoft.Extensions.Options                               8.0.0 
+   > Microsoft.Extensions.Primitives                            8.0.0 
+   > Microsoft.IdentityModel.Abstractions                       7.0.3 
+   > Microsoft.IdentityModel.JsonWebTokens                      7.0.3 
+   > Microsoft.IdentityModel.Logging                            7.0.3 
+   > Microsoft.IdentityModel.Tokens                             7.0.3 
+   > MimeKit                                                    4.17.0
+   > Npgsql                                                     8.0.0 
+   > System.Formats.Asn1                                        8.0.1 
+   > System.Security.Cryptography.Pkcs                          8.0.1 
+
+
+Les sources suivantes ont été utilisées :
+   https://api.nuget.org/v3/index.json
+   C:\Program Files (x86)\Microsoft SDKs\NuGetPackages\
+
+Le projet 'Mentora.API' comporte les packages vulnérables suivants
+   [net8.0]: 
+   Package transitif                            Résolu   Gravité    URL d'avertissement                              
+   > Microsoft.Extensions.Caching.Memory        8.0.0    High       https://github.com/advisories/GHSA-qj66-m88j-hmgj
+   > Microsoft.IdentityModel.JsonWebTokens      7.0.3    Moderate   https://github.com/advisories/GHSA-59j7-ghrg-fj52
+   > Npgsql                                     8.0.0    High       https://github.com/advisories/GHSA-x9vc-6hfv-hg8c
+   > System.IdentityModel.Tokens.Jwt            7.0.3    Moderate   https://github.com/advisories/GHSA-59j7-ghrg-fj52
+   > System.Text.Json                           8.0.0    High       https://github.com/advisories/GHSA-hh2w-p6rv-4g7w
+                                                         High       https://github.com/advisories/GHSA-8g4q-xg66-9fp4
+
+Le projet spécifié 'Mentora.Core' n'a aucun package vulnérable compte tenu des sources actuelles.
+Le projet 'Mentora.Infrastructure' comporte les packages vulnérables suivants
+   [net8.0]: 
+   Package de niveau supérieur            Demandé   Résolu   Gravité    URL d'avertissement                              
+   > System.IdentityModel.Tokens.Jwt      7.0.3     7.0.3    Moderate   https://github.com/advisories/GHSA-59j7-ghrg-fj52
+
+   Package transitif                            Résolu   Gravité    URL d'avertissement                              
+   > Microsoft.Extensions.Caching.Memory        8.0.0    High       https://github.com/advisories/GHSA-qj66-m88j-hmgj
+   > Microsoft.IdentityModel.JsonWebTokens      7.0.3    Moderate   https://github.com/advisories/GHSA-59j7-ghrg-fj52
+   > Npgsql                                     8.0.0    High       https://github.com/advisories/GHSA-x9vc-6hfv-hg8c
+
