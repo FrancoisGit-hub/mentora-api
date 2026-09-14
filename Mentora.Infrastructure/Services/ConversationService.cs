@@ -32,14 +32,12 @@ public class ConversationService(
 
     public async Task<ConversationDto> GetOrCreateForCoachAsync(Guid coachId, Guid memberId, CancellationToken ct)
     {
-        var memberExists = await db.Members.AnyAsync(m => m.MemberId == memberId, ct);
-        if (!memberExists)
-            throw new NotFoundException("Member not found.");
-
+        // 404, never 403 — same pattern as CoachMemberSettingsService.LoadLinkedAsync: an
+        // unattached coach must never learn the member exists.
         var isLinked = await db.MemberCoaches
             .AnyAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct);
         if (!isLinked)
-            throw new ForbiddenException("You are not linked to this member.");
+            throw new NotFoundException($"Member {memberId} not found.");
 
         return await GetOrCreateInternalAsync(memberId, coachId, ct);
     }
