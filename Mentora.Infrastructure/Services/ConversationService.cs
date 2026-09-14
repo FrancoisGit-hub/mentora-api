@@ -18,14 +18,12 @@ public class ConversationService(
 {
     public async Task<ConversationDto> GetOrCreateForMemberAsync(Guid memberId, Guid coachId, CancellationToken ct)
     {
-        var coachExists = await db.Coaches.AnyAsync(c => c.CoachId == coachId, ct);
-        if (!coachExists)
-            throw new NotFoundException("Coach not found.");
-
+        // 404, never 403 — same pattern as GetOrCreateForCoachAsync: a member on an unrelated
+        // coach must never learn the coach exists.
         var isLinked = await db.MemberCoaches
             .AnyAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct);
         if (!isLinked)
-            throw new ForbiddenException("You are not linked to this coach.");
+            throw new NotFoundException($"Coach {coachId} not found.");
 
         return await GetOrCreateInternalAsync(memberId, coachId, ct);
     }
@@ -215,14 +213,12 @@ public class ConversationService(
 
     private async Task ValidateAsync(Guid memberId, Guid coachId, CancellationToken ct)
     {
-        if (!await db.Coaches.AnyAsync(c => c.CoachId == coachId, ct))
-            throw new NotFoundException("Coach not found.");
-
-        if (!await db.Members.AnyAsync(m => m.MemberId == memberId, ct))
-            throw new NotFoundException("Member not found.");
-
-        if (!await db.MemberCoaches.AnyAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct))
-            throw new ForbiddenException("You are not linked to this coach.");
+        // 404, never 403 — same pattern as GetOrCreateForCoachAsync/GetOrCreateForMemberAsync:
+        // the (memberId, coachId) link check IS the existence check, in one query.
+        var isLinked = await db.MemberCoaches
+            .AnyAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct);
+        if (!isLinked)
+            throw new NotFoundException("Conversation not found.");
     }
 
     private async Task<Conversation> GetOrCreateConversationEntityAsync(Guid memberId, Guid coachId, CancellationToken ct)

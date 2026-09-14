@@ -17,18 +17,15 @@ public class MemberCatalogService(MentoraDbContext db) : IMemberCatalogService
         Guid? offerProgramId,
         CancellationToken ct)
     {
-        // 1 — coach existence (single query; also provides coach info for the DTO)
-        var coach = await db.Coaches
+        // 1/2 — 404, never 403: existence and link folded into ONE query on MEMBER_COACHES, same
+        // pattern as CoachMemberSettingsService.LoadLinkedAsync. Coach comes along via Include,
+        // for the DTO below.
+        var link = await db.MemberCoaches
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.CoachId == coachId, ct)
-            ?? throw new NotFoundException("Coach not found.");
-
-        // 2 — member-coach link check
-        var isLinked = await db.MemberCoaches
-            .AnyAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct);
-
-        if (!isLinked)
-            throw new ForbiddenException("You are not linked to this coach.");
+            .Include(mc => mc.Coach)
+            .FirstOrDefaultAsync(mc => mc.MemberId == memberId && mc.CoachId == coachId, ct)
+            ?? throw new NotFoundException($"Coach {coachId} not found.");
+        var coach = link.Coach;
 
         // 3 — standalone PUBLISHED products (with offer-program name)
         var productsQuery = db.Products
