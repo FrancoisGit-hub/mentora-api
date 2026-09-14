@@ -1,0 +1,55 @@
+{
+  "capturedAt": "2026-09-14T00:00:00Z",
+  "note": "Baseline capture BEFORE the System.IdentityModel.Tokens.Jwt 7.0.3 -> 8.x upgrade. options.MapInboundClaims = true was pinned explicitly in Program.cs (commit 3faa0f4) prior to this capture, so this reflects the locked-in behaviour, not an unpinned default.",
+  "coach": {
+    "email": "coach@mentora.fr",
+    "issuedAccessTokenPayload": {
+      "sub": "ff2be73b-8a80-46d6-90d8-cd462b876095",
+      "email": "coach@mentora.fr",
+      "userType": "COACH",
+      "jti": "40c4ffd2-674b-4416-a1ae-826e4baf06fa",
+      "coachId": "e268a512-84d6-4e27-b5c0-1d6c08a47190",
+      "exp": 1789407734,
+      "iss": "mentora-api",
+      "aud": "mentora-app"
+    },
+    "resolvedClaimsPrincipal": [
+      { "type": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", "value": "ff2be73b-8a80-46d6-90d8-cd462b876095" },
+      { "type": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "value": "coach@mentora.fr" },
+      { "type": "userType", "value": "COACH" },
+      { "type": "jti", "value": "40c4ffd2-674b-4416-a1ae-826e4baf06fa" },
+      { "type": "coachId", "value": "e268a512-84d6-4e27-b5c0-1d6c08a47190" },
+      { "type": "exp", "value": "1789407734" },
+      { "type": "iss", "value": "mentora-api" },
+      { "type": "aud", "value": "mentora-app" }
+    ]
+  },
+  "member": {
+    "email": "member@mentora.fr",
+    "issuedAccessTokenPayload": {
+      "sub": "874d7734-cc4f-47ee-9527-3a4c0262f7b3",
+      "email": "member@mentora.fr",
+      "userType": "MEMBER",
+      "jti": "0e0e5208-13c7-4a05-b400-3e72c563e0f9",
+      "memberId": "38b05ed2-e577-4cf7-81e9-365eaafab626",
+      "exp": 1789407748,
+      "iss": "mentora-api",
+      "aud": "mentora-app"
+    },
+    "resolvedClaimsPrincipal": [
+      { "type": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", "value": "874d7734-cc4f-47ee-9527-3a4c0262f7b3" },
+      { "type": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "value": "member@mentora.fr" },
+      { "type": "userType", "value": "MEMBER" },
+      { "type": "jti", "value": "0e0e5208-13c7-4a05-b400-3e72c563e0f9" },
+      { "type": "memberId", "value": "38b05ed2-e577-4cf7-81e9-365eaafab626" },
+      { "type": "exp", "value": "1789407748" },
+      { "type": "iss", "value": "mentora-api" },
+      { "type": "aud", "value": "mentora-app" }
+    ]
+  },
+  "mappingVerdict": {
+    "sub": "Resolves ONLY as ClaimTypes.NameIdentifier (long-form URI). The literal \"sub\" claim type is NOT present in the resolved ClaimsPrincipal.",
+    "email": "Resolves ONLY as ClaimTypes.Email (long-form URI, http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress). The literal \"email\" claim type is NOT present.",
+    "unmapped": "userType, jti, memberId, coachId, exp, iss, aud all pass through unchanged as their literal claim type strings -- none of these are in the JwtSecurityTokenHandler DefaultInboundClaimTypeMap, so MapInboundClaims has no effect on them."
+  }
+}
