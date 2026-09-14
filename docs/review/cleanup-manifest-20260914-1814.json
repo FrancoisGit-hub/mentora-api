@@ -1,0 +1,72 @@
+﻿[
+    {
+        "Type":  "EXERCISE",
+        "Id":  "7a3013e3-9d0d-4d45-a4b5-1d01bd55204b",
+        "Owner":  "COACH_B",
+        "DeleteOrder":  10,
+        "Name":  "VPSTEST-20260914-1814 Private Exercise (Coach B)"
+    },
+    {
+        "Type":  "SESSION",
+        "Id":  "1af603ba-b586-4f1d-b799-f6918bd870cd",
+        "Owner":  "MEMBER_1",
+        "DeleteOrder":  20,
+        "Name":  "booked via /member/sessions"
+    },
+    {
+        "Type":  "SESSION",
+        "Id":  "dbe118eb-95af-4a11-aefb-55d283ff89b6",
+        "Owner":  "MEMBER_1",
+        "DeleteOrder":  20,
+        "Name":  "rebooked via /member/sessions (P4.10)"
+    },
+    {
+        "Type":  "PROGRAM",
+        "Id":  "ac6b42d4-6cae-4c70-ab75-50da03a8f8d4",
+        "Owner":  "MEMBER_1 (via COACH_A)",
+        "DeleteOrder":  30,
+        "Name":  "assigned from VPSTEST-20260914-1814 Template"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "4720af57-b936-4e6f-85b1-631fd15252dd",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  40,
+        "Name":  "VPSTEST-20260914-1814 Template"
+    },
+    {
+        "Type":  "PROGRAM",
+        "Id":  "6dc51fcd-b60d-498b-876c-f4cede1fed90",
+        "Owner":  "MEMBER_1 (via COACH_A)",
+        "DeleteOrder":  101,
+        "Name":  "assigned from VPSTEST-20260914-1814 StepA Template"
+    },
+    {
+        "Type":  "EXERCISE",
+        "Id":  "3b418cf2-ce3b-4797-b00f-88780eb1ebae",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  102,
+        "Name":  "VPSTEST-20260914-1814 StepA Exercise (Coach A)"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "107086df-3438-4e29-90f3-8e53e296f555",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  103,
+        "Name":  "VPSTEST-20260914-1814 StepA Template"
+    },
+    {
+        "Type":  "PROGRAM",
+        "Id":  "35d0ba20-b110-40eb-a5dc-299144d1556b",
+        "Owner":  "MEMBER_1 (via COACH_A)",
+        "DeleteOrder":  110,
+        "Name":  "assigned from VPSTEST-20260914-1814 StepA-ter Template"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "f9879356-2685-4754-ba9d-0e22ef24b336",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  111,
+        "Name":  "VPSTEST-20260914-1814 StepA-ter Template"
+    }
+]

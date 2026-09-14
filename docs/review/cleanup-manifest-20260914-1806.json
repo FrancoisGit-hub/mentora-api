@@ -1,0 +1,58 @@
+﻿[
+    {
+        "Type":  "EXERCISE",
+        "Id":  "55879a9f-4530-44fa-a1c7-6bf0f56260a5",
+        "Owner":  "COACH_B",
+        "DeleteOrder":  10,
+        "Name":  "VPSTEST-20260914-1806 Private Exercise (Coach B)"
+    },
+    {
+        "Type":  "PROGRAM",
+        "Id":  "74bc53ae-c2bf-4c71-8669-8e7c4f7f9815",
+        "Owner":  "MEMBER_1 (via COACH_A)",
+        "DeleteOrder":  30,
+        "Name":  "assigned from VPSTEST-20260914-1806 Template"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "6b36ead1-67fe-42a3-86a1-9e1282bddba9",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  40,
+        "Name":  "VPSTEST-20260914-1806 Template"
+    },
+    {
+        "Type":  "PROGRAM",
+        "Id":  "a5e7cfca-dfbf-47be-8481-5d10739ae250",
+        "Owner":  "MEMBER_1 (via COACH_A)",
+        "DeleteOrder":  101,
+        "Name":  "assigned from VPSTEST-20260914-1806 StepA Template"
+    },
+    {
+        "Type":  "EXERCISE",
+        "Id":  "0a287585-40ec-42ff-a818-2bf8d6669af3",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  102,
+        "Name":  "VPSTEST-20260914-1806 StepA Exercise (Coach A)"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "444b5c0b-1d97-49e3-bfd0-072f1cfd8bb1",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  103,
+        "Name":  "VPSTEST-20260914-1806 StepA Template"
+    },
+    {
+        "Type":  "PROGRAM",
+        "Id":  "330eadf7-30db-442a-accd-b2b34645d02c",
+        "Owner":  "MEMBER_1 (via COACH_A)",
+        "DeleteOrder":  110,
+        "Name":  "assigned from VPSTEST-20260914-1806 StepA-ter Template"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "9be8a1dc-dba4-4cfe-ac9c-012cd9527b97",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  111,
+        "Name":  "VPSTEST-20260914-1806 StepA-ter Template"
+    }
+]
