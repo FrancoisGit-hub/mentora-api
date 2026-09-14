@@ -133,6 +133,13 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Pinned explicitly (Lot 7 / E1.1) ahead of the System.IdentityModel.Tokens.Jwt
+        // upgrade so the inbound claim-type mapping behaviour is locked in and cannot
+        // silently change as a side effect of the package bump. This preserves the
+        // existing implicit default — "sub" resolves as ClaimTypes.NameIdentifier —
+        // which AuthController/UserDevicesController/AccountController rely on.
+        options.MapInboundClaims = true;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
