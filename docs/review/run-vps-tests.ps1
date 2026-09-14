@@ -351,6 +351,59 @@ function Get-FirstProp {
 }
 
 # ---------------------------------------------------------------------------
+# Program-session / program-exercise id extraction - known property path,
+# not a heuristic.
+#
+# Unlike most of this API (whose response schemas are erased to `{}` in the
+# generated OpenAPI), the training-program tree IS fully typed on the server:
+# GET /coach/training-programs/{id} and the "program" field of the assign
+# response both serialize a ProgramResponse (Mentora.Core/DTOs/Program/
+# ProgramResponse.cs) with camelCase JSON property names taken straight from
+# the record definitions:
+#   ProgramResponse.Blocks            -> blocks[]      (level MACROCYCLE)
+#     ProgramBlockResponse.Blocks     -> blocks[]      (level MESOCYCLE)
+#       ProgramBlockResponse.Blocks   -> blocks[]      (level MICROCYCLE)
+#         ProgramBlockResponse.Sessions -> sessions[]
+#           ProgramSessionResponse.ProgramSessionId -> programSessionId
+#           ProgramSessionResponse.Circuits -> circuits[]
+#             ProgramCircuitResponse.Exercises -> exercises[]
+#               ProgramExerciseResponse.ProgramExerciseId -> programExerciseId
+#
+# The old walk looked for a node that had BOTH an 'exercises' (or
+# 'plannedDate') property AND an 'id'/'programSessionId' property. No node in
+# this tree ever has both: a session node has 'programSessionId' but its
+# sibling collection is 'circuits', not 'exercises' (exercises live two
+# levels deeper, under circuits) and its date field is named 'date', not
+# 'plannedDate'. So the old condition's OR/AND never matched and the walk
+# always came back empty - not a shape that changed, a condition that was
+# never satisfiable against this DTO.
+#
+# Every program-template fixture this script builds (New-ProgramTemplateBody)
+# nests exactly one block per level with exactly one session and one circuit
+# at the leaf, so taking the first block/session/circuit at each level is
+# safe for every fixture this script creates - a fixed index, not a guess.
+function Get-ProgramSessionAndExerciseIds {
+    param([object]$ProgramRoot)
+    $result = [PSCustomObject]@{ ProgramSessionId = $null; ProgramExerciseId = $null }
+    if ($null -eq $ProgramRoot) { return $result }
+    $macro = @($ProgramRoot.blocks) | Select-Object -First 1
+    if (-not $macro) { return $result }
+    $meso = @($macro.blocks) | Select-Object -First 1
+    if (-not $meso) { return $result }
+    $micro = @($meso.blocks) | Select-Object -First 1
+    if (-not $micro) { return $result }
+    $session = @($micro.sessions) | Select-Object -First 1
+    if (-not $session) { return $result }
+    $result.ProgramSessionId = $session.programSessionId
+    $circuit = @($session.circuits) | Select-Object -First 1
+    if (-not $circuit) { return $result }
+    $exercise = @($circuit.exercises) | Select-Object -First 1
+    if (-not $exercise) { return $result }
+    $result.ProgramExerciseId = $exercise.programExerciseId
+    return $result
+}
+
+# ---------------------------------------------------------------------------
 # Output writers
 # ---------------------------------------------------------------------------
 
@@ -611,26 +664,15 @@ function Invoke-Phase4 {
     $Captured['programId'] = $programId
     Add-Fixture -Type 'PROGRAM' -FixtureId $programId -Owner 'MEMBER_1 (via COACH_A)' -DeleteOrder 30 -Name "assigned from $($templateBody.name)"
 
-    # Locate a program session id inside the assigned program's tree.
+    # Locate a program session id inside the assigned program's tree (see
+    # Get-ProgramSessionAndExerciseIds for the exact property path).
     $rProg = Invoke-Api -Id 'P4.read-assigned-program' -Method GET -Path "/api/v1/coach/training-programs/$programId" -ActorKey 'COACH_A' -Expected 200 -Quiet
     $programSessionId = $null
     $programExerciseId = $null
     if ($rProg.Status -eq 200) {
-        $allNodes = Get-AllNodes -Obj $rProg.Data
-        foreach ($node in $allNodes) {
-            $names = $node.PSObject.Properties.Name
-            if (($names -contains 'plannedDate' -or $names -contains 'exercises') -and ($names -contains 'id' -or $names -contains 'programSessionId')) {
-                $candidateId = Get-FirstProp -Obj $node -Names @('id', 'programSessionId')
-                if ($candidateId -and -not $programSessionId) { $programSessionId = $candidateId }
-                if ($names -contains 'exercises') {
-                    $exNodes = @($node.exercises)
-                    if ($exNodes.Count -gt 0) {
-                        $peId = Get-FirstProp -Obj $exNodes[0] -Names @('id', 'programExerciseId')
-                        if ($peId -and -not $programExerciseId) { $programExerciseId = $peId }
-                    }
-                }
-            }
-        }
+        $progIds = Get-ProgramSessionAndExerciseIds -ProgramRoot $rProg.Data
+        $programSessionId = $progIds.ProgramSessionId
+        $programExerciseId = $progIds.ProgramExerciseId
     }
     $Captured['programSessionId'] = $programSessionId
     $Captured['programExerciseId'] = $programExerciseId
@@ -668,7 +710,7 @@ function Invoke-Phase4 {
     }
     if (-not $voucherId) {
         $BlockedReasons['phase4booking'] = 'MEMBER_1 has no AVAILABLE voucher'
-        Add-Blocked -Id 'P4.8' -Method 'POST' -Path '/api/v1/member/sessions' -Actor 'MEMBER_1' -Expected '201' -Reason $BlockedReasons['phase4booking']
+        Add-Blocked -Id 'P4.8' -Method 'POST' -Path '/api/v1/member/sessions' -Actor 'MEMBER_1' -Expected '200/201' -Reason $BlockedReasons['phase4booking']
     } else {
         $rSlots = Invoke-Api -Id 'P4.setup-slots' -Method GET -Path "/api/v1/member/session-slots?coachId=$CoachAId&voucherId=$voucherId" -ActorKey 'MEMBER_1' -Expected 200 -Quiet
         $slotId = $null
@@ -677,11 +719,15 @@ function Invoke-Phase4 {
         }
         if (-not $slotId) {
             $BlockedReasons['phase4booking'] = 'no session slot compatible with MEMBER_1''s available voucher'
-            Add-Blocked -Id 'P4.8' -Method 'POST' -Path '/api/v1/member/sessions' -Actor 'MEMBER_1' -Expected '201' -Reason $BlockedReasons['phase4booking']
+            Add-Blocked -Id 'P4.8' -Method 'POST' -Path '/api/v1/member/sessions' -Actor 'MEMBER_1' -Expected '200/201' -Reason $BlockedReasons['phase4booking']
         } else {
-            $rBook = Invoke-Api -Id 'P4.8' -Method POST -Path '/api/v1/member/sessions' -ActorKey 'MEMBER_1' -Expected 201 -Body @{ voucherId = $voucherId; slotId = $slotId }
-            if ($rBook.Status -eq 201) {
-                $bookedSessionId = Get-FirstProp -Obj $rBook.Data -Names @('id', 'sessionId')
+            # Expected 200/201, not just 201: MemberSessionsController.Reserve returns Ok() (200)
+            # on a successful booking by design, not Created(201) - a pre-existing REST-convention
+            # gap (a POST that creates a resource "should" 201) tracked in the backlog, not fixed
+            # here. Either status carries a real created SessionResponse body worth capturing.
+            $rBook = Invoke-Api -Id 'P4.8' -Method POST -Path '/api/v1/member/sessions' -ActorKey 'MEMBER_1' -Expected @(200, 201) -Body @{ voucherId = $voucherId; slotId = $slotId }
+            if ($rBook.Status -in @(200, 201)) {
+                $bookedSessionId = Get-FirstProp -Obj $rBook.Data -Names @('sessionId', 'id')
                 $Captured['bookedSessionId'] = $bookedSessionId
                 if ($bookedSessionId) { Add-Fixture -Type 'SESSION' -FixtureId $bookedSessionId -Owner 'MEMBER_1' -DeleteOrder 20 -Name 'booked via /member/sessions' }
 
@@ -710,14 +756,15 @@ function Invoke-Phase4 {
                     }
                 }
                 if ($reVoucherId) {
-                    $rRebook = Invoke-Api -Id 'P4.10' -Method POST -Path '/api/v1/member/sessions' -ActorKey 'MEMBER_1' -Expected 201 -Body @{ voucherId = $reVoucherId; slotId = $slotId }
-                    if ($rRebook.Status -eq 201) {
-                        $reBookedSessionId = Get-FirstProp -Obj $rRebook.Data -Names @('id', 'sessionId')
+                    # Same 200/201 note as P4.8: Reserve returns Ok() (200) by design, backlog item.
+                    $rRebook = Invoke-Api -Id 'P4.10' -Method POST -Path '/api/v1/member/sessions' -ActorKey 'MEMBER_1' -Expected @(200, 201) -Body @{ voucherId = $reVoucherId; slotId = $slotId }
+                    if ($rRebook.Status -in @(200, 201)) {
+                        $reBookedSessionId = Get-FirstProp -Obj $rRebook.Data -Names @('sessionId', 'id')
                         $Captured['bookedSessionId'] = $reBookedSessionId
                         if ($reBookedSessionId) { Add-Fixture -Type 'SESSION' -FixtureId $reBookedSessionId -Owner 'MEMBER_1' -DeleteOrder 20 -Name 'rebooked via /member/sessions (P4.10)' }
                     }
                 } else {
-                    Add-Blocked -Id 'P4.10' -Method 'POST' -Path '/api/v1/member/sessions' -Actor 'MEMBER_1' -Expected '201' -Reason 'voucher was not returned to AVAILABLE after cancel, or none found'
+                    Add-Blocked -Id 'P4.10' -Method 'POST' -Path '/api/v1/member/sessions' -Actor 'MEMBER_1' -Expected '200/201' -Reason 'voucher was not returned to AVAILABLE after cancel, or none found'
                 }
             }
         }
@@ -1264,12 +1311,7 @@ function Invoke-StepARegressionChecks {
             $assignRoot = if ($rAssign.Data.program) { $rAssign.Data.program } else { $rAssign.Data }
             $stepAProgramId = Get-FirstProp -Obj $assignRoot -Names @('id', 'programId')
             if ($stepAProgramId) { Add-Fixture -Type 'PROGRAM' -FixtureId $stepAProgramId -Owner 'MEMBER_1 (via COACH_A)' -DeleteOrder 101 -Name "assigned from $($validBody.name)" }
-            foreach ($node in (Get-AllNodes -Obj $assignRoot)) {
-                $names = $node.PSObject.Properties.Name
-                if (-not $stepAProgramSessionId -and ($names -contains 'exercises') -and ($names -contains 'id' -or $names -contains 'programSessionId')) {
-                    $stepAProgramSessionId = Get-FirstProp -Obj $node -Names @('id', 'programSessionId')
-                }
-            }
+            $stepAProgramSessionId = (Get-ProgramSessionAndExerciseIds -ProgramRoot $assignRoot).ProgramSessionId
         }
 
         # SA6 - PUT /coach/training-programs/{ownedByA}, foreign coach, invalid body -> 404
@@ -1426,17 +1468,9 @@ function Invoke-StepATerRegressionChecks {
         $assignRoot = if ($rAssign.Data.program) { $rAssign.Data.program } else { $rAssign.Data }
         $satProgramId = Get-FirstProp -Obj $assignRoot -Names @('id', 'programId')
         if ($satProgramId) { Add-Fixture -Type 'PROGRAM' -FixtureId $satProgramId -Owner 'MEMBER_1 (via COACH_A)' -DeleteOrder 110 -Name "assigned from $($satBody.name)" }
-        foreach ($node in (Get-AllNodes -Obj $assignRoot)) {
-            $names = $node.PSObject.Properties.Name
-            if (($names -contains 'exercises') -and ($names -contains 'id' -or $names -contains 'programSessionId')) {
-                $candidateId = Get-FirstProp -Obj $node -Names @('id', 'programSessionId')
-                if ($candidateId -and -not $satProgramSessionId) { $satProgramSessionId = $candidateId }
-                $exNodes = @($node.exercises)
-                if ($exNodes.Count -gt 0 -and -not $satProgramExerciseId) {
-                    $satProgramExerciseId = Get-FirstProp -Obj $exNodes[0] -Names @('id', 'programExerciseId')
-                }
-            }
-        }
+        $satIds = Get-ProgramSessionAndExerciseIds -ProgramRoot $assignRoot
+        $satProgramSessionId = $satIds.ProgramSessionId
+        $satProgramExerciseId = $satIds.ProgramExerciseId
     }
 
     if (-not $satProgramSessionId) {
