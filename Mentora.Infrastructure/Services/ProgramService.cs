@@ -159,17 +159,19 @@ public class ProgramService(
     public async Task<ProgramResponse> UpdateAsync(
         Guid coachId, Guid programId, UpdateProgramRequest request, CancellationToken ct)
     {
+        // Write rule: only rows owned by this coach — another coach's program 404s, never 403.
+        // Ownership wins over body validation: an invalid body on someone else's program must
+        // still 404.
+        var program = await db.Programs
+            .FirstOrDefaultAsync(p => p.ProgramId == programId && p.ProgramCoachId == coachId, ct)
+            ?? throw new NotFoundException($"Program {programId} not found.");
+
         var validationContext = new ValidationContext<UpdateProgramRequest>(request);
         validationContext.RootContextData["CoachId"] = coachId;
 
         var validationResult = await updateValidator.ValidateAsync(validationContext, ct);
         if (!validationResult.IsValid)
             throw new ValidationException(validationResult.Errors);
-
-        // Write rule: only rows owned by this coach — another coach's program 404s, never 403.
-        var program = await db.Programs
-            .FirstOrDefaultAsync(p => p.ProgramId == programId && p.ProgramCoachId == coachId, ct)
-            ?? throw new NotFoundException($"Program {programId} not found.");
 
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
@@ -285,9 +287,8 @@ public class ProgramService(
     public async Task<ProgramSessionResponse> UpdateCompletionByCoachAsync(
         Guid coachId, Guid programSessionId, UpdateProgramSessionCompletionRequest request, CancellationToken ct)
     {
-        await completionValidator.ValidateAndThrowAsync(request, ct);
-
-        // Ownership folded into the query filter — never 403.
+        // Ownership folded into the query filter — never 403. Ownership wins over body
+        // validation: an invalid body on someone else's program session must still 404.
         var programSession = await db.ProgramSessions
             .FirstOrDefaultAsync(ps => ps.ProgramSessionId == programSessionId && ps.ProgramSessionCoachId == coachId, ct)
             ?? throw new NotFoundException($"Program session {programSessionId} not found.");
@@ -298,6 +299,8 @@ public class ProgramService(
             .AnyAsync(mc => mc.MemberId == programSession.ProgramSessionMemberId && mc.CoachId == coachId, ct);
         if (!isLinked)
             throw new NotFoundException($"Program session {programSessionId} not found.");
+
+        await completionValidator.ValidateAndThrowAsync(request, ct);
 
         await EnsureProgramActiveAsync(programSession.ProgramSessionProgramId, ct);
 

@@ -88,13 +88,14 @@ public class ExerciseService(
     public async Task<ExerciseResponse> UpdateAsync(
         Guid exerciseId, ExerciseRequest request, Guid coachId, CancellationToken ct)
     {
-        await validator.ValidateAndThrowAsync(request, ct);
-
         // Write rule: only rows owned by this coach — a Mentora entry (CoachId IS NULL) or
-        // another coach's row falls out of this predicate and 404s, never 403.
+        // another coach's row falls out of this predicate and 404s, never 403. Ownership wins
+        // over body validation: an invalid body on someone else's exercise must still 404.
         var exercise = await db.Exercises
             .FirstOrDefaultAsync(e => e.ExerciseId == exerciseId && e.ExerciseCoachId == coachId, ct)
             ?? throw new NotFoundException($"Exercise {exerciseId} not found.");
+
+        await validator.ValidateAndThrowAsync(request, ct);
 
         exercise.ExerciseName            = request.Name.Trim();
         exercise.ExerciseDescription     = request.Description?.Trim();

@@ -89,13 +89,14 @@ public class ProgramTemplateService(
     public async Task<ProgramTemplateResponse> UpdateAsync(
         Guid programTemplateId, ProgramTemplateRequest request, Guid coachId, CancellationToken ct)
     {
-        await ValidateAsync(request, coachId, ct);
-
         // Write rule: only rows owned by this coach — a Mentora template (CoachId IS NULL) or
-        // another coach's row falls out of this predicate and 404s, never 403.
+        // another coach's row falls out of this predicate and 404s, never 403. Ownership wins
+        // over body validation: an invalid body on someone else's template must still 404.
         var template = await db.ProgramTemplates
             .FirstOrDefaultAsync(t => t.ProgramTemplateId == programTemplateId && t.ProgramTemplateCoachId == coachId, ct)
             ?? throw new NotFoundException($"Program template {programTemplateId} not found.");
+
+        await ValidateAsync(request, coachId, ct);
 
         template.ProgramTemplateName          = request.Name.Trim();
         template.ProgramTemplateDescription   = request.Description?.Trim();

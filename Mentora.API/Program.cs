@@ -251,7 +251,19 @@ if (string.Equals(emailProvider, "Smtp", StringComparison.OrdinalIgnoreCase))
 else
     builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        // Lot 6 fix (C2) — [ApiController]'s automatic ModelState validation used to run
+        // before ownership/existence checks and FluentValidation, so an invalid body on a
+        // resource owned by another coach came back as a native 400/422 instead of 404.
+        // Suppressing it lets every action reach its service, where ownership is checked
+        // first; FluentValidation (422) and NotFoundException (404) take over from here.
+        options.Filters.Add<NullBodyGuardFilter>();
+    })
+    .ConfigureApiBehaviorOptions(o =>
+    {
+        o.SuppressModelStateInvalidFilter = true;
+    })
     .AddJsonOptions(options =>
     {
         // Serialize all enum properties as UPPERCASE strings on the wire (e.g. "AVAILABLE").
