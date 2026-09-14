@@ -332,12 +332,13 @@ public class ProgramService(
     public async Task<ProgramSessionResponse> UpdateCompletionByMemberAsync(
         Guid memberId, Guid programSessionId, UpdateProgramSessionCompletionRequest request, CancellationToken ct)
     {
-        await completionValidator.ValidateAndThrowAsync(request, ct);
-
-        // Ownership folded into the query filter — never 403.
+        // Ownership folded into the query filter — never 403. Ownership wins over body
+        // validation: an invalid body on someone else's program session must still 404.
         var programSession = await db.ProgramSessions
             .FirstOrDefaultAsync(ps => ps.ProgramSessionId == programSessionId && ps.ProgramSessionMemberId == memberId, ct)
             ?? throw new NotFoundException($"Program session {programSessionId} not found.");
+
+        await completionValidator.ValidateAndThrowAsync(request, ct);
 
         await EnsureProgramActiveAsync(programSession.ProgramSessionProgramId, ct);
 
