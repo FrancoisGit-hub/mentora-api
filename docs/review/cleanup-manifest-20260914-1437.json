@@ -1,0 +1,30 @@
+﻿[
+    {
+        "Type":  "EXERCISE",
+        "Id":  "8d3cdc6e-f8a1-4d9e-8f3f-2d2a063053f1",
+        "Owner":  "COACH_B",
+        "DeleteOrder":  10,
+        "Name":  "VPSTEST-20260914-1437 Private Exercise (Coach B)"
+    },
+    {
+        "Type":  "SESSION_GROUP",
+        "Id":  "514611d6-4717-44ec-8843-4ba45576f2f0",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  15,
+        "Name":  "group session created in P3.4"
+    },
+    {
+        "Type":  "PROGRAM",
+        "Id":  "efef93e3-2f72-45f1-a263-cf4d1eec93df",
+        "Owner":  "MEMBER_1 (via COACH_A)",
+        "DeleteOrder":  30,
+        "Name":  "assigned from VPSTEST-20260914-1437 Template"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "db1b8aa9-3fa7-4484-9869-33e92d22edc4",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  40,
+        "Name":  "VPSTEST-20260914-1437 Template"
+    }
+]

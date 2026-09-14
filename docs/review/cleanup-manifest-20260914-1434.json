@@ -1,0 +1,16 @@
+﻿[
+    {
+        "Type":  "EXERCISE",
+        "Id":  "a1dfe0e5-fd8c-4fbf-9276-930a519f6e2a",
+        "Owner":  "COACH_B",
+        "DeleteOrder":  10,
+        "Name":  "VPSTEST-20260914-1434 Private Exercise (Coach B)"
+    },
+    {
+        "Type":  "PROGRAM_TEMPLATE",
+        "Id":  "ea4aa566-2bf6-4e12-8509-8098b4359b2c",
+        "Owner":  "COACH_A",
+        "DeleteOrder":  40,
+        "Name":  "VPSTEST-20260914-1434 Template"
+    }
+]
