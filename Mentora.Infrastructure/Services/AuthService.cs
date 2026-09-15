@@ -180,7 +180,8 @@ public class AuthService(
         return new AuthResponse(
             AccessToken: GenerateAccessToken(record.User, memberId, coachId),
             RefreshToken: newClientToken,
-            ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60
+            ExpiresIn: _jwt.AccessTokenExpirationMinutes * 60,
+            IsCoach: record.AuthRefreshTokenUserRole == UserRole.Coach
         );
     }
 
