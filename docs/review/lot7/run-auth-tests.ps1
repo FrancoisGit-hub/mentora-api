@@ -93,6 +93,43 @@ function Invoke-ApiCall {
     }
 }
 
+function Invoke-ApiCallRaw {
+    # Like Invoke-ApiCall, but returns the response body as the raw string the server
+    # sent, unparsed - needed to prove two bodies are byte-identical rather than just
+    # deep-equal after JSON round-tripping (which can hide key-order or whitespace
+    # differences).
+    param(
+        [string]$Method,
+        [string]$Path,
+        $Body = $null
+    )
+    $uri = "$BaseUrl$Path"
+    $params = @{
+        Method          = $Method
+        Uri             = $uri
+        UseBasicParsing = $true
+    }
+    if ($null -ne $Body) {
+        $params.ContentType = "application/json"
+        $params.Body = ($Body | ConvertTo-Json -Depth 10)
+    }
+    try {
+        $resp = Invoke-WebRequest @params
+        return [PSCustomObject]@{ StatusCode = [int]$resp.StatusCode; RawBody = $resp.Content }
+    }
+    catch {
+        $webResp = $_.Exception.Response
+        if ($webResp) {
+            $statusCode = [int]$webResp.StatusCode
+            $stream = $webResp.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($stream)
+            $rawBody = $reader.ReadToEnd()
+            return [PSCustomObject]@{ StatusCode = $statusCode; RawBody = $rawBody }
+        }
+        throw
+    }
+}
+
 function Get-OtpLineCount {
     param([string]$Email)
     if (-not (Test-Path $LogFile)) { return 0 }
@@ -323,6 +360,36 @@ catch {
     Add-Result -Num "12a" -Scenario "POST /api/v1/account/deletion-request (RequestDeletion)" -Expected 200 -Actual "ERROR" -Notes $_.Exception.Message
     Add-Result -Num "12b" -Scenario "GET /api/v1/account/deletion-request (GetDeletionStatus)" -Expected 200 -Actual "ERROR" -Notes $_.Exception.Message
     Add-Result -Num "12c" -Scenario "DELETE /api/v1/account/deletion-request (CancelDeletion)" -Expected 200 -Actual "ERROR" -Notes $_.Exception.Message
+}
+
+# ---------------------------------------------------------------------------
+# Scenario 13 - E1.2: 401 body neutrality across the refresh endpoint's five
+# token-validity failure causes (unknown, revoked, expired, reused, post-logout).
+# This does NOT cover, and is not claiming anything about, the separate
+# data-integrity path (AuthService.cs:169/174 - refresh token role has no matching
+# Coach/Member profile), which deliberately still returns 400 - see
+# docs/review/lot7/auth-claims-backlog.md.
+# ---------------------------------------------------------------------------
+
+try {
+    if (-not $s45Token) { throw "Prerequisite scenario 5 did not leave behind a revoked refresh token" }
+
+    $revoked = Invoke-ApiCallRaw -Method POST -Path "/api/v1/auth/token/refresh" -Body @{ refreshToken = $s45Token }
+
+    $garbageToken = "$([guid]::NewGuid()):$([guid]::NewGuid().ToString('N'))"
+    $garbage = Invoke-ApiCallRaw -Method POST -Path "/api/v1/auth/token/refresh" -Body @{ refreshToken = $garbageToken }
+
+    $bothUnauthorized = ($revoked.StatusCode -eq 401) -and ($garbage.StatusCode -eq 401)
+    $identicalBody    = $revoked.RawBody -ceq $garbage.RawBody
+    $pass             = $bothUnauthorized -and $identicalBody
+
+    Add-Result -Num "13" `
+        -Scenario "401 body is byte-identical: revoked token (scenario 5's) vs. a garbage/unknown token (5 token-validity causes only, not the data-integrity 400 path)" `
+        -Expected $true -Actual $pass `
+        -Notes "revoked=$($revoked.StatusCode) garbage=$($garbage.StatusCode) identicalBody=$identicalBody | revokedBody=$($revoked.RawBody) | garbageBody=$($garbage.RawBody)"
+}
+catch {
+    Add-Result -Num "13" -Scenario "401 body is byte-identical: revoked token vs. a garbage/unknown token (5 token-validity causes only, not the data-integrity 400 path)" -Expected $true -Actual "ERROR" -Notes $_.Exception.Message
 }
 
 # ---------------------------------------------------------------------------
