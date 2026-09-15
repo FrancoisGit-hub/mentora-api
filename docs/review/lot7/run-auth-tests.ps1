@@ -227,9 +227,9 @@ catch { Add-Result -Num "4" -Scenario "Refresh with a valid, unused refresh toke
 try {
     if (-not $s45Token) { throw "Prerequisite scenario 4 did not produce a refresh token" }
     $r = Invoke-ApiCall -Method POST -Path "/api/v1/auth/token/refresh" -Body @{ refreshToken = $s45Token }
-    Add-Result -Num "5" -Scenario "Refresh reusing the same token immediately after (now revoked)" -Expected 400 -Actual $r.StatusCode -Notes "Known preexisting gap: should be 401, not fixed in E1.1"
+    Add-Result -Num "5" -Scenario "Refresh reusing the same token immediately after (now revoked)" -Expected 401 -Actual $r.StatusCode -Notes "Fixed in E1.2 (was 400 in E1.1)"
 }
-catch { Add-Result -Num "5" -Scenario "Refresh reusing the same token immediately after (now revoked)" -Expected 400 -Actual "ERROR" -Notes $_.Exception.Message }
+catch { Add-Result -Num "5" -Scenario "Refresh reusing the same token immediately after (now revoked)" -Expected 401 -Actual "ERROR" -Notes $_.Exception.Message }
 
 # ---------------------------------------------------------------------------
 # Scenarios 6a-6b / 10 (chained: logout revokes, then refresh with that token)
@@ -251,9 +251,9 @@ catch {
 try {
     if (-not $s6Token) { throw "Prerequisite scenario 6a did not produce a refresh token" }
     $r = Invoke-ApiCall -Method POST -Path "/api/v1/auth/token/refresh" -Body @{ refreshToken = $s6Token }
-    Add-Result -Num "6b" -Scenario "Refresh attempted with the token 6a just revoked via logout" -Expected 400 -Actual $r.StatusCode -Notes "Same preexisting gap as #5"
+    Add-Result -Num "6b" -Scenario "Refresh attempted with the token 6a just revoked via logout" -Expected 401 -Actual $r.StatusCode -Notes "Fixed in E1.2 (was 400 in E1.1)"
 }
-catch { Add-Result -Num "6b" -Scenario "Refresh attempted with the token 6a just revoked via logout" -Expected 400 -Actual "ERROR" -Notes $_.Exception.Message }
+catch { Add-Result -Num "6b" -Scenario "Refresh attempted with the token 6a just revoked via logout" -Expected 401 -Actual "ERROR" -Notes $_.Exception.Message }
 
 # ---------------------------------------------------------------------------
 # Scenarios 7-9
