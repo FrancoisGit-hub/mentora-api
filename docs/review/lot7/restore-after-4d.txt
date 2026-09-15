@@ -1,0 +1,3 @@
+  Identification des projets à restaurer...
+  Restauration effectuée de C:\Users\gitte\OneDrive\Documents\Web2success\Mentora\tech\repo-mentora\Mentora.API\Mentora.API.csproj (en 3,02 sec).
+  Sur l'ensemble des projets, 2 sur 3 sont à jour pour la restauration.
