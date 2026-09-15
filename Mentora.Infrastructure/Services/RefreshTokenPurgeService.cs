@@ -10,13 +10,14 @@ namespace Mentora.Infrastructure.Services;
 
 /// <summary>
 /// Daily purge of AUTH_REFRESH_TOKENS rows that have been revoked or expired for more
-/// than <see cref="RetentionDays"/> days. Waits <see cref="InitialDelay"/> before its
-/// first pass so a container restart during a deployment never triggers a delete, then
-/// runs every <see cref="Interval"/>. Governed by
-/// <see cref="RefreshTokenPurgeOptions.CountOnly"/> (default true): count-only mode
-/// logs the row count the purge would delete and deletes nothing. Live mode selects
-/// the eligible ids first and logs them (capped) before deleting by id, so the first
-/// real purge leaves an audit trail rather than a single opaque set-based DELETE.
+/// than <see cref="RetentionDays"/> days. Waits
+/// <see cref="RefreshTokenPurgeOptions.InitialDelayMinutes"/> before its first pass so
+/// a container restart during a deployment never triggers a delete, then runs every
+/// <see cref="Interval"/>. Governed by <see cref="RefreshTokenPurgeOptions.CountOnly"/>
+/// (default true): count-only mode logs the row count the purge would delete and
+/// deletes nothing. Live mode selects the eligible ids first and logs them (capped)
+/// before deleting by id, so the first real purge leaves an audit trail rather than a
+/// single opaque set-based DELETE.
 /// </summary>
 public class RefreshTokenPurgeService(
     IServiceScopeFactory scopeFactory,
@@ -26,16 +27,13 @@ public class RefreshTokenPurgeService(
     private const int RetentionDays = 30;
     private const int LoggedIdCap = 50;
 
-    // Longer than any deploy/restart window (build, migrations, seeders), so a restart
-    // during a deployment never fires the first pass.
-    private static readonly TimeSpan InitialDelay = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan Interval = TimeSpan.FromDays(1);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            await Task.Delay(InitialDelay, stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(options.Value.InitialDelayMinutes), stoppingToken);
         }
         catch (OperationCanceledException)
         {
