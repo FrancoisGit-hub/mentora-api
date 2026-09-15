@@ -93,27 +93,45 @@ function Invoke-ApiCall {
     }
 }
 
-function Get-LatestOtp {
+function Get-OtpLineCount {
     param([string]$Email)
-    if (-not (Test-Path $LogFile)) { throw "Log file not found: $LogFile" }
+    if (-not (Test-Path $LogFile)) { return 0 }
     $needle = "[OTP] $Email"
-    $lines = Get-Content -Path $LogFile | Where-Object { $_.Contains($needle) }
-    if (-not $lines -or $lines.Count -eq 0) { throw "No OTP log line found for '$Email' in $LogFile" }
+    $lines = @(Get-Content -Path $LogFile | Where-Object { $_.Contains($needle) })
+    return $lines.Count
+}
+
+function Get-LatestOtp {
+    param([string]$Email, [int]$MinLineCount)
+    if (-not (Test-Path $LogFile)) { return $null }
+    $needle = "[OTP] $Email"
+    $lines = @(Get-Content -Path $LogFile | Where-Object { $_.Contains($needle) })
+    if ($lines.Count -lt $MinLineCount) { return $null }
     $lastLine = $lines[-1]
     if ($lastLine -match '(\d{6})\s*$') {
         return $Matches[1]
     }
-    throw "Could not parse a 6-digit OTP from log line: $lastLine"
+    # The console-redirect write can be torn mid-flush, handing us a truncated
+    # fragment of the line (observed: a 1-character "line" instead of the full
+    # "[OTP] email -> 123456"). Treat as "not there yet" rather than a hard failure
+    # so the caller's retry loop can pick up the fully-flushed line.
+    return $null
 }
 
 function New-Session {
     param([string]$Email, [Nullable[bool]]$IsCoach)
+    $priorCount = Get-OtpLineCount -Email $Email
     $body = @{ email = $Email }
     if ($null -ne $IsCoach) { $body.isCoach = $IsCoach }
     $r1 = Invoke-ApiCall -Method POST -Path "/api/v1/auth/otp/request" -Body $body
     if ($r1.StatusCode -ne 200) { throw "OTP request failed for $Email : $($r1.StatusCode) $($r1.Content | ConvertTo-Json -Compress)" }
-    Start-Sleep -Milliseconds 300
-    $code = Get-LatestOtp -Email $Email
+    $code = $null
+    for ($attempt = 0; $attempt -lt 20; $attempt++) {
+        Start-Sleep -Milliseconds 200
+        $code = Get-LatestOtp -Email $Email -MinLineCount ($priorCount + 1)
+        if ($code) { break }
+    }
+    if (-not $code) { throw "No new OTP log line found for '$Email' in $LogFile after retrying (had $priorCount before the request)" }
     $body2 = @{ email = $Email; code = $code }
     if ($null -ne $IsCoach) { $body2.isCoach = $IsCoach }
     $r2 = Invoke-ApiCall -Method POST -Path "/api/v1/auth/otp/verify" -Body $body2
