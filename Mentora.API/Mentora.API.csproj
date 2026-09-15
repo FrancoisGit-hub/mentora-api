@@ -8,6 +8,11 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <!-- Lot 7 / E1.1: JwtBearer's 8.0.x servicing train pulls Microsoft.IdentityModel.*
+         at 7.x. Pinned explicitly to 8.22.0 here so the whole IdentityModel family
+         (Tokens.Jwt, Protocols, Protocols.OpenIdConnect, JsonWebTokens, etc.) resolves
+         to one consistent version instead of splitting across 7.x/8.x. -->
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.22.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
