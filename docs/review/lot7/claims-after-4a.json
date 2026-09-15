@@ -1,0 +1,80 @@
+﻿{
+    "capturedAt":  "2026-09-15T08:46:27.9232477Z",
+    "note":  "Post-4a capture: System.IdentityModel.Tokens.Jwt / Microsoft.IdentityModel.* bumped 7.0.3 -\u003e 8.22.0. JwtBearer stays 8.0.0. Compare against claims-before.json.",
+    "coach":  {
+                  "email":  "coach@mentora.fr",
+                  "resolvedClaimsPrincipal":  [
+                                                  {
+                                                      "type":  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
+                                                      "value":  "ff2be73b-8a80-46d6-90d8-cd462b876095"
+                                                  },
+                                                  {
+                                                      "type":  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+                                                      "value":  "coach@mentora.fr"
+                                                  },
+                                                  {
+                                                      "type":  "userType",
+                                                      "value":  "COACH"
+                                                  },
+                                                  {
+                                                      "type":  "jti",
+                                                      "value":  "cb537138-fb4e-4635-8c27-90b0bf9f96dd"
+                                                  },
+                                                  {
+                                                      "type":  "coachId",
+                                                      "value":  "e268a512-84d6-4e27-b5c0-1d6c08a47190"
+                                                  },
+                                                  {
+                                                      "type":  "exp",
+                                                      "value":  "1789465584"
+                                                  },
+                                                  {
+                                                      "type":  "iss",
+                                                      "value":  "mentora-api"
+                                                  },
+                                                  {
+                                                      "type":  "aud",
+                                                      "value":  "mentora-app"
+                                                  }
+                                              ],
+                  "accessToken":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmZjJiZTczYi04YTgwLTQ2ZDYtOTBkOC1jZDQ2MmI4NzYwOTUiLCJlbWFpbCI6ImNvYWNoQG1lbnRvcmEuZnIiLCJ1c2VyVHlwZSI6IkNPQUNIIiwianRpIjoiY2I1MzcxMzgtZmI0ZS00NjM1LThjMjctOTBiMGJmOWY5NmRkIiwiY29hY2hJZCI6ImUyNjhhNTEyLTg0ZDYtNGUyNy1iNWMwLTFkNmMwOGE0NzE5MCIsImV4cCI6MTc4OTQ2NTU4NCwiaXNzIjoibWVudG9yYS1hcGkiLCJhdWQiOiJtZW50b3JhLWFwcCJ9.q7qgkjdLArdq4K0rTQUe2Psp1cSC05cbTQzBA8t8YnQ"
+              },
+    "member":  {
+                   "email":  "member@mentora.fr",
+                   "resolvedClaimsPrincipal":  [
+                                                   {
+                                                       "type":  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
+                                                       "value":  "874d7734-cc4f-47ee-9527-3a4c0262f7b3"
+                                                   },
+                                                   {
+                                                       "type":  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+                                                       "value":  "member@mentora.fr"
+                                                   },
+                                                   {
+                                                       "type":  "userType",
+                                                       "value":  "MEMBER"
+                                                   },
+                                                   {
+                                                       "type":  "jti",
+                                                       "value":  "69e99636-8605-4de1-b8bb-e64f0f033dc2"
+                                                   },
+                                                   {
+                                                       "type":  "memberId",
+                                                       "value":  "38b05ed2-e577-4cf7-81e9-365eaafab626"
+                                                   },
+                                                   {
+                                                       "type":  "exp",
+                                                       "value":  "1789465587"
+                                                   },
+                                                   {
+                                                       "type":  "iss",
+                                                       "value":  "mentora-api"
+                                                   },
+                                                   {
+                                                       "type":  "aud",
+                                                       "value":  "mentora-app"
+                                                   }
+                                               ],
+                   "accessToken":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NzRkNzczNC1jYzRmLTQ3ZWUtOTUyNy0zYTRjMDI2MmY3YjMiLCJlbWFpbCI6Im1lbWJlckBtZW50b3JhLmZyIiwidXNlclR5cGUiOiJNRU1CRVIiLCJqdGkiOiI2OWU5OTYzNi04NjA1LTRkZTEtYjhiYi1lNjRmMGYwMzNkYzIiLCJtZW1iZXJJZCI6IjM4YjA1ZWQyLWU1NzctNGNmNy04MWU5LTM2NWVhYWZhYjYyNiIsImV4cCI6MTc4OTQ2NTU4NywiaXNzIjoibWVudG9yYS1hcGkiLCJhdWQiOiJtZW50b3JhLWFwcCJ9.zNKZryIoVR6a2sxZQBNJRLowHhfEJJiH4onkEZmbG6E"
+               }
+}
