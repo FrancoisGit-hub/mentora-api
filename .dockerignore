@@ -1,0 +1,38 @@
+# .dockerignore for Mentora.API/Dockerfile
+# Build context is the repo root (docker build -f Mentora.API/Dockerfile .).
+# The Dockerfile's `COPY . .` (build stage) pulls in everything below that
+# isn't excluded here, and dotnet publish auto-copies every appsettings*.json
+# it finds alongside the .csproj into the final image.
+
+# Security fix (E1.3): appsettings.Development.json carries a local DB
+# password and RefreshTokenPurge.InitialDelayMinutes=0. The container runs
+# ASPNETCORE_ENVIRONMENT=Development, so this file overrides appsettings.json
+# and defeats the 15-minute purge delay guard. Must never reach the image.
+# appsettings.json and appsettings.Production.json are NOT excluded.
+**/appsettings.Development.json
+
+# Build artifacts from the host (Mentora.API/Mentora.Core/Mentora.Infrastructure
+# each have bin/ and obj/, ~49MB total today). `dotnet build`/`dotnet publish`
+# regenerate these inside the container; copying host artifacts in bloats the
+# context and can leak host-OS/arch-specific output.
+bin
+obj
+
+# Git metadata (~5.2MB) - version history, not needed to build or run the app.
+.git
+
+# IDE/editor state - not needed to build or run the app.
+.vs
+.vscode
+
+# Project documentation (~1.2MB) - not needed to build or run the app.
+docs
+
+# Stray local artifacts, e.g. `docker save` tarballs left in the repo root
+# (found one at repo root today, ~95MB) - never needed as build input and
+# would otherwise dominate the build context size.
+*.tar
+
+# No JS/Node tooling in this repo today, but excluding defensively in case
+# any project ever adds one - node_modules is always regenerable and huge.
+**/node_modules
