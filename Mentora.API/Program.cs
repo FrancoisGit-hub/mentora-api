@@ -250,6 +250,11 @@ builder.Services.AddSignalR()
             new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
     });
 
+// Lot 7 / E1.2 — daily purge of revoked/expired refresh tokens, count-only by default
+builder.Services.Configure<RefreshTokenPurgeOptions>(
+    builder.Configuration.GetSection(RefreshTokenPurgeOptions.SectionName));
+builder.Services.AddHostedService<RefreshTokenPurgeService>();
+
 // Lot 3.0 — Email (OTP delivery)
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
 var emailProvider = builder.Configuration["Email:Provider"] ?? "Logging";
