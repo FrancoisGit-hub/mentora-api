@@ -148,10 +148,10 @@ public class AuthService(
                 r.AuthRefreshTokenId == tokenId &&
                 !r.AuthRefreshTokenIsRevoked &&
                 r.AuthRefreshTokenExpirationDate > DateTime.UtcNow)
-            ?? throw new InvalidOperationException("Invalid or expired refresh token.");
+            ?? throw new UnauthorizedException("Invalid or expired refresh token.");
 
         if (!BCrypt.Net.BCrypt.Verify(rawSecret, record.AuthRefreshTokenHash))
-            throw new InvalidOperationException("Invalid or expired refresh token.");
+            throw new UnauthorizedException("Invalid or expired refresh token.");
 
         // Revoke the consumed token
         record.AuthRefreshTokenIsRevoked = true;
