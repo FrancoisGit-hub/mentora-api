@@ -101,13 +101,17 @@ function Invoke-ApiCallRaw {
     param(
         [string]$Method,
         [string]$Path,
-        $Body = $null
+        $Body = $null,
+        [string]$Token = $null
     )
     $uri = "$BaseUrl$Path"
+    $headers = @{}
+    if ($Token) { $headers["Authorization"] = "Bearer $Token" }
     $params = @{
         Method          = $Method
         Uri             = $uri
         UseBasicParsing = $true
+        Headers         = $headers
     }
     if ($null -ne $Body) {
         $params.ContentType = "application/json"
