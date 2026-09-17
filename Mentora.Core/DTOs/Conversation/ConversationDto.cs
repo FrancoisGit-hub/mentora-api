@@ -7,8 +7,10 @@ namespace Mentora.Core.DTOs.Conversation;
 /// <param name="CoachId">Identifier of the coach in this conversation.</param>
 /// <param name="VisioUrl">
 /// Permanent Jitsi room URL for this member/coach pair, computed at read time from the
-/// conversation ID. Not time-boxed — this room does not expire and has no joinable window,
-/// unlike the per-session VISIO URLs on <see cref="Mentora.Core.DTOs.Session.SessionResponse"/>.
+/// conversation ID. Not time-boxed — this room does not expire and has no joinable window.
+/// Unrelated to <see cref="Mentora.Core.DTOs.Session.SessionResponse"/>.VisioUrl, which is
+/// deprecated since Lot 8 (always null) — per-session video calls now go through
+/// POST .../sessions/{sessionId}/visio-token (LiveKit), not Jitsi.
 /// </param>
 /// <param name="CreatedDate">Date the conversation was first created (UTC).</param>
 /// <param name="LastMessageDate">Date of the most recent message, or null if none yet.</param>

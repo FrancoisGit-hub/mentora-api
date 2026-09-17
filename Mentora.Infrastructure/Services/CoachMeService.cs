@@ -168,7 +168,9 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             ScheduledAt:      s.SessionScheduledAt,
             DurationMinutes:  s.SessionDurationMinutes,
             OfferType:        EnumMappings.OfferTypeMapping.ToWire(s.SessionOfferType),
-            VisioUrl:         s.SessionVisioUrl);
+            // Lot 8 — always null; kept on the wire for mobile compatibility only. Use
+            // POST .../sessions/{sessionId}/visio-token instead.
+            VisioUrl:         null);
     }
 
     private static ProductResponse ToProductResponse(Product p) => new(

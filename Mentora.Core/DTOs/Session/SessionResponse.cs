@@ -18,7 +18,10 @@ namespace Mentora.Core.DTOs.Session;
 /// <param name="Sport">Sport discipline.</param>
 /// <param name="ScheduledAt">Date and time the session is scheduled for (UTC).</param>
 /// <param name="Status">Effective status: SCHEDULED, COMPLETED, or CANCELLED.</param>
-/// <param name="VisioUrl">Video call URL, present only for non-cancelled VISIO sessions.</param>
+/// <param name="VisioUrl">
+/// Deprecated since Lot 8 — always null. Kept on the wire for mobile compatibility only.
+/// Use POST .../sessions/{sessionId}/visio-token to obtain a LiveKit room-access token instead.
+/// </param>
 /// <param name="EffectiveAddress">
 /// Resolved at read time, never snapshotted: this member's per-coach address override
 /// (MEMBER_COACHES.MEMBER_COACH_PRESENTIAL_ADDRESS) if set, else the booked product's own

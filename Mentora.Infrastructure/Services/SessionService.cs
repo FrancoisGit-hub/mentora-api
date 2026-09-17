@@ -16,7 +16,6 @@ public class SessionService(
     MentoraDbContext db,
     IValidator<ReserveSessionRequest> reserveValidator,
     IValidator<CancelSessionRequest> cancelValidator,
-    IVisioUrlGenerator visioGenerator,
     ILogger<SessionService> logger) : ISessionService
 {
     // ── Member-side ─────────────────────────────────────────────────────────────
@@ -98,11 +97,6 @@ public class SessionService(
             if (slot.SessionSlotStartDate < DateTime.UtcNow)
                 throw new ConflictException("Cannot reserve a slot in the past.");
 
-            // Visio URL — only for VISIO offer type
-            string? visioUrl = voucher.OfferType == OfferType.Visio
-                ? visioGenerator.Generate()
-                : null;
-
             var session = new Session
             {
                 SessionId              = Guid.NewGuid(),
@@ -116,7 +110,7 @@ public class SessionService(
                 SessionSport           = voucher.Sport,
                 SessionScheduledAt     = slot.SessionSlotStartDate,
                 SessionStatus          = SessionStatus.Scheduled,
-                SessionVisioUrl        = visioUrl,
+                SessionVisioUrl        = null, // Lot 8 — always null now; see SessionResponse.VisioUrl doc
                 SessionCreatedDate     = DateTime.UtcNow,
                 SessionUpdatedDate     = DateTime.UtcNow,
             };
@@ -453,7 +447,7 @@ public class SessionService(
             SessionScheduledAt     = slot.SessionSlotStartDate,
             SessionMaxParticipants = product.ProductMaxParticipants,
             SessionStatus          = SessionStatus.Scheduled,
-            SessionVisioUrl        = null, // VisioGroupe cannot exist yet — see OfferType.VisioGroupe
+            SessionVisioUrl        = null, // Lot 8 — always null now; see SessionResponse.VisioUrl doc
             SessionCreatedDate     = now,
             SessionUpdatedDate     = now,
         };
@@ -689,10 +683,9 @@ public class SessionService(
         Session session, Coach coach, Member? member, Product? product, MemberCoach? memberCoach)
     {
         var effectiveStatus = ComputeEffectiveStatus(session);
-        // Visio URL only for VISIO sessions that are not cancelled
-        var visioUrl = session.SessionOfferType == OfferType.Visio && effectiveStatus != SessionStatus.Cancelled
-            ? session.SessionVisioUrl
-            : null;
+        // Lot 8 — always null; kept on the wire for mobile compatibility only. Use
+        // POST .../sessions/{sessionId}/visio-token instead.
+        string? visioUrl = null;
 
         // Effective address, resolved at read time (never snapshotted) for in-person sessions:
         // the member's per-coach override, else the booked product's own location. Treated as

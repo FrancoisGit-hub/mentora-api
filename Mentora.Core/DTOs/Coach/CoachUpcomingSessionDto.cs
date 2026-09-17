@@ -10,7 +10,10 @@ namespace Mentora.Core.DTOs.Coach;
 /// <param name="ScheduledAt">Date and time the session is scheduled for (UTC).</param>
 /// <param name="DurationMinutes">Session duration in minutes.</param>
 /// <param name="OfferType">Session format: VISIO, PRESENTIEL_SOLO, or PRESENTIEL_GROUPE.</param>
-/// <param name="VisioUrl">Video call URL, present only for VISIO sessions.</param>
+/// <param name="VisioUrl">
+/// Deprecated since Lot 8 — always null. Kept on the wire for mobile compatibility only.
+/// Use POST .../sessions/{sessionId}/visio-token to obtain a LiveKit room-access token instead.
+/// </param>
 public record CoachUpcomingSessionDto(
     Guid SessionId,
     Guid? MemberId,
