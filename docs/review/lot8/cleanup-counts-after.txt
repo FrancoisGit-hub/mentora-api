@@ -1,0 +1,17 @@
+Post-cleanup row counts vs baseline-counts.txt (captured 2026-09-17T15:09:24Z)
+
+Table                 | Baseline | After cleanup | Match
+-----------------------|----------|----------------|------
+SESSIONS              | 0        | 0              | YES
+SESSION_SLOTS         | 0        | 0              | YES
+SESSION_VOUCHERS      | 0        | 0              | YES
+SESSION_PARTICIPANTS  | 0        | 0              | YES
+ORDER_ITEMS           | 0        | 0              | YES
+ORDERS                | 0        | 0              | YES
+MEMBER_COACHES        | 2        | 2              | YES
+AUTH_OTPS             | 39       | 39             | YES
+AUTH_REFRESH_TOKENS   | 38       | 38             | YES
+
+All tables back to baseline exactly. Cleanup executed via docs/review/lot8/cleanup-proposal.sql
+as a single transaction (psql -1 -v ON_ERROR_STOP=1), DELETE counts: 1, 7, 6, 1, 1, 2, 2, 2
+(all matched the pre-verified SELECT COUNT(*) values).

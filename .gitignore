@@ -495,3 +495,8 @@ deploy.ps1
 
 *.tar
 .claude/settings.local.json
+
+# Review artifacts carrying live tokens
+docs/review/**/tokens.json
+docs/review/**/*-response.json
+docs/review/**/api.pid

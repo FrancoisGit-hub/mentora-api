@@ -1,0 +1,38 @@
+Lot 8.2 fixtures manifest
+Run start (UTC): 2026-09-17T15:09:24Z
+Fixture anchor time (UTC): ANCHOR=2026-09-17T15:17:28Z
+  PLUS5   = 2026-09-17T15:22:28Z (now + 5 min)
+  PLUS3H  = 2026-09-17T18:17:28Z (now + 3 h)
+  MINUS3H = 2026-09-17T12:17:28Z (now - 3 h)
+
+Users (pre-existing, NOT created by this run - reference only):
+  Coach A  : e268a512-84d6-4e27-b5c0-1d6c08a47190  (coach@mentora.fr)
+  Member M1: 38b05ed2-e577-4cf7-81e9-365eaafab626  (member@mentora.fr)
+  Member M2: 0d5608a9-d284-4346-a932-b38533c2c0b8  (coach@mentora.fr's Member profile - dual-role account, used only as "other member")
+  Coach B  : NONE - no second coach exists locally. F8/C3 skipped.
+
+Rows INSERTED by this run (table | PK):
+
+ORDERS               | 59cc97c8-662b-4823-a484-66794767c0c1   (ORDER1 - used as FK root for OI1)
+ORDERS               | 0b6d3ee4-8595-4d6e-8e45-38089e8a8908   (STRAY DUPLICATE - accidental extra insert during diagnostic, unused by any fixture, needs cleanup too)
+ORDER_ITEMS          | 69a06cbc-1f08-4f90-8a7e-122429cdc56e   (OI1 - reused as VOUCHER_ORDER_ITEM_ID for all 6 vouchers below)
+SESSION_SLOTS        | 338c8c87-e3ff-4828-b2d4-7dbe55fae18b   (SLOT1 - reused as SESSION_SLOT_ID for all 7 sessions below)
+
+SESSION_VOUCHERS     | 243468a3-7cd6-40f1-ba77-ca43ca9f4a66   (VOUCHER_F1 - VISIO, M1)
+SESSION_VOUCHERS     | 486e2f9e-28a2-473f-a01a-c2839e28cdf4   (VOUCHER_F2 - PRESENTIEL_SOLO, M1)
+SESSION_VOUCHERS     | 806cbc95-c7f3-4c47-afe3-be5e8e13683d   (VOUCHER_F4 - VISIO, M1)
+SESSION_VOUCHERS     | 79b57ab8-e624-49b6-8252-efb60072ae21   (VOUCHER_F5 - VISIO, M1)
+SESSION_VOUCHERS     | 90f2fcb3-6bf2-4191-b31c-9f980995a433   (VOUCHER_F6 - VISIO, M1)
+SESSION_VOUCHERS     | c1a11931-cb81-4828-9ab2-8cf3ab6de104   (VOUCHER_F7 - VISIO, M2)
+
+SESSIONS             | cbf19245-783b-4a9d-99fb-e4afe876a917   (F1 - VISIO, M1, SCHEDULED, ScheduledAt=PLUS5)     [in window]
+SESSIONS             | a1d7bb16-3c1a-48dc-98d9-6e89870ba5ea   (F2 - PRESENTIEL_SOLO, M1, SCHEDULED, ScheduledAt=PLUS5)
+SESSIONS             | 6a86b6d8-95c8-411c-904d-e11d3339737c   (F3 - PRESENTIEL_GROUPE, MemberId=NULL, VoucherId=NULL, SCHEDULED, ScheduledAt=PLUS5)
+SESSIONS             | 6482583f-872b-46ac-8fe6-fefee1f63d64   (F4 - VISIO, M1, CANCELLED, ScheduledAt=PLUS5)
+SESSIONS             | 4a0e28cf-1db3-4ea4-ad88-91d5ee6d850e   (F5 - VISIO, M1, SCHEDULED, ScheduledAt=PLUS3H)    [window not open]
+SESSIONS             | 140ede3a-73ab-42c4-933a-ab89c1a69ac0   (F6 - VISIO, M1, SCHEDULED, ScheduledAt=MINUS3H)   [window closed]
+SESSIONS             | 13b610ca-6c6d-47d3-ad4d-c4c799cd8195   (F7 - VISIO, M2, SCHEDULED, ScheduledAt=PLUS5)     [other member]
+
+SESSION_PARTICIPANTS | ce588a1f-3061-436f-b7d4-7e437b3e01db   (PARTICIPANT_F3 - session F3, member M1, REGISTERED)
+
+F8 (VISIO owned by coach B): NOT CREATED - no second coach exists in the local DB.
