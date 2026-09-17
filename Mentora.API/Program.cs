@@ -242,6 +242,20 @@ builder.Services.AddScoped<IProgramService, ProgramService>();
 // Lot 6.5 — Merged agenda
 builder.Services.AddScoped<IAgendaService, AgendaService>();
 
+// Lot 8 — LiveKit visio-token issuance. ValidateOnStart fails loudly on a missing/malformed
+// secret: this is new in the codebase and intentional — a missing secret must never silently
+// degrade to "no check" for something as sensitive as room-join credentials.
+builder.Services.AddOptions<LiveKitOptions>()
+    .Bind(builder.Configuration.GetSection(LiveKitOptions.SectionName))
+    .Validate(o => !string.IsNullOrWhiteSpace(o.Url) && (o.Url.StartsWith("wss://") || o.Url.StartsWith("ws://")),
+        "LiveKit:Url must be set and start with wss:// or ws://.")
+    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey), "LiveKit:ApiKey must be set.")
+    .Validate(o => o.ApiSecret.Length >= 32, "LiveKit:ApiSecret must be at least 32 characters.")
+    .Validate(o => o.JoinBeforeMinutes >= 0, "LiveKit:JoinBeforeMinutes must not be negative.")
+    .Validate(o => o.JoinAfterEndMinutes >= 0, "LiveKit:JoinAfterEndMinutes must not be negative.")
+    .ValidateOnStart();
+builder.Services.AddScoped<IVisioTokenService, VisioTokenService>();
+
 // Lot 3.3 — SignalR (enum serialization mirrors the REST JSON convention)
 builder.Services.AddSignalR()
     .AddJsonProtocol(options =>
