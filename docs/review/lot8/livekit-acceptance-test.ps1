@@ -7,11 +7,12 @@
 [CmdletBinding()]
 param(
     [string]$AppSettingsDevPath = "C:\Users\gitte\OneDrive\Documents\Web2success\Mentora\tech\repo-mentora\Mentora.API\appsettings.Development.json",
-    [string]$C1ResponsePath = (Join-Path $PSScriptRoot "c1-response.json"),
+    [string]$C1ResponsePath = "",
     [string]$LiveKitImage = "livekit/livekit-server:v1.13.7"
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($C1ResponsePath)) { $C1ResponsePath = Join-Path $PSScriptRoot "c1-response.json" }
 
 # --- Read secret, never echoed ---
 $devSettings = Get-Content $AppSettingsDevPath -Raw | ConvertFrom-Json

@@ -11,10 +11,11 @@ param(
     [string]$MemberEmail = "member@mentora.fr",
     [Parameter(Mandatory = $true)]
     [string]$LogFile,
-    [string]$OutFile = (Join-Path $PSScriptRoot "tokens.json")
+    [string]$OutFile = ""
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($OutFile)) { $OutFile = Join-Path $PSScriptRoot "tokens.json" }
 
 function Invoke-ApiCall {
     param([string]$Method, [string]$Path, $Body = $null, [string]$Token = $null)

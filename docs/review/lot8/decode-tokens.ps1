@@ -9,10 +9,11 @@ param(
     [Parameter(Mandatory = $true)][string]$CoachToken,
     [Parameter(Mandatory = $true)][string]$MemberToken,
     [Parameter(Mandatory = $true)][string]$F1,
-    [string]$OutDir = (Join-Path $PSScriptRoot ".")
+    [string]$OutDir = ""
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($OutDir)) { $OutDir = $PSScriptRoot }
 
 function Invoke-VisioCall {
     param([string]$Path, [string]$Token)

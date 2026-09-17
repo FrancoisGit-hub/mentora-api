@@ -17,10 +17,11 @@ param(
     [Parameter(Mandatory = $true)][string]$F6,
     [Parameter(Mandatory = $true)][string]$F7,
     [string]$F8 = "",
-    [string]$OutDir = (Join-Path $PSScriptRoot ".")
+    [string]$OutDir = ""
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($OutDir)) { $OutDir = $PSScriptRoot }
 $script:Results = New-Object System.Collections.Generic.List[object]
 
 function Invoke-VisioCall {
