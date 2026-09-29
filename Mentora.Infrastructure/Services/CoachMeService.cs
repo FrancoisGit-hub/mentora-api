@@ -94,8 +94,10 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             .Where(o => o.CoachId == coachId && o.Status == OrderStatus.Paid && o.PaidAt >= monthStart)
             .SumAsync(o => (decimal?)o.TotalEuros, ct) ?? 0m;
 
+        // Sold = member purchases only; coach grants (Lot 9) also create vouchers but are not sales.
         var sessionsSoldThisMonth = await db.SessionVouchers.CountAsync(v =>
-            v.CoachId == coachId && v.CreatedDate >= monthStart, ct);
+            v.CoachId == coachId && v.CreatedDate >= monthStart
+            && v.OrderItem.Order.Origin == PurchaseOrigin.MemberPurchase, ct);
 
         var revenuePrevMonth = await db.Orders
             .Where(o => o.CoachId == coachId && o.Status == OrderStatus.Paid
@@ -103,7 +105,8 @@ public class CoachMeService(MentoraDbContext db) : ICoachMeService
             .SumAsync(o => (decimal?)o.TotalEuros, ct) ?? 0m;
 
         var sessionsSoldPrevMonth = await db.SessionVouchers.CountAsync(v =>
-            v.CoachId == coachId && v.CreatedDate >= prevMonthStart && v.CreatedDate < monthStart, ct);
+            v.CoachId == coachId && v.CreatedDate >= prevMonthStart && v.CreatedDate < monthStart
+            && v.OrderItem.Order.Origin == PurchaseOrigin.MemberPurchase, ct);
 
         var revenueTotal = await db.Orders
             .Where(o => o.CoachId == coachId && o.Status == OrderStatus.Paid)

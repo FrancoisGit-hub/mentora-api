@@ -41,7 +41,10 @@ public class ExerciseService(
             query = query.Where(e => e.ExerciseIsActive);
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(e => EF.Functions.ILike(e.ExerciseName, $"%{search.Trim()}%"));
+        {
+            var likePattern = "%" + EscapeLike(search.Trim()) + "%";
+            query = query.Where(e => EF.Functions.ILike(e.ExerciseName, likePattern, "\\"));
+        }
 
         if (muscleGroupFilter is not null)
             query = query.Where(e => e.ExerciseMuscleGroup == muscleGroupFilter.Value);
