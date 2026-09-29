@@ -343,6 +343,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await OfferProgramSeeder.SeedAsync(scope.ServiceProvider);
     await ExerciseSeeder.SeedAsync(scope.ServiceProvider);
     await MuscleGroupSeeder.SeedAsync(scope.ServiceProvider);
+    await CatalogSeeder.SeedAsync(scope.ServiceProvider);
     await ProgramTemplateSeeder.SeedAsync(scope.ServiceProvider);
 }
 

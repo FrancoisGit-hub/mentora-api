@@ -10,10 +10,20 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
+  </ItemGroup>
+
+  <!-- Exercise catalog CSV exports read by CatalogSeeder. Explicit LogicalName so the resource
+       names do not depend on the folder-to-namespace mangling rules. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Seeding\Catalog\EXERCICES.csv" LogicalName="Mentora.Catalog.EXERCICES.csv" />
+    <EmbeddedResource Include="Seeding\Catalog\MATERIELS.csv" LogicalName="Mentora.Catalog.MATERIELS.csv" />
+    <EmbeddedResource Include="Seeding\Catalog\MUSCLES.csv" LogicalName="Mentora.Catalog.MUSCLES.csv" />
+    <EmbeddedResource Include="Seeding\Catalog\EXERCICES_MUSCLES.csv" LogicalName="Mentora.Catalog.EXERCICES_MUSCLES.csv" />
   </ItemGroup>
 
   <PropertyGroup>
