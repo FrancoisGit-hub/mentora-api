@@ -116,6 +116,9 @@ builder.Services.AddSwaggerGen(c =>
 
     // Expose VoucherStatus query param as a constrained string enum in Swagger
     c.OperationFilter<VoucherStatusOperationFilter>();
+
+    // Lot 9.1 — flag the deprecated api/v1/coach/programs alias (see OfferProgramsController)
+    c.OperationFilter<DeprecatedCoachProgramsRouteOperationFilter>();
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

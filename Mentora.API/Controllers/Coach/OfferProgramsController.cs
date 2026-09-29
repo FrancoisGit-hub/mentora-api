@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace Mentora.API.Controllers.Coach;
 
 [ApiController]
-[Route("api/v1/coach/programs")]
+[Route("api/v1/coach/product-programs", Order = 0)]
+// TODO(lot9-backlog): remove the deprecated coach/programs alias once the mobile app uses product-programs.
+[Route("api/v1/coach/programs", Order = 1)]
 [Authorize(Policy = "CoachOnly")]
 [ApiExplorerSettings(GroupName = "coach")]
 [Tags("Coach — Programs")]
