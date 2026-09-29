@@ -6,6 +6,9 @@ namespace Mentora.Core.Entities;
 /// </summary>
 public class EquipmentItem
 {
+    /// <summary>Name of the equipment row that stands for "no equipment needed".</summary>
+    public const string NoEquipmentName = "Sans matériel";
+
     public Guid EquipmentId { get; set; }
     public string? EquipmentSourceCode { get; set; }
     public string EquipmentName { get; set; } = null!;

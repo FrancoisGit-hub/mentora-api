@@ -18,8 +18,15 @@ public class CoachExercisesController(IExerciseService exerciseService) : Contro
     /// plus the coach's own.
     /// </summary>
     /// <param name="search">Optional case-insensitive substring filter on the exercise name.</param>
-    /// <param name="muscleGroup">Optional muscle group filter (wire value, e.g. <c>CHEST</c>).</param>
-    /// <param name="equipment">Optional equipment filter (wire value, e.g. <c>BARBELL</c>).</param>
+    /// <param name="muscleGroup">Deprecated since Lot 9, use <c>muscleGroupId</c>. Removed in Lot 10. Legacy muscle group filter (wire value, e.g. <c>CHEST</c>).</param>
+    /// <param name="equipment">Deprecated since Lot 9, use <c>equipmentId</c>. Removed in Lot 10. Legacy equipment filter (wire value, e.g. <c>BARBELL</c>).</param>
+    /// <param name="muscleGroupId">Optional primary muscle group filter.</param>
+    /// <param name="equipmentId">Optional equipment filter, matching primary or secondary equipment.</param>
+    /// <param name="objectiveId">Optional objective filter.</param>
+    /// <param name="level">
+    /// Optional level (<c>BEGINNER</c>, <c>INTERMEDIATE</c>, <c>ADVANCED</c>): returns exercises whose minimum
+    /// level is lower than or equal to it. Exercises with an unknown level are excluded when given.
+    /// </param>
     /// <param name="scope">
     /// <c>ALL</c> (default) returns Mentora entries and this coach's own; <c>MENTORA</c> restricts
     /// to shared catalogue entries; <c>MINE</c> restricts to this coach's own entries.
@@ -35,13 +42,18 @@ public class CoachExercisesController(IExerciseService exerciseService) : Contro
         [FromQuery] string? search,
         [FromQuery] string? muscleGroup,
         [FromQuery] string? equipment,
+        [FromQuery] Guid? muscleGroupId,
+        [FromQuery] Guid? equipmentId,
+        [FromQuery] Guid? objectiveId,
+        [FromQuery] string? level,
         [FromQuery] string scope = "ALL",
         [FromQuery] bool includeInactive = false,
         CancellationToken ct = default)
     {
         var coachId = Guid.Parse(User.FindFirst("coachId")!.Value);
         var result  = await exerciseService.ListForCoachAsync(
-            coachId, search, muscleGroup, equipment, scope, includeInactive, ct);
+            coachId, search, muscleGroup, equipment, muscleGroupId, equipmentId, objectiveId, level,
+            scope, includeInactive, ct);
         return Ok(new { success = true, data = result, error = (string?)null, statusCode = 200 });
     }
 
