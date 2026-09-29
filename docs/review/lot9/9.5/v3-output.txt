@@ -1,0 +1,31 @@
+﻿=== Prise de masse — débutant (24abe8d4-fd8d-4885-8c1b-2fcec1f3343c)
+POST -> 201  Location: /api/v1/coach/training-programs/2e89cf55-a572-466a-9b1b-c3c71aecdb0c
+  programId=2e89cf55-a572-466a-9b1b-c3c71aecdb0c archivedProgramId=
+GET  -> 200
+  name='Prise de masse — débutant' goal=MUSCLE_GAIN status=ACTIVE durationWeeks=4 templateId=24abe8d4-fd8d-4885-8c1b-2fcec1f3343c
+  [OK] status ACTIVE
+  [OK] templateId kept
+  [OK] blocks 6 = 6
+  [OK] sessions 12 = 12
+  [OK] circuits 16 = 16
+  [OK] exercises 52 = 52
+  [OK] exercise ids identical to template body (multiset)
+  [OK] every exercise resolves (name present), unresolved=0
+  distinct exercises: 13; first names: Développé couché barre / Rowing barre buste penché / Développé épaules barre / Traction / tirage vertical
+=== Remise en forme — débutant (7f65f76c-70b8-405d-9a89-1c0b97623a0f)
+POST -> 201  Location: /api/v1/coach/training-programs/b4bedede-88f2-43bf-b6bf-70d8077d3d61
+  programId=b4bedede-88f2-43bf-b6bf-70d8077d3d61 archivedProgramId=2e89cf55-a572-466a-9b1b-c3c71aecdb0c
+GET  -> 200
+  name='Remise en forme — débutant' goal=GENERAL_FITNESS status=ACTIVE durationWeeks=4 templateId=7f65f76c-70b8-405d-9a89-1c0b97623a0f
+  [OK] status ACTIVE
+  [OK] templateId kept
+  [OK] blocks 4 = 4
+  [OK] sessions 12 = 12
+  [OK] circuits 16 = 16
+  [OK] exercises 36 = 36
+  [OK] exercise ids identical to template body (multiset)
+  [OK] every exercise resolves (name present), unresolved=0
+  distinct exercises: 9; first names: Squat / Pompes / Gainage planche / Burpees
+
+Created program ids (2) saved to C:\Users\gitte\OneDrive\Documents\Web2success\Mentora\tech\repo-mentora\docs\review\lot9\9.5\v3-created-program-ids.txt
+V3 RESULT: ALL OK

@@ -1,0 +1,25 @@
+   legacy   |       grp       | count 
+------------+-----------------+-------
+ ABS        | Abdominaux      |     3
+ BACK       | Dos             |     2
+ BICEPS     | Bras            |     3
+ CALVES     | Mollets         |     1
+ CARDIO     |                 |     1
+ CHEST      | Pectoraux       |     1
+ FOREARMS   | Avant-bras      |     3
+ FULL_BODY  |                 |     3
+ GLUTES     | Fessiers        |     2
+ HAMSTRINGS | Ischio-jambiers |     1
+ QUADRICEPS | Quadriceps      |     2
+ SHOULDERS  | Épaules         |     3
+ TRICEPS    | Bras            |     2
+(13 rows)
+
+     EXERCISE_NAME     | EXERCISE_MUSCLE_GROUP 
+-----------------------+-----------------------
+ Burpees               | FULL_BODY
+ Course à pied (tapis) | CARDIO
+ Kettlebell swing      | FULL_BODY
+ Thruster haltères     | FULL_BODY
+(4 rows)
+

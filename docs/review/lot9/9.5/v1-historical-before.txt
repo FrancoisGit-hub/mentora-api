@@ -1,0 +1,17 @@
+   legacy   | grp | count 
+------------+-----+-------
+ ABS        |     |     3
+ BACK       |     |     2
+ BICEPS     |     |     3
+ CALVES     |     |     1
+ CARDIO     |     |     1
+ CHEST      |     |     1
+ FOREARMS   |     |     3
+ FULL_BODY  |     |     3
+ GLUTES     |     |     2
+ HAMSTRINGS |     |     1
+ QUADRICEPS |     |     2
+ SHOULDERS  |     |     3
+ TRICEPS    |     |     2
+(13 rows)
+

@@ -1,0 +1,37 @@
+BEGIN
+SELECT 2
+--- targets before
+ programs_selected | programs_of_m3 | blocks | sessions | circuits | exercises | member_coaches | members | users 
+-------------------+----------------+--------+----------+----------+-----------+----------------+---------+-------
+                 2 |              2 |     10 |       24 |       32 |        88 |              1 |       1 |     1
+(1 row)
+
+--- other rows hanging on M3 (should all be 0, they would cascade with the member)
+ conversations | member_parameters | auth_otps | auth_refresh_tokens 
+---------------+-------------------+-----------+---------------------
+             0 |                 0 |         0 |                   0
+(1 row)
+
+--- deletes
+DELETE 88
+DELETE 32
+DELETE 24
+DELETE 8
+DELETE 1
+DELETE 1
+DELETE 2
+DELETE 1
+DELETE 1
+DELETE 1
+--- targets after deletes (inside the transaction: all 0 expected)
+ programs_of_m3 | blocks | sessions | circuits | exercises | member_coaches | members | users 
+----------------+--------+----------+----------+-----------+----------------+---------+-------
+              0 |      0 |        0 |        0 |         0 |              0 |       0 |     0
+(1 row)
+
+ROLLBACK
+ programs | program_exercises | m3 | m3_user 
+----------+-------------------+----+---------
+        2 |                88 |  1 |       1
+(1 row)
+

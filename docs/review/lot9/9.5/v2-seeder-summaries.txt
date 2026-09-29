@@ -1,0 +1,9 @@
+      MuscleGroupSeeder: created 0 muscle group(s).
+      CatalogSeeder no-equipment row: created 0, existing 1.
+      CatalogSeeder equipment: created 0, existing 70, skipped 0, warnings 0.
+      CatalogSeeder objectives: created 0, existing 53, skipped 0, warnings 0.
+      CatalogSeeder primary groups: from muscles 248, from label 0, unresolved 0, mismatches 138, warnings 0.
+      CatalogSeeder extra equipment: created 0, warnings 0.
+      CatalogSeeder historical groups filled: 0.
+      CatalogSeeder exercises: created 0, adopted 0, already imported 248, filled 0, historical no-equipment 0, skipped 2, objective links added 0, plural-only equipment matches 3, warnings 1.
+      Now listening on: http://localhost:5243
