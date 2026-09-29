@@ -1,0 +1,32 @@
+﻿## 1. Offer program
+  programId: a394381a-448b-43ce-a17d-e9a419726057  name: Lot9.1 V11 create check
+## 2. Fixture product (DRAFT)
+  productId: 718b91a3-79bd-40d8-b863-93d6c9655662  status: DRAFT
+## 3. Grant 1 voucher to member 38b05ed2-e577-4cf7-81e9-365eaafab626
+{
+    "purchaseId":  "31fd024d-fa8b-447e-be59-5e44cb3ea841",
+    "memberId":  "38b05ed2-e577-4cf7-81e9-365eaafab626",
+    "productId":  "718b91a3-79bd-40d8-b863-93d6c9655662",
+    "quantity":  1,
+    "voucherCount":  1,
+    "voucherIds":  [
+                       "877eda3e-09db-42e5-b761-d5229cd931e9"
+                   ],
+    "origin":  "COACH_GRANT",
+    "grantedDate":  "2026-09-29T21:06:04.3400903Z"
+}
+  orderId (purchaseId): 31fd024d-fa8b-447e-be59-5e44cb3ea841
+## 4. GET /api/v1/coach/me after the grant
+
+
+appointmentsThisMonth : 0
+revenueThisMonth      : 0
+sessionsSoldThisMonth : 0
+revenuePrevMonth      : 0
+sessionsSoldPrevMonth : 0
+activeMembersCount    : 2
+revenueTotal          : 0
+
+
+
+

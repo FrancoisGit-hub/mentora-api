@@ -1,0 +1,39 @@
+== BEFORE
+ fixture_vouchers | fixture_order_items | fixture_orders | fixture_products | vouchers_total | order_items_total | orders_total | products_total 
+------------------+---------------------+----------------+------------------+----------------+-------------------+--------------+----------------
+                1 |                   1 |              1 |                1 |              1 |                 1 |            1 |              1
+(1 row)
+
+BEGIN
+== DELETE
+              VOUCHER_ID              |     VOUCHER_CREATED_DATE      
+--------------------------------------+-------------------------------
+ 877eda3e-09db-42e5-b761-d5229cd931e9 | 2026-09-29 21:06:04.342769+00
+(1 row)
+
+DELETE 1
+            ORDER_ITEM_ID             | ORDER_ITEM_PRODUCT_NAME 
+--------------------------------------+-------------------------
+ 79f9df94-69aa-4c81-b234-adb806337481 | Lot96 grant fixture
+(1 row)
+
+DELETE 1
+               ORDER_ID               | ORDER_ORIGIN | ORDER_TOTAL_EUROS |      ORDER_CREATED_DATE      
+--------------------------------------+--------------+-------------------+------------------------------
+ 31fd024d-fa8b-447e-be59-5e44cb3ea841 | COACH_GRANT  |              0.00 | 2026-09-29 21:06:04.34009+00
+(1 row)
+
+DELETE 1
+              PRODUCT_ID              |    PRODUCT_NAME     | PRODUCT_STATUS |     PRODUCT_CREATED_DATE      
+--------------------------------------+---------------------+----------------+-------------------------------
+ 718b91a3-79bd-40d8-b863-93d6c9655662 | Lot96 grant fixture | DRAFT          | 2026-09-29 21:06:04.094001+00
+(1 row)
+
+DELETE 1
+== AFTER (inside the transaction)
+ fixture_order_items | fixture_orders | fixture_products | vouchers_total | order_items_total | orders_total | products_total 
+---------------------+----------------+------------------+----------------+-------------------+--------------+----------------
+                   0 |              0 |                0 |              0 |                 0 |            0 |              0
+(1 row)
+
+COMMIT

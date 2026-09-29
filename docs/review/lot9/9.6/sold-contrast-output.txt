@@ -1,0 +1,10 @@
+ sold_old_predicate | sold_new_predicate 
+--------------------+--------------------
+                  1 |                  0
+(1 row)
+
+               ORDER_ID               | ORDER_ORIGIN | ORDER_STATUS | ORDER_TOTAL_EUROS |      ORDER_CREATED_DATE      
+--------------------------------------+--------------+--------------+-------------------+------------------------------
+ 31fd024d-fa8b-447e-be59-5e44cb3ea841 | COACH_GRANT  | PAID         |              0.00 | 2026-09-29 21:06:04.34009+00
+(1 row)
+

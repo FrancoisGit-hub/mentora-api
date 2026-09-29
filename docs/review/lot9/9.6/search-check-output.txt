@@ -1,0 +1,5 @@
+ name_contains_percent | name_contains_underscore | name_ilike_squat 
+-----------------------+--------------------------+------------------
+                     0 |                        0 |                9
+(1 row)
+

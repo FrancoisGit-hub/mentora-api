@@ -1,0 +1,22 @@
+GET /api/v1/coach/exercises?search=%25 -> 200
+  items: 0
+
+GET /api/v1/coach/exercises?search=_ -> 200
+  items: 0
+
+GET /api/v1/coach/exercises?search=squat -> 200
+  items: 9
+   - Bulgarian split squat
+   - Goblet squat
+   - Hack squat
+   - Saut squat
+   - Sissy squat assisté
+   - Smith machine squat
+   - Squat
+   - Squat barre arrière
+   - Squat haltères
+
+SQL check: see search-check.sql / search-check-output.txt
+
+EF-generated SQL (from api-run.log):
+WHERE (e."EXERCISE_COACH_ID" IS NULL OR e."EXERCISE_COACH_ID" = @__coachId_0) AND e."EXERCISE_IS_ACTIVE" AND e."EXERCISE_NAME" ILIKE @__likePattern_2 ESCAPE '\'
