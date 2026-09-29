@@ -616,6 +616,25 @@ public static class CatalogSeeder
             historicalLinked++;
         }
 
+        // Rule 7.6: a historical Mentora exercise with no primary group gets it from its legacy
+        // muscle group code. FULL_BODY and CARDIO have no matching group and stay NULL.
+        var groupsByName = new Dictionary<string, MuscleGroupItem>(StringComparer.OrdinalIgnoreCase);
+        foreach (var g in await db.MuscleGroups.ToListAsync())
+            groupsByName.TryAdd(g.MuscleGroupName.Trim(), g);
+
+        var historicalGroups = 0;
+        foreach (var historical in mentora.Where(e => e.ExerciseSourceCode == null
+                                                      && e.ExercisePrimaryMuscleGroupId == null))
+        {
+            var groupName = HistoricalGroupName(historical.ExerciseMuscleGroup);
+            if (groupName is null || !groupsByName.TryGetValue(groupName, out var legacyGroup))
+                continue;
+
+            historical.ExercisePrimaryMuscleGroupId = legacyGroup.MuscleGroupId;
+            historical.ExerciseUpdatedDate          = now;
+            historicalGroups++;
+        }
+
         foreach (var (value, ids) in unmatchedEquipment)
             warnings.Add($"unmatched equipment '{value}' x{ids.Count}, left NULL: {string.Join(", ", ids)}");
         foreach (var (value, ids) in ambiguousEquipment)
@@ -626,8 +645,10 @@ public static class CatalogSeeder
             .Select(p => $"plural-only equipment match {p.Key} x{p.Value.Count}: {string.Join(", ", p.Value)}")
             .ToList();
 
-        if (created > 0 || adopted > 0 || filled > 0 || historicalLinked > 0)
+        if (created > 0 || adopted > 0 || filled > 0 || historicalLinked > 0 || historicalGroups > 0)
             await db.SaveChangesAsync();
+
+        logger.LogInformation("CatalogSeeder historical groups filled: {Count}.", historicalGroups);
 
         logger.LogInformation(
             "CatalogSeeder exercises: created {Created}, adopted {Adopted}, already imported {AlreadyImported}, filled {Filled}, historical no-equipment {Historical}, skipped {Skipped}, objective links added {Links}, plural-only equipment matches {Plural}, warnings {Warnings}.",
@@ -741,6 +762,23 @@ public static class CatalogSeeder
         }
         return MuscleGroup.FullBody;
     }
+
+    // Legacy code -> MUSCLE_GROUPS name (rule 7.6). FULL_BODY and CARDIO map to nothing.
+    private static string? HistoricalGroupName(MuscleGroup legacy) => legacy switch
+    {
+        MuscleGroup.Chest      => "Pectoraux",
+        MuscleGroup.Back       => "Dos",
+        MuscleGroup.Shoulders  => "Épaules",
+        MuscleGroup.Biceps     => "Bras",
+        MuscleGroup.Triceps    => "Bras",
+        MuscleGroup.Forearms   => "Avant-bras",
+        MuscleGroup.Abs        => "Abdominaux",
+        MuscleGroup.Quadriceps => "Quadriceps",
+        MuscleGroup.Hamstrings => "Ischio-jambiers",
+        MuscleGroup.Glutes     => "Fessiers",
+        MuscleGroup.Calves     => "Mollets",
+        _                      => null,
+    };
 
     private static Equipment LegacyEquipment(EquipmentItem? primary, string? primaryRaw)
     {
