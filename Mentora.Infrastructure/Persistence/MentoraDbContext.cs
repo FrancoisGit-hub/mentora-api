@@ -33,6 +33,11 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
+    public DbSet<MuscleGroupItem> MuscleGroups => Set<MuscleGroupItem>();
+    public DbSet<EquipmentItem> EquipmentItems => Set<EquipmentItem>();
+    public DbSet<Objective> Objectives => Set<Objective>();
+    public DbSet<ExerciseObjective> ExerciseObjectives => Set<ExerciseObjective>();
+    public DbSet<ExerciseVideo> ExerciseVideos => Set<ExerciseVideo>();
     public DbSet<ProgramTemplate> ProgramTemplates => Set<ProgramTemplate>();
     public DbSet<Program> Programs => Set<Program>();
     public DbSet<ProgramBlock> ProgramBlocks => Set<ProgramBlock>();

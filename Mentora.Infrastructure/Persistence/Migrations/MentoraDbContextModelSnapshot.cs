@@ -420,6 +420,66 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.ToTable("CONVERSATIONS", (string)null);
                 });
 
+            modelBuilder.Entity("Mentora.Core.Entities.EquipmentItem", b =>
+                {
+                    b.Property<Guid>("EquipmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("EQUIPMENT_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("EquipmentCategory")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("EQUIPMENT_CATEGORY");
+
+                    b.Property<DateTime>("EquipmentCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("EQUIPMENT_CREATED_DATE");
+
+                    b.Property<bool>("EquipmentIsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("EQUIPMENT_IS_ACTIVE");
+
+                    b.Property<string>("EquipmentLegacyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasDefaultValue("OTHER")
+                        .HasColumnName("EQUIPMENT_LEGACY_CODE");
+
+                    b.Property<string>("EquipmentName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("EQUIPMENT_NAME");
+
+                    b.Property<string>("EquipmentSourceCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("EQUIPMENT_SOURCE_CODE");
+
+                    b.Property<string>("EquipmentSubcategory")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("EQUIPMENT_SUBCATEGORY");
+
+                    b.Property<DateTime>("EquipmentUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("EQUIPMENT_UPDATED_DATE");
+
+                    b.HasKey("EquipmentId");
+
+                    b.HasIndex("EquipmentName")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EQUIPMENT_NAME");
+
+                    b.ToTable("EQUIPMENT", (string)null);
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.Exercise", b =>
                 {
                     b.Property<Guid>("ExerciseId")
@@ -428,9 +488,26 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnName("EXERCISE_ID")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<string>("ExerciseBreathing")
+                        .HasColumnType("text")
+                        .HasColumnName("EXERCISE_BREATHING");
+
+                    b.Property<string>("ExerciseCategory")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("EXERCISE_CATEGORY");
+
                     b.Property<Guid?>("ExerciseCoachId")
                         .HasColumnType("uuid")
                         .HasColumnName("EXERCISE_COACH_ID");
+
+                    b.Property<string>("ExerciseCoachTip")
+                        .HasColumnType("text")
+                        .HasColumnName("EXERCISE_COACH_TIP");
+
+                    b.Property<List<string>>("ExerciseCommonMistakes")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("EXERCISE_COMMON_MISTAKES");
 
                     b.Property<DateTime>("ExerciseCreatedDate")
                         .HasColumnType("timestamp with time zone")
@@ -445,6 +522,11 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)")
                         .HasColumnName("EXERCISE_EQUIPMENT");
+
+                    b.Property<string>("ExerciseGripType")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("EXERCISE_GRIP_TYPE");
 
                     b.Property<string>("ExerciseImageUrl")
                         .HasMaxLength(500)
@@ -467,6 +549,21 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("EXERCISE_IS_POLYARTICULAR");
 
+                    b.Property<string>("ExerciseLaterality")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("EXERCISE_LATERALITY");
+
+                    b.Property<string>("ExerciseMinLevel")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("EXERCISE_MIN_LEVEL");
+
+                    b.Property<string>("ExerciseMovementPattern")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("EXERCISE_MOVEMENT_PATTERN");
+
                     b.Property<string>("ExerciseMuscleGroup")
                         .IsRequired()
                         .HasMaxLength(40)
@@ -479,6 +576,50 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(120)")
                         .HasColumnName("EXERCISE_NAME");
 
+                    b.Property<string>("ExerciseNameEn")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("EXERCISE_NAME_EN");
+
+                    b.Property<string>("ExercisePrecautions")
+                        .HasColumnType("text")
+                        .HasColumnName("EXERCISE_PRECAUTIONS");
+
+                    b.Property<Guid?>("ExercisePrimaryEquipmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("EXERCISE_PRIMARY_EQUIPMENT_ID");
+
+                    b.Property<Guid?>("ExercisePrimaryMuscleGroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("EXERCISE_PRIMARY_MUSCLE_GROUP_ID");
+
+                    b.Property<string>("ExerciseSearchTags")
+                        .HasColumnType("text")
+                        .HasColumnName("EXERCISE_SEARCH_TAGS");
+
+                    b.Property<Guid?>("ExerciseSecondaryEquipmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("EXERCISE_SECONDARY_EQUIPMENT_ID");
+
+                    b.Property<List<string>>("ExerciseSecondaryMuscles")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("EXERCISE_SECONDARY_MUSCLES");
+
+                    b.Property<string>("ExerciseSourceCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("EXERCISE_SOURCE_CODE");
+
+                    b.Property<string>("ExerciseStartingPosition")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("EXERCISE_STARTING_POSITION");
+
+                    b.Property<string>("ExerciseType")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("EXERCISE_TYPE");
+
                     b.Property<DateTime>("ExerciseUpdatedDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("EXERCISE_UPDATED_DATE");
@@ -490,10 +631,109 @@ namespace Mentora.Infrastructure.Persistence.Migrations
 
                     b.HasKey("ExerciseId");
 
+                    b.HasIndex("ExerciseMinLevel")
+                        .HasDatabaseName("IX_EXERCISES_MIN_LEVEL");
+
+                    b.HasIndex("ExercisePrimaryEquipmentId")
+                        .HasDatabaseName("IX_EXERCISES_PRIMARY_EQUIPMENT");
+
+                    b.HasIndex("ExercisePrimaryMuscleGroupId")
+                        .HasDatabaseName("IX_EXERCISES_PRIMARY_MUSCLE_GROUP");
+
+                    b.HasIndex("ExerciseSecondaryEquipmentId")
+                        .HasDatabaseName("IX_EXERCISES_SECONDARY_EQUIPMENT");
+
                     b.HasIndex("ExerciseCoachId", "ExerciseIsActive")
                         .HasDatabaseName("IX_EXERCISES_COACH_ACTIVE");
 
                     b.ToTable("EXERCISES", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.ExerciseObjective", b =>
+                {
+                    b.Property<Guid>("ExerciseObjectiveExerciseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("EXERCISE_OBJECTIVE_EXERCISE_ID");
+
+                    b.Property<Guid>("ExerciseObjectiveObjectiveId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("EXERCISE_OBJECTIVE_OBJECTIVE_ID");
+
+                    b.HasKey("ExerciseObjectiveExerciseId", "ExerciseObjectiveObjectiveId");
+
+                    b.HasIndex("ExerciseObjectiveObjectiveId")
+                        .HasDatabaseName("IX_EXERCISE_OBJECTIVES_OBJECTIVE");
+
+                    b.ToTable("EXERCISE_OBJECTIVES", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.ExerciseVideo", b =>
+                {
+                    b.Property<Guid>("ExerciseVideoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("EXERCISE_VIDEO_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("ExerciseVideoAspectRatio")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("EXERCISE_VIDEO_ASPECT_RATIO");
+
+                    b.Property<DateTime>("ExerciseVideoCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("EXERCISE_VIDEO_CREATED_DATE");
+
+                    b.Property<decimal?>("ExerciseVideoDurationSeconds")
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("EXERCISE_VIDEO_DURATION_SECONDS");
+
+                    b.Property<Guid>("ExerciseVideoExerciseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("EXERCISE_VIDEO_EXERCISE_ID");
+
+                    b.Property<string>("ExerciseVideoMuxAssetId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("EXERCISE_VIDEO_MUX_ASSET_ID");
+
+                    b.Property<string>("ExerciseVideoMuxPlaybackId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("EXERCISE_VIDEO_MUX_PLAYBACK_ID");
+
+                    b.Property<string>("ExerciseVideoPlaybackPolicy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("EXERCISE_VIDEO_PLAYBACK_POLICY")
+                        .HasDefaultValueSql("'PUBLIC'");
+
+                    b.Property<string>("ExerciseVideoStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("EXERCISE_VIDEO_STATUS")
+                        .HasDefaultValueSql("'WAITING'");
+
+                    b.Property<DateTime>("ExerciseVideoUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("EXERCISE_VIDEO_UPDATED_DATE");
+
+                    b.HasKey("ExerciseVideoId");
+
+                    b.HasIndex("ExerciseVideoExerciseId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EXERCISE_VIDEOS_EXERCISE");
+
+                    b.HasIndex("ExerciseVideoMuxAssetId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EXERCISE_VIDEOS_MUX_ASSET");
+
+                    b.ToTable("EXERCISE_VIDEOS", (string)null);
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.HealthCheck", b =>
@@ -743,6 +983,78 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_MESSAGES_CONVERSATION_SENT_DESC");
 
                     b.ToTable("MESSAGES", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.MuscleGroupItem", b =>
+                {
+                    b.Property<Guid>("MuscleGroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("MUSCLE_GROUP_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("MuscleGroupCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("MUSCLE_GROUP_CREATED_DATE");
+
+                    b.Property<string>("MuscleGroupLegacyCode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("MUSCLE_GROUP_LEGACY_CODE");
+
+                    b.Property<string>("MuscleGroupName")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("MUSCLE_GROUP_NAME");
+
+                    b.Property<int>("MuscleGroupSortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("MUSCLE_GROUP_SORT_ORDER");
+
+                    b.Property<DateTime>("MuscleGroupUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("MUSCLE_GROUP_UPDATED_DATE");
+
+                    b.HasKey("MuscleGroupId");
+
+                    b.HasIndex("MuscleGroupName")
+                        .IsUnique()
+                        .HasDatabaseName("UX_MUSCLE_GROUPS_NAME");
+
+                    b.ToTable("MUSCLE_GROUPS", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.Objective", b =>
+                {
+                    b.Property<Guid>("ObjectiveId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("OBJECTIVE_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("ObjectiveCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("OBJECTIVE_CREATED_DATE");
+
+                    b.Property<string>("ObjectiveName")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("OBJECTIVE_NAME");
+
+                    b.Property<DateTime>("ObjectiveUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("OBJECTIVE_UPDATED_DATE");
+
+                    b.HasKey("ObjectiveId");
+
+                    b.HasIndex("ObjectiveName")
+                        .IsUnique()
+                        .HasDatabaseName("UX_OBJECTIVES_NAME");
+
+                    b.ToTable("OBJECTIVES", (string)null);
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.OfferProgram", b =>
@@ -2089,7 +2401,58 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ExerciseCoachId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Mentora.Core.Entities.EquipmentItem", "PrimaryEquipment")
+                        .WithMany()
+                        .HasForeignKey("ExercisePrimaryEquipmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mentora.Core.Entities.MuscleGroupItem", "PrimaryMuscleGroup")
+                        .WithMany()
+                        .HasForeignKey("ExercisePrimaryMuscleGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mentora.Core.Entities.EquipmentItem", "SecondaryEquipment")
+                        .WithMany()
+                        .HasForeignKey("ExerciseSecondaryEquipmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Coach");
+
+                    b.Navigation("PrimaryEquipment");
+
+                    b.Navigation("PrimaryMuscleGroup");
+
+                    b.Navigation("SecondaryEquipment");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.ExerciseObjective", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.Exercise", "Exercise")
+                        .WithMany("ExerciseObjectives")
+                        .HasForeignKey("ExerciseObjectiveExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mentora.Core.Entities.Objective", "Objective")
+                        .WithMany()
+                        .HasForeignKey("ExerciseObjectiveObjectiveId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("Objective");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.ExerciseVideo", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.Exercise", "Exercise")
+                        .WithOne("Video")
+                        .HasForeignKey("Mentora.Core.Entities.ExerciseVideo", "ExerciseVideoExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.Member", b =>
@@ -2478,6 +2841,13 @@ namespace Mentora.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Mentora.Core.Entities.Conversation", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.Exercise", b =>
+                {
+                    b.Navigation("ExerciseObjectives");
+
+                    b.Navigation("Video");
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.Member", b =>

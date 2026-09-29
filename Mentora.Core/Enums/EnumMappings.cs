@@ -416,6 +416,70 @@ public static class EnumMappings
         }
     }
 
+    public static class ExerciseLevelMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["BEGINNER", "INTERMEDIATE", "ADVANCED"]);
+
+        public static ExerciseLevel Parse(string value)
+        {
+            if (value == "BEGINNER")     return ExerciseLevel.Beginner;
+            if (value == "INTERMEDIATE") return ExerciseLevel.Intermediate;
+            if (value == "ADVANCED")     return ExerciseLevel.Advanced;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ExerciseLevel wire value.");
+        }
+
+        public static string ToWire(ExerciseLevel value)
+        {
+            if (value == ExerciseLevel.Beginner)     return "BEGINNER";
+            if (value == ExerciseLevel.Intermediate) return "INTERMEDIATE";
+            if (value == ExerciseLevel.Advanced)     return "ADVANCED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ExerciseLevel enum value.");
+        }
+    }
+
+    public static class ExerciseVideoStatusMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["WAITING", "READY", "ERRORED"]);
+
+        public static ExerciseVideoStatus Parse(string value)
+        {
+            if (value == "WAITING") return ExerciseVideoStatus.Waiting;
+            if (value == "READY")   return ExerciseVideoStatus.Ready;
+            if (value == "ERRORED") return ExerciseVideoStatus.Errored;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ExerciseVideoStatus wire value.");
+        }
+
+        public static string ToWire(ExerciseVideoStatus value)
+        {
+            if (value == ExerciseVideoStatus.Waiting) return "WAITING";
+            if (value == ExerciseVideoStatus.Ready)   return "READY";
+            if (value == ExerciseVideoStatus.Errored) return "ERRORED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ExerciseVideoStatus enum value.");
+        }
+    }
+
+    public static class VideoPlaybackPolicyMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["PUBLIC", "SIGNED"]);
+
+        public static VideoPlaybackPolicy Parse(string value)
+        {
+            if (value == "PUBLIC") return VideoPlaybackPolicy.Public;
+            if (value == "SIGNED") return VideoPlaybackPolicy.Signed;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown VideoPlaybackPolicy wire value.");
+        }
+
+        public static string ToWire(VideoPlaybackPolicy value)
+        {
+            if (value == VideoPlaybackPolicy.Public) return "PUBLIC";
+            if (value == VideoPlaybackPolicy.Signed) return "SIGNED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown VideoPlaybackPolicy enum value.");
+        }
+    }
+
     public static class ProgramSessionStatusMapping
     {
         public static readonly ReadOnlyCollection<string> WireValues =
