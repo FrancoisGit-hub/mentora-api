@@ -105,6 +105,26 @@ public static class EnumMappings
         }
     }
 
+    public static class PurchaseOriginMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["MEMBER_PURCHASE", "COACH_GRANT"]);
+
+        public static PurchaseOrigin Parse(string value)
+        {
+            if (value == "MEMBER_PURCHASE") return PurchaseOrigin.MemberPurchase;
+            if (value == "COACH_GRANT")     return PurchaseOrigin.CoachGrant;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown PurchaseOrigin wire value.");
+        }
+
+        public static string ToWire(PurchaseOrigin value)
+        {
+            if (value == PurchaseOrigin.MemberPurchase) return "MEMBER_PURCHASE";
+            if (value == PurchaseOrigin.CoachGrant)     return "COACH_GRANT";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown PurchaseOrigin enum value.");
+        }
+    }
+
     public static class VoucherStatusMapping
     {
         public static readonly ReadOnlyCollection<string> WireValues =

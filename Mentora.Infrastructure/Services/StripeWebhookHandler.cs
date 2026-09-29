@@ -133,28 +133,8 @@ public class StripeWebhookHandler(
         order.PaidAt    = DateTime.UtcNow;
         order.UpdatedDate = DateTime.UtcNow;
 
-        // Generate 1 voucher per OrderItem × Quantity
-        foreach (var item in order.Items)
-        {
-            for (var n = 0; n < item.Quantity; n++)
-            {
-                db.SessionVouchers.Add(new SessionVoucher
-                {
-                    VoucherId         = Guid.NewGuid(),
-                    OrderItemId       = item.OrderItemId,
-                    MemberId          = order.MemberId,
-                    CoachId           = order.CoachId,
-                    ProductId         = item.ProductId,
-                    OfferType         = item.OfferType,
-                    DurationMinutes   = item.DurationMinutes,
-                    Sport             = item.Sport,
-                    Status            = VoucherStatus.Available,
-                    ReservedSessionId = null,
-                    CreatedDate       = DateTime.UtcNow,
-                    UpdatedDate       = DateTime.UtcNow,
-                });
-            }
-        }
+        // Generate 1 voucher per OrderItem × Quantity — shared with the coach grant flow
+        db.SessionVouchers.AddRange(VoucherGeneration.GenerateForOrder(order));
 
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);

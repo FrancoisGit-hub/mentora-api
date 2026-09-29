@@ -245,6 +245,9 @@ builder.Services.AddScoped<IProgramService, ProgramService>();
 // Lot 6.5 — Merged agenda
 builder.Services.AddScoped<IAgendaService, AgendaService>();
 
+// Lot 9.1 — Coach voucher grants
+builder.Services.AddScoped<IVoucherGrantService, VoucherGrantService>();
+
 // Lot 8 — LiveKit visio-token issuance. ValidateOnStart fails loudly on a missing/malformed
 // secret: this is new in the codebase and intentional — a missing secret must never silently
 // degrade to "no check" for something as sensitive as room-join credentials.

@@ -49,6 +49,21 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnName("ORDER_STRIPE_CHECKOUT_URL")
             .HasColumnType("text");
 
+        var originConverter = new ValueConverter<PurchaseOrigin, string>(
+            v => PurchaseOriginToDb(v),
+            v => PurchaseOriginFromDb(v));
+
+        builder.Property(e => e.Origin)
+            .HasColumnName("ORDER_ORIGIN")
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasConversion(originConverter)
+            .HasDefaultValueSql("'MEMBER_PURCHASE'");
+
+        builder.Property(e => e.GrantNote)
+            .HasColumnName("ORDER_GRANT_NOTE")
+            .HasMaxLength(500);
+
         builder.Property(e => e.CreatedDate)
             .HasColumnName("ORDER_CREATED_DATE")
             .IsRequired();
@@ -93,5 +108,19 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         if (v == "EXPIRED") return OrderStatus.Expired;
         if (v == "FAILED")  return OrderStatus.Failed;
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown OrderStatus DB value.");
+    }
+
+    private static string PurchaseOriginToDb(PurchaseOrigin v)
+    {
+        if (v == PurchaseOrigin.MemberPurchase) return "MEMBER_PURCHASE";
+        if (v == PurchaseOrigin.CoachGrant)     return "COACH_GRANT";
+        throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown PurchaseOrigin value.");
+    }
+
+    private static PurchaseOrigin PurchaseOriginFromDb(string v)
+    {
+        if (v == "MEMBER_PURCHASE") return PurchaseOrigin.MemberPurchase;
+        if (v == "COACH_GRANT")     return PurchaseOrigin.CoachGrant;
+        throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown PurchaseOrigin DB value.");
     }
 }

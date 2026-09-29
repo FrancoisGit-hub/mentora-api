@@ -18,6 +18,9 @@ public class Order
     public string? StripeSessionId { get; set; }
     public string? StripeCheckoutUrl { get; set; }
 
+    public PurchaseOrigin Origin { get; set; } = PurchaseOrigin.MemberPurchase;
+    public string? GrantNote { get; set; }
+
     public DateTime CreatedDate { get; set; }
     public DateTime UpdatedDate { get; set; }
     public DateTime? PaidAt { get; set; }
