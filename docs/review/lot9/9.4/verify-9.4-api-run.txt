@@ -1,0 +1,145 @@
+﻿## V2 - filters (member list, walked with limit=100)
+Pectoraux (muscleGroupId)                                  API =   30  SQL =   30  OK
+Haltères (equipmentId, primary OR secondary)               API =   50  SQL =   50  OK
+Sans matériel (equipmentId)                                API =   49  SQL =   49  OK
+Banc (equipmentId)                                         API =   12  SQL =   12  OK
+objective Force (objectiveId)                              API =   39  SQL =   39  OK
+level=BEGINNER                                             API =  125  SQL =  125  OK
+level=INTERMEDIATE (>= BEGINNER)                           API =  231  SQL =  231  OK
+search=squat                                               API =    9  SQL =    9  OK
+combined Pectoraux + Haltères                              API =    8  SQL =    8  OK
+combined Force + level=INTERMEDIATE                        API =   37  SQL =   37  OK
+
+## V2 - 'Sans matériel': exact count 49; 10 first names:
+  - Abduction hanche allongée sur le côté  [primary: Sans matériel; secondary: Tapis de sol]
+  - Bear crawl  [primary: Sans matériel; secondary: Tapis de sol]
+  - Bird dog  [primary: Sans matériel; secondary: Tapis de sol]
+  - Burpee  [primary: Sans matériel; secondary: ]
+  - Burpees  [primary: Sans matériel; secondary: ]
+  - Course à pied  [primary: Sans matériel; secondary: ]
+  - Crab walk  [primary: Sans matériel; secondary: Tapis de sol]
+  - Crunch  [primary: Sans matériel; secondary: ]
+  - Crunch au sol  [primary: Sans matériel; secondary: Tapis de sol]
+  - Crunch vélo  [primary: Sans matériel; secondary: Tapis de sol]
+  matched to a sheet row by name: 44; not in the sheet (historical): 5 -> Burpees | Crunch | Dips | Gainage planche | Suspension à la barre
+  sheet exercises whose materiel_principal is Banc / Barre / Corde / Poignée simple: 0
+  secondary equipment shown for the 'Sans matériel' results (distinct): Banc, Haltères, Mur, Plots, Tapis de sol
+
+## V3 - visibility
+member list has coach A's active exercise (1eebb781-3f3c-42ec-8842-b109b0d5405f): True
+member list has coach B's exercise (5b4e9c1a-0c1d-4a55-9d3e-940400000003): False
+member list has coach A's inactive exercise (41f04f69-cb37-47c5-9148-45ba401f7e50): False
+GET member/exercises/1eebb781-3f3c-42ec-8842-b109b0d5405f [coach A active] -> 200
+GET member/exercises/5b4e9c1a-0c1d-4a55-9d3e-940400000003 [coach B] -> 404
+GET member/exercises/41f04f69-cb37-47c5-9148-45ba401f7e50 [coach A inactive] -> 404
+GET member/exercises/1feab1a9-b6cc-446b-bc34-d6d6695cb754 [unknown guid] -> 404
+
+## V4 - errors
+GET member/exercises?level=EXPERT -> 400  {"success":false,"data":null,"error":"Invalid level 'EXPERT'. Accepted values: BEGINNER, INTERMEDIATE, ADVANCED.","statusCode":400}
+GET member/exercises?limit=0 -> 400  {"success":false,"data":null,"error":"limit must be between 1 and 100 (got 0).","statusCode":400}
+GET member/exercises?limit=101 -> 400  {"success":false,"data":null,"error":"limit must be between 1 and 100 (got 101).","statusCode":400}
+GET member/exercises?cursor=garbage -> 400  {"success":false,"data":null,"error":"Invalid cursor format.","statusCode":400}
+GET member/exercises?search=a -> 400  {"success":false,"data":null,"error":"search must be between 2 and 60 characters (got 1).","statusCode":400}
+GET member/exercises?search=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx... -> 400  {"success":false,"data":null,"error":"search must be between 2 and 60 characters (got 61).","statusCode":400}
+GET member/exercises?search=%20%20 -> 200  {"success":true,"data":{"items":[{"exerciseId":"72b9431c-9086-46ab-ba0e-2671f69702da","name":"Abduction hanche à la poulie","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"be895cf6-28d3-4354-a9fc-9c3ef1bcfe18","name":"Poulie basse"},"secondaryEquipment":{"equipmentId":"d5858376-071d-47eb-a826-22abdbe2034d","name":"Sangle cheville"}},{"exerciseId":"7062b1c9-35e8-436e-9992-6c646af29851","name":"Abduction hanche allongée sur le côté","level":"BEGINNER","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"97eb234d-05f5-4de8-b91a-e3ee3546eeab","name":"Abduction hanche avec élastique debout","level":"BEGINNER","primaryEquipment":{"equipmentId":"984ad195-1d85-437d-9cb2-3c31b53722a6","name":"Élastique"},"secondaryEquipment":null},{"exerciseId":"f1609e43-f870-401e-a975-d7cf2ca4043d","name":"Ab wheel rollout","level":"ADVANCED","primaryEquipment":{"equipmentId":"d5f758b2-16c0-4073-94bd-9564912adf0e","name":"Roue abdominale"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"d1be0690-59c8-4bab-ba9d-bbbb182f772f","name":"Adduction hanche à la poulie","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"be895cf6-28d3-4354-a9fc-9c3ef1bcfe18","name":"Poulie basse"},"secondaryEquipment":{"equipmentId":"d5858376-071d-47eb-a826-22abdbe2034d","name":"Sangle cheville"}},{"exerciseId":"d3fb04aa-bb04-44b7-9532-c251591c4634","name":"Air bike","level":"BEGINNER","primaryEquipment":{"equipmentId":"128d265a-a59a-4ea9-a620-c500b3c52195","name":"Air bike"},"secondaryEquipment":null},{"exerciseId":"c3e03857-bd04-41e4-ab6b-25f60e601b87","name":"Arnold press","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":{"equipmentId":"57a46241-6f14-446d-aaf9-41106c35908f","name":"Banc réglable"}},{"exerciseId":"5f9b7aed-c425-4845-b0b7-015471a6a21d","name":"Barre au front","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"37d3855a-2292-431a-bfcb-da99a471c2c3","name":"Barre EZ"},"secondaryEquipment":{"equipmentId":"74895d1d-ccb9-4458-b37e-fd899f146dce","name":"Banc"}},{"exerciseId":"e45bfa59-4b09-4740-acc6-5ebbec6ba90e","name":"Battle rope vagues alternées","level":"BEGINNER","primaryEquipment":{"equipmentId":"bc42bee5-5aaa-4923-8361-4a3c0d49e108","name":"Battle rope"},"secondaryEquipment":null},{"exerciseId":"195631e0-97b5-484e-b41d-5f52a16c6607","name":"Battle rope vagues simultanées","level":"BEGINNER","primaryEquipment":{"equipmentId":"bc42bee5-5aaa-4923-8361-4a3c0d49e108","name":"Battle rope"},"secondaryEquipment":null},{"exerciseId":"abf2a874-0942-466f-894e-a96791ee9344","name":"Bear crawl","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"cb66d720-bf8a-4927-970e-e63ac793fe16","name":"Bird dog","level":"BEGINNER","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"99f58860-a11d-459b-ad4c-0a268c8486c0","name":"Box jump","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"d56ee0f1-7d81-47ac-a851-e54406f3979c","name":"Box pliométrique"},"secondaryEquipment":null},{"exerciseId":"bf0b8e11-dfe4-4e10-9cf1-169b5b9b6c98","name":"Bulgarian split squat","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":{"equipmentId":"74895d1d-ccb9-4458-b37e-fd899f146dce","name":"Banc"}},{"exerciseId":"aa0ed253-6969-4f2f-86d1-5ffbfb8a5695","name":"Burpee","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":null},{"exerciseId":"18323604-d35c-48ec-8715-4d94da7dd217","name":"Burpees","level":null,"primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":null},{"exerciseId":"99e3f182-d840-4dd5-af77-6fe847b422fb","name":"Cable hip thrust","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"be895cf6-28d3-4354-a9fc-9c3ef1bcfe18","name":"Poulie basse"},"secondaryEquipment":{"equipmentId":"74895d1d-ccb9-4458-b37e-fd899f146dce","name":"Banc"}},{"exerciseId":"5841b9d8-a996-4ea1-8592-bff1986e1f85","name":"Chest press machine","level":"BEGINNER","primaryEquipment":{"equipmentId":"31994d77-8028-497c-ba64-6509e2844d06","name":"Chest press"},"secondaryEquipment":null},{"exerciseId":"13d9832d-dc17-41cd-aeb7-ba40285befb9","name":"Chest press unilatérale","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"31994d77-8028-497c-ba64-6509e2844d06","name":"Chest press"},"secondaryEquipment":null},{"exerciseId":"21ec31b7-9dca-4fb4-9ea0-6d4774b8a3be","name":"Clamshell","level":"BEGINNER","primaryEquipment":{"equipmentId":"9cf8ca5a-5029-4ffa-b73a-ef21cbaaf786","name":"Mini-band"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"404b6cf7-7950-4805-850d-65107758534c","name":"Corde à sauter","level":"BEGINNER","primaryEquipment":{"equipmentId":"43036179-4fef-4c86-9f2d-0dbebfb0ad92","name":"Corde à sauter"},"secondaryEquipment":null},{"exerciseId":"99ddbd55-5a00-4bcc-b101-820c29a2f89c","name":"Course à pied","level":"BEGINNER","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":null},{"exerciseId":"e5d4adb6-b943-47cd-9b87-69bff972eccc","name":"Course à pied (tapis)","level":null,"primaryEquipment":null,"secondaryEquipment":null},{"exerciseId":"6d98e0a8-2dfe-4665-8f23-5fcc57f2892a","name":"Crab walk","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"a7ad108d-f029-4470-aedd-c9bd3bdab652","name":"Crossover poulie basse","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"f0c32467-eda7-4686-a01c-e6b7f1c9a99e","name":"Vis-à-vis"},"secondaryEquipment":null},{"exerciseId":"d9281c9a-45d8-41b3-a8bc-11281024c561","name":"Crossover poulie haute","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"f0c32467-eda7-4686-a01c-e6b7f1c9a99e","name":"Vis-à-vis"},"secondaryEquipment":null},{"exerciseId":"50847180-2747-4bf3-9d87-26e846cd3a4b","name":"Crunch","level":null,"primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":null},{"exerciseId":"8019daf3-5b62-4b6c-aeaa-1627dd55e813","name":"Crunch à la poulie","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"f3675675-5b23-490a-a6fd-7f2a16d85cf4","name":"Poulie haute"},"secondaryEquipment":{"equipmentId":"6263bcef-2d6d-4d6f-a1ec-e53e239576b8","name":"Corde"}},{"exerciseId":"9699d215-4232-438c-bd41-805e56770240","name":"Crunch au sol","level":"BEGINNER","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"bad5cff9-aba7-44d0-a975-609d405dc9f3","name":"Crunch lesté","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"5e90e554-60f5-419b-a4b8-e53308d9a766","name":"Disque ou haltère"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"955ac6ae-d6cc-4993-9f8e-3e61d525b178","name":"Crunch vélo","level":"BEGINNER","primaryEquipment":{"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"5cdc7c05-d097-4679-85c1-111a01038a97","name":"Cuban press haltères","level":"ADVANCED","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":null},{"exerciseId":"c2ff6721-89b6-4711-973f-937c17f4a6e1","name":"Curl barre","level":"BEGINNER","primaryEquipment":{"equipmentId":"04dbd52c-185c-4fab-928b-19d904473e25","name":"Barre olympique"},"secondaryEquipment":null},{"exerciseId":"806ce255-2732-4c63-8e01-dcef2f3490cf","name":"Curl barre EZ","level":"BEGINNER","primaryEquipment":{"equipmentId":"37d3855a-2292-431a-bfcb-da99a471c2c3","name":"Barre EZ"},"secondaryEquipment":null},{"exerciseId":"261a6701-64ec-4048-a508-29eec1d034fd","name":"Curl Bayesian","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"be895cf6-28d3-4354-a9fc-9c3ef1bcfe18","name":"Poulie basse"},"secondaryEquipment":{"equipmentId":"71e4b3b6-155b-4721-b7aa-4829259ffbe7","name":"Poignée simple"}},{"exerciseId":"de6b8a62-6708-4596-a708-e002566c14df","name":"Curl biceps barre","level":null,"primaryEquipment":null,"secondaryEquipment":null},{"exerciseId":"79265c3f-211a-4636-80ae-cda18a6bcde1","name":"Curl biceps haltères alterné","level":null,"primaryEquipment":null,"secondaryEquipment":null},{"exerciseId":"7d6dacba-0ccb-4146-a651-5d3c917ef77c","name":"Curl concentration","level":"BEGINNER","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":null},{"exerciseId":"9e8ef044-f2a9-4735-9dc9-ee479aae27d4","name":"Curl haltères","level":"BEGINNER","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":null},{"exerciseId":"227f343c-ff05-48e4-9312-5cca8b857bdc","name":"Curl incliné haltères","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":{"equipmentId":"57a46241-6f14-446d-aaf9-41106c35908f","name":"Banc réglable"}},{"exerciseId":"b8b00f8a-7664-44fd-a2b6-ceda77f6bbe2","name":"Curl inversé barre","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"8cc0f0ba-b46d-4c61-9cb1-b819d87262e6","name":"Barre"},"secondaryEquipment":null},{"exerciseId":"991755ab-ec71-4f4a-83a5-34096797e124","name":"Curl ischio sliders","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"622f650b-68a8-4b9c-a057-8cc1aeaf3f1c","name":"Sliders"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"6ac06381-83af-42f8-83b8-b7fa2a760f3c","name":"Curl ischio sur ballon suisse","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"ea914f45-c488-4ba1-9eda-b16dd8fc74aa","name":"Ballon suisse"},"secondaryEquipment":{"equipmentId":"28d9f8cb-7a79-407f-aaf9-cb75d37c607e","name":"Tapis de sol"}},{"exerciseId":"f38edda5-1b15-4e03-a6b2-fba31bfb9ac4","name":"Curl marteau","level":"BEGINNER","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":null},{"exerciseId":"299e617f-544d-4044-a8be-920743d06c9b","name":"Curl marteau alterné","level":"BEGINNER","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":null},{"exerciseId":"03e7c5f3-f39e-4e48-a734-4e46f991eabd","name":"Curl marteau haltères","level":null,"primaryEquipment":null,"secondaryEquipment":null},{"exerciseId":"01ed62fb-3db6-4c3f-9879-e76560163205","name":"Curl poignet barre","level":null,"primaryEquipment":null,"secondaryEquipment":null},{"exerciseId":"6297adc8-a038-4d8a-b103-d8fd46f4227a","name":"Curl poignets haltères","level":"BEGINNER","primaryEquipment":{"equipmentId":"63b68ad4-a46f-44c0-89ba-23c56be801e5","name":"Haltères"},"secondaryEquipment":null},{"exerciseId":"312deeb7-e065-49e4-9381-92293b31b731","name":"Curl poulie basse","level":"BEGINNER","primaryEquipment":{"equipmentId":"be895cf6-28d3-4354-a9fc-9c3ef1bcfe18","name":"Poulie basse"},"secondaryEquipment":{"equipmentId":"8cc0f0ba-b46d-4c61-9cb1-b819d87262e6","name":"Barre"}},{"exerciseId":"5b3cb685-d906-45df-9c8c-8da8a4862872","name":"Curl poulie unilatéral","level":"INTERMEDIATE","primaryEquipment":{"equipmentId":"be895cf6-28d3-4354-a9fc-9c3ef1bcfe18","name":"Poulie basse"},"secondaryEquipment":{"equipmentId":"71e4b3b6-155b-4721-b7aa-4829259ffbe7","name":"Poignée simple"}}],"nextCursor":"eyJOYW1lIjoiQ3VybCBwb3VsaWUgdW5pbGF0XHUwMEU5cmFsIiwiRXhlcmNpc2VJZCI6IjViM2NiNjg1LWQ5MDYtNDVkZi05YzhjLThkYThhNDg2Mjg3MiJ9"},"error":null,"statusCode":200}
+GET member/exercises?cursor=eyJmb28iOjF9 -> 400  {"success":false,"data":null,"error":"Invalid cursor.","statusCode":400}
+unknown muscleGroupId -> 200, items 0, nextCursor = 
+search='__' (LIKE wildcards escaped, must not match everything) -> 200, items 0
+search='%%' -> 200, items 0
+search=' SQUAT ' (trimmed, case-insensitive) -> 200, items 9
+
+## V5 - detail of EX001 (member)
+status 200; video is null: True
+{
+    "exerciseId":  "1194fd80-be00-4630-907e-80609ef0f331",
+    "coachId":  null,
+    "name":  "Développé couché barre",
+    "description":  "Exercice polyarticulaire de référence pour les pectoraux.",
+    "instructions":  "Allongé sur un banc, saisir la barre à largeur épaules, descendre jusqu\u0027à effleurer la poitrine puis pousser jusqu\u0027à extension complète des bras.",
+    "videoUrl":  null,
+    "imageUrl":  null,
+    "muscleGroup":  "CHEST",
+    "equipment":  "BARBELL",
+    "isPolyarticular":  true,
+    "isActive":  true,
+    "createdDate":  "2026-08-11T11:53:42.833197Z",
+    "updatedDate":  "2026-09-29T18:58:57.654289Z",
+    "sourceCode":  "EX001",
+    "nameEn":  "Barbell Bench Press",
+    "category":  "Musculation",
+    "movementPattern":  "Poussée horizontale",
+    "exerciseType":  "Polyarticulaire",
+    "laterality":  "Bilatéral",
+    "startingPosition":  "Couché sur banc",
+    "gripType":  "Pronée",
+    "primaryMuscleGroup":  {
+                               "muscleGroupId":  "d6660410-7110-4ac5-8f08-c90ac7f1288d",
+                               "name":  "Pectoraux"
+                           },
+    "secondaryMuscles":  [
+                             "Triceps",
+                             "deltoïde antérieur"
+                         ],
+    "primaryEquipment":  {
+                             "equipmentId":  "04dbd52c-185c-4fab-928b-19d904473e25",
+                             "name":  "Barre olympique"
+                         },
+    "secondaryEquipment":  {
+                               "equipmentId":  "74895d1d-ccb9-4458-b37e-fd899f146dce",
+                               "name":  "Banc"
+                           },
+    "level":  "INTERMEDIATE",
+    "breathing":  "Inspirer à la descente ; expirer lors de la poussée",
+    "commonMistakes":  [
+                           "Décoller les épaules",
+                           "rebondir sur la poitrine",
+                           "poignets cassés",
+                           "pieds instables"
+                       ],
+    "precautions":  "Adapter l\u0027amplitude en cas d\u0027inconfort à l\u0027épaule",
+    "coachTip":  null,
+    "objectives":  [
+                       {
+                           "objectiveId":  "88e02f18-6783-4826-9056-24c4e3d4914b",
+                           "name":  "Force"
+                       },
+                       {
+                           "objectiveId":  "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+                           "name":  "Hypertrophie"
+                       }
+                   ],
+    "video":  null
+}
+
+## V7 - coach
+GET coach/exercises -> 200; data is an array: True; items: 276
+legacy keys present and unchanged in order: True
+new keys present: True; total keys: 32
+every item has the same 32 keys: True
+muscleGroup=CHEST -> 200, items 32, all legacy muscleGroup CHEST: True
+muscleGroupId=Pectoraux -> 200, items 30, all primaryMuscleGroup Pectoraux: True
+equipmentId=Haltères -> 200, items 50
+equipment=DUMBBELL (legacy) -> 200, items 63
+objectiveId=Force -> 200, items 39
+level=BEGINNER -> 200, items 125
+level=EXPERT -> 400 {"success":false,"data":null,"error":"Invalid level 'EXPERT'. Accepted values: BEGINNER, INTERMEDIATE, ADVANCED.","statusCode":400}
+GET coach/exercises/{coach A exercise} -> 200; keys: 32
+GET coach/exercises/EX001 -> 200; level INTERMEDIATE; primaryEquipment Barre olympique; objectives Force ; Hypertrophie
+GET coach/exercises/{coach B exercise} -> 404
+
+## V8 - filter endpoints
+GET /api/v1/member/exercise-filters -> 200: muscleGroups 12, equipment 91, objectives 52, levels BEGINNER,INTERMEDIATE,ADVANCED
+  equipment first 4: Sans matériel | Air bike | Anneaux gymnastique | Ballon suisse
+  muscleGroups (sortOrder): Pectoraux(1), Dos(2), Épaules(3), Bras(4), Avant-bras(5), Quadriceps(6), Ischio-jambiers(7), Fessiers(8), Adducteurs(9), Mollets(10), Tibial(11), Abdominaux(12)
+  objectives first 5: Activation | Agilité | Anti-inclinaison | Anti-rotation | Apprentissage
+  sample equipment item: {"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel","category":"Sans matériel"}
+GET /api/v1/coach/exercise-filters -> 200: muscleGroups 12, equipment 91, objectives 52, levels BEGINNER,INTERMEDIATE,ADVANCED
+  equipment first 4: Sans matériel | Air bike | Anneaux gymnastique | Ballon suisse
+  muscleGroups (sortOrder): Pectoraux(1), Dos(2), Épaules(3), Bras(4), Avant-bras(5), Quadriceps(6), Ischio-jambiers(7), Fessiers(8), Adducteurs(9), Mollets(10), Tibial(11), Abdominaux(12)
+  objectives first 5: Activation | Agilité | Anti-inclinaison | Anti-rotation | Apprentissage
+  sample equipment item: {"equipmentId":"944fec76-b2b3-4c93-9e7e-1506666fe773","name":"Sans matériel","category":"Sans matériel"}
+member token on coach/exercise-filters -> 403
+no token on member/exercise-filters -> 401
+no token on coach/exercise-filters -> 401
+no token on member/exercises/{id} -> 401
+coach token (COACH, has member profile) on member/exercise-filters -> 403

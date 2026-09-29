@@ -1,0 +1,13 @@
+Added paths:
+  + GET /api/v1/coach/exercise-filters  [Coach — Exercises]
+Removed paths:
+  (none)
+Changed operations:
+  GET /api/v1/coach/exercises
+    + query/param equipmentId (string(uuid))
+    + query/param level (string)
+    + query/param muscleGroupId (string(uuid))
+    + query/param objectiveId (string(uuid))
+    ~ param equipment: deprecated False -> True
+    ~ param muscleGroup: deprecated False -> True
+Schemas:

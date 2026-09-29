@@ -1,0 +1,47 @@
+BEGIN
+             EXERCISE_ID              |         EXERCISE_NAME          |          EXERCISE_COACH_ID           
+--------------------------------------+--------------------------------+--------------------------------------
+ 1eebb781-3f3c-42ec-8842-b109b0d5405f | Lot94 exercice coach A         | e268a512-84d6-4e27-b5c0-1d6c08a47190
+ 41f04f69-cb37-47c5-9148-45ba401f7e50 | Lot94 exercice coach A inactif | e268a512-84d6-4e27-b5c0-1d6c08a47190
+ 5b4e9c1a-0c1d-4a55-9d3e-940400000003 | Lot94 exercice coach B         | 5b4e9c1a-0c1d-4a55-9d3e-940400000002
+(3 rows)
+
+DELETE 3
+           OFFER_PROGRAM_ID           
+--------------------------------------
+ 00403477-5749-476a-9afe-cf1d3d0722c2
+ 496d3471-962c-4147-8fb4-9ef2a26372aa
+ 2d6ba7c8-f605-4431-95ba-785d98a7482e
+ 58e3f45b-61ff-4bbe-a493-b8a3886da1fe
+(4 rows)
+
+DELETE 4
+          COACH_PARAMETER_ID          
+--------------------------------------
+ 3b1c0a41-9527-4759-b007-c475f3e0fc65
+(1 row)
+
+DELETE 1
+               COACH_ID               
+--------------------------------------
+ 5b4e9c1a-0c1d-4a55-9d3e-940400000002
+(1 row)
+
+DELETE 1
+               USER_ID                |       USER_EMAIL        
+--------------------------------------+-------------------------
+ 5b4e9c1a-0c1d-4a55-9d3e-940400000001 | coachb.lot94@mentora.fr
+(1 row)
+
+DELETE 1
+ fixture_users | fixture_coaches | fixture_exercises | exercises_total | equipment_total | users_total 
+---------------+-----------------+-------------------+-----------------+-----------------+-------------
+             0 |               0 |                 0 |             275 |             118 |           2
+(1 row)
+
+COMMIT
+ fixture_users | fixture_exercises | exercises_total 
+---------------+-------------------+-----------------
+             0 |                 0 |             275
+(1 row)
+

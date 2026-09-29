@@ -1,0 +1,15 @@
+Added paths:
+  + GET /api/v1/member/exercise-filters  [Member — Exercises]
+Removed paths:
+  (none)
+Changed operations:
+  GET /api/v1/member/exercises
+    + query/param cursor (string)
+    + query/param equipmentId (string(uuid))
+    + query/param level (string)
+    + query/param limit (integer(int32))
+    + query/param muscleGroupId (string(uuid))
+    + query/param objectiveId (string(uuid))
+    + query/param search (string)
+    ~ responses ['200', '401', '403'] -> ['200', '400', '401', '403']
+Schemas:
