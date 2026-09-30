@@ -1,0 +1,3153 @@
+{
+ "request": {
+  "limit": 50
+ },
+ "pages": [
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "72b9431c-9086-46ab-ba0e-2671f69702da",
+       "name": "Abduction hanche à la poulie",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "d5858376-071d-47eb-a826-22abdbe2034d",
+        "name": "Sangle cheville"
+       }
+      },
+      {
+       "exerciseId": "7062b1c9-35e8-436e-9992-6c646af29851",
+       "name": "Abduction hanche allongée sur le côté",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "97eb234d-05f5-4de8-b91a-e3ee3546eeab",
+       "name": "Abduction hanche avec élastique debout",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "984ad195-1d85-437d-9cb2-3c31b53722a6",
+        "name": "Élastique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "f1609e43-f870-401e-a975-d7cf2ca4043d",
+       "name": "Ab wheel rollout",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "d5f758b2-16c0-4073-94bd-9564912adf0e",
+        "name": "Roue abdominale"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "d1be0690-59c8-4bab-ba9d-bbbb182f772f",
+       "name": "Adduction hanche à la poulie",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "d5858376-071d-47eb-a826-22abdbe2034d",
+        "name": "Sangle cheville"
+       }
+      },
+      {
+       "exerciseId": "d3fb04aa-bb04-44b7-9532-c251591c4634",
+       "name": "Air bike",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "128d265a-a59a-4ea9-a620-c500b3c52195",
+        "name": "Air bike"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "c3e03857-bd04-41e4-ab6b-25f60e601b87",
+       "name": "Arnold press",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "5f9b7aed-c425-4845-b0b7-015471a6a21d",
+       "name": "Barre au front",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "37d3855a-2292-431a-bfcb-da99a471c2c3",
+        "name": "Barre EZ"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "e45bfa59-4b09-4740-acc6-5ebbec6ba90e",
+       "name": "Battle rope vagues alternées",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "bc42bee5-5aaa-4923-8361-4a3c0d49e108",
+        "name": "Battle rope"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "195631e0-97b5-484e-b41d-5f52a16c6607",
+       "name": "Battle rope vagues simultanées",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "bc42bee5-5aaa-4923-8361-4a3c0d49e108",
+        "name": "Battle rope"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "abf2a874-0942-466f-894e-a96791ee9344",
+       "name": "Bear crawl",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "cb66d720-bf8a-4927-970e-e63ac793fe16",
+       "name": "Bird dog",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "99f58860-a11d-459b-ad4c-0a268c8486c0",
+       "name": "Box jump",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "d56ee0f1-7d81-47ac-a851-e54406f3979c",
+        "name": "Box pliométrique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "bf0b8e11-dfe4-4e10-9cf1-169b5b9b6c98",
+       "name": "Bulgarian split squat",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "aa0ed253-6969-4f2f-86d1-5ffbfb8a5695",
+       "name": "Burpee",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "18323604-d35c-48ec-8715-4d94da7dd217",
+       "name": "Burpees",
+       "level": null,
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "99e3f182-d840-4dd5-af77-6fe847b422fb",
+       "name": "Cable hip thrust",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "5841b9d8-a996-4ea1-8592-bff1986e1f85",
+       "name": "Chest press machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "31994d77-8028-497c-ba64-6509e2844d06",
+        "name": "Chest press"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "13d9832d-dc17-41cd-aeb7-ba40285befb9",
+       "name": "Chest press unilatérale",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "31994d77-8028-497c-ba64-6509e2844d06",
+        "name": "Chest press"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "21ec31b7-9dca-4fb4-9ea0-6d4774b8a3be",
+       "name": "Clamshell",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "9cf8ca5a-5029-4ffa-b73a-ef21cbaaf786",
+        "name": "Mini-band"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "404b6cf7-7950-4805-850d-65107758534c",
+       "name": "Corde à sauter",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "43036179-4fef-4c86-9f2d-0dbebfb0ad92",
+        "name": "Corde à sauter"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "99ddbd55-5a00-4bcc-b101-820c29a2f89c",
+       "name": "Course à pied",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "e5d4adb6-b943-47cd-9b87-69bff972eccc",
+       "name": "Course à pied (tapis)",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "6d98e0a8-2dfe-4665-8f23-5fcc57f2892a",
+       "name": "Crab walk",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "a7ad108d-f029-4470-aedd-c9bd3bdab652",
+       "name": "Crossover poulie basse",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f0c32467-eda7-4686-a01c-e6b7f1c9a99e",
+        "name": "Vis-à-vis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "d9281c9a-45d8-41b3-a8bc-11281024c561",
+       "name": "Crossover poulie haute",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f0c32467-eda7-4686-a01c-e6b7f1c9a99e",
+        "name": "Vis-à-vis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "50847180-2747-4bf3-9d87-26e846cd3a4b",
+       "name": "Crunch",
+       "level": null,
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "8019daf3-5b62-4b6c-aeaa-1627dd55e813",
+       "name": "Crunch à la poulie",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "6263bcef-2d6d-4d6f-a1ec-e53e239576b8",
+        "name": "Corde"
+       }
+      },
+      {
+       "exerciseId": "9699d215-4232-438c-bd41-805e56770240",
+       "name": "Crunch au sol",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "bad5cff9-aba7-44d0-a975-609d405dc9f3",
+       "name": "Crunch lesté",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "5e90e554-60f5-419b-a4b8-e53308d9a766",
+        "name": "Disque ou haltère"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "955ac6ae-d6cc-4993-9f8e-3e61d525b178",
+       "name": "Crunch vélo",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "5cdc7c05-d097-4679-85c1-111a01038a97",
+       "name": "Cuban press haltères",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "c2ff6721-89b6-4711-973f-937c17f4a6e1",
+       "name": "Curl barre",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "806ce255-2732-4c63-8e01-dcef2f3490cf",
+       "name": "Curl barre EZ",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "37d3855a-2292-431a-bfcb-da99a471c2c3",
+        "name": "Barre EZ"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "261a6701-64ec-4048-a508-29eec1d034fd",
+       "name": "Curl Bayesian",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "de6b8a62-6708-4596-a708-e002566c14df",
+       "name": "Curl biceps barre",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "79265c3f-211a-4636-80ae-cda18a6bcde1",
+       "name": "Curl biceps haltères alterné",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "7d6dacba-0ccb-4146-a651-5d3c917ef77c",
+       "name": "Curl concentration",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "9e8ef044-f2a9-4735-9dc9-ee479aae27d4",
+       "name": "Curl haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "227f343c-ff05-48e4-9312-5cca8b857bdc",
+       "name": "Curl incliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "b8b00f8a-7664-44fd-a2b6-ceda77f6bbe2",
+       "name": "Curl inversé barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "8cc0f0ba-b46d-4c61-9cb1-b819d87262e6",
+        "name": "Barre"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "991755ab-ec71-4f4a-83a5-34096797e124",
+       "name": "Curl ischio sliders",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "622f650b-68a8-4b9c-a057-8cc1aeaf3f1c",
+        "name": "Sliders"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "6ac06381-83af-42f8-83b8-b7fa2a760f3c",
+       "name": "Curl ischio sur ballon suisse",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "ea914f45-c488-4ba1-9eda-b16dd8fc74aa",
+        "name": "Ballon suisse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "f38edda5-1b15-4e03-a6b2-fba31bfb9ac4",
+       "name": "Curl marteau",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "299e617f-544d-4044-a8be-920743d06c9b",
+       "name": "Curl marteau alterné",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "03e7c5f3-f39e-4e48-a734-4e46f991eabd",
+       "name": "Curl marteau haltères",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "01ed62fb-3db6-4c3f-9879-e76560163205",
+       "name": "Curl poignet barre",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "6297adc8-a038-4d8a-b103-d8fd46f4227a",
+       "name": "Curl poignets haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "312deeb7-e065-49e4-9381-92293b31b731",
+       "name": "Curl poulie basse",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "8cc0f0ba-b46d-4c61-9cb1-b819d87262e6",
+        "name": "Barre"
+       }
+      },
+      {
+       "exerciseId": "5b3cb685-d906-45df-9c8c-8da8a4862872",
+       "name": "Curl poulie unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      }
+     ],
+     "nextCursor": "eyJOYW1lIjoiQ3VybCBwb3VsaWUgdW5pbGF0XHUwMEU5cmFsIiwiRXhlcmNpc2VJZCI6IjViM2NiNjg1LWQ5MDYtNDVkZi05YzhjLThkYThhNDg2Mjg3MiJ9"
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  },
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "5d22a085-f5c9-4cd6-9ca4-adff69a98003",
+       "name": "Curl pupitre barre EZ",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "37d3855a-2292-431a-bfcb-da99a471c2c3",
+        "name": "Barre EZ"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "89b93e1e-7bb8-498e-b6fc-2347447581ab",
+        "name": "Banc pupitre"
+       }
+      },
+      {
+       "exerciseId": "accca342-13ab-44f4-bb8d-8d19cd07d1b7",
+       "name": "Curl pupitre haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "89b93e1e-7bb8-498e-b6fc-2347447581ab",
+        "name": "Banc pupitre"
+       }
+      },
+      {
+       "exerciseId": "9f183b33-382a-4a3e-963f-b1d095f07240",
+       "name": "Curl spider",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "67c6cac1-fc4a-44fc-8525-1901713d98ac",
+       "name": "Curl Zottman",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "e73d5152-5611-4d2e-a6b5-2c172c0a87ca",
+       "name": "Développé alterné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "1194fd80-be00-4630-907e-80609ef0f331",
+       "name": "Développé couché barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "541e455f-b169-43a4-bfee-d586ab8420e5",
+       "name": "Développé couché haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "66ae331e-b0dc-49b4-af8a-4d41318877d1",
+       "name": "Développé couché prise serrée",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "0c136095-eee3-45ab-8b0a-669e2540136f",
+       "name": "Développé couché prise serrée triceps",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "cba57937-62db-4fd4-99b5-b9ccccbb5d8a",
+       "name": "Développé décliné barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "6f33b700-5d14-4432-a5ce-f1e4e96bb48c",
+       "name": "Développé décliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "0680ade4-af1f-4d3a-b420-de563aa86243",
+       "name": "Développé épaules barre",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "bf3d1bae-aca2-42e7-a809-2f5ec8927901",
+       "name": "Développé épaules haltères assis",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "5b28916a-31a6-41f7-a4cd-99624225fa92",
+       "name": "Développé épaules haltères debout",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "53128873-25c1-4974-a00f-bf6fc978aa4c",
+       "name": "Développé épaules unilatéral haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "374d139a-4bf8-46b1-9824-e5bc4cc2c2c0",
+       "name": "Développé haltères prise neutre",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "1425ffae-1cf5-4b49-b6f6-4bfc3bb0b4f9",
+       "name": "Développé incliné barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "0f32a969-62cc-4d5b-99f8-fca453db5c5a",
+       "name": "Développé incliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "ba9b0cf2-74d4-44b0-b011-044fc759bccf",
+       "name": "Développé militaire barre assis",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "965456ec-2304-463a-a383-956923dd9b46",
+       "name": "Développé militaire barre debout",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "673d476e-6327-43e2-9ae6-aa0752b22cc0",
+       "name": "Développé unilatéral haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "7caa3fe7-e12e-40a8-8112-8bd91e20a1f9",
+       "name": "Dips",
+       "level": null,
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "1504e042-c40b-46cd-bcad-84732648a752",
+       "name": "Dips assistés",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "75658f5e-5e9c-4398-a73d-9bfe8a723f32",
+        "name": "Machine à dips assistés"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "3d673952-3025-4ba3-961c-f3a88f835444",
+       "name": "Dips triceps",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "de7799a9-6b12-43b8-9376-33617bad5216",
+        "name": "Barres parallèles"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "f4280376-449d-427a-9547-2de301878c08",
+       "name": "Donkey kick",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "111ee596-b279-4160-b70b-01f895942ef3",
+       "name": "Double unders",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "43036179-4fef-4c86-9f2d-0dbebfb0ad92",
+        "name": "Corde à sauter"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ed277597-8165-40dc-8a17-18cfad694cf7",
+       "name": "Écarté couché haltères",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "c636c206-8162-4476-8d6d-cb99f5af2750",
+       "name": "Écarté haltères couché",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "e0f22604-4f82-49c2-9501-8fa69e44e60b",
+       "name": "Écarté incliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "47d1f24c-e0f6-4444-b525-de08c100443c",
+       "name": "Écarté poulie unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "869d1b17-f810-4232-8d49-5a246c20f973",
+        "name": "Poulie réglable"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "d76263bb-7246-4e87-8571-14676ae6492a",
+       "name": "Écarté poulie vis-à-vis",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f0c32467-eda7-4686-a01c-e6b7f1c9a99e",
+        "name": "Vis-à-vis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "a364470b-bbe4-4df6-b96a-20655e079673",
+       "name": "Élévation frontale alternée haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "a2bd6a5f-5dd0-4516-907b-50d8e3e12467",
+       "name": "Élévation frontale barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "8cc0f0ba-b46d-4c61-9cb1-b819d87262e6",
+        "name": "Barre"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "5a332197-5816-41d7-acfb-78e3f09eb0ce",
+       "name": "Élévation frontale haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "2e20e882-3b53-4e28-9e04-5d485e6f6883",
+       "name": "Élévation frontale poulie",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "9e27ee2e-d477-43c7-b780-0fef37a1fe5c",
+       "name": "Élévation latérale à la poulie unilatérale",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "1b57b218-c973-415d-b180-7a64be2532c7",
+       "name": "Élévation latérale couchée sur le côté",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "318a4de3-2dfc-4beb-b428-1d8917d85027",
+        "name": "Banc ou tapis"
+       }
+      },
+      {
+       "exerciseId": "1aa16a4e-0671-4af7-989a-e474a966ef8d",
+       "name": "Élévation latérale inclinée haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "97e1d20d-e3c4-4287-b3ba-a621ad047cc8",
+        "name": "Support fixe"
+       }
+      },
+      {
+       "exerciseId": "ff8093d1-514a-416e-a1e6-1b50cdf8d779",
+       "name": "Élévation latérale machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "66b5bb80-3c39-4c20-a600-fb056bb67f7d",
+        "name": "Machine élévations latérales"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "5433ecdf-cc35-4d75-9a1c-bd5604eb0a0e",
+       "name": "Élévations frontales haltères",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "62fe1f40-4d66-4d83-824b-e927f2c015eb",
+       "name": "Élévations latérales haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "91097b29-4924-4d90-9a33-f0e05c807b0a",
+       "name": "Elliptique",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "50ef7682-b24b-4074-9c25-f7e338123ecd",
+        "name": "Elliptique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "94c5bc14-8335-439e-8ca1-b1511ed23b83",
+       "name": "Extension hanche à quatre pattes avec élastique",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "984ad195-1d85-437d-9cb2-3c31b53722a6",
+        "name": "Élastique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "12b99404-04f0-4312-ab5a-f06267efaeb7",
+       "name": "Extension hanche sur banc à 45 degrés orientée fessiers",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "0e9428dd-9dc7-4160-b2e0-8f3cb8cf1dbe",
+        "name": "Banc lombaire"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "0233b5de-864a-4606-abbc-64db3a5b5fbd",
+       "name": "Extension lombaire au banc",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "0e9428dd-9dc7-4160-b2e0-8f3cb8cf1dbe",
+        "name": "Banc lombaire"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "4082eab9-032d-44c7-8d05-b8ec1e5f21c4",
+       "name": "Extension poignet haltère",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ba0e0975-f5c8-4bbf-9a41-7d60518e866f",
+       "name": "Extension poignets barre",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "8cc0f0ba-b46d-4c61-9cb1-b819d87262e6",
+        "name": "Barre"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ebdcf6cf-e6c5-47f3-bf7f-aa69aee50138",
+       "name": "Extension poignets inversée",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "8cc0f0ba-b46d-4c61-9cb1-b819d87262e6",
+        "name": "Barre"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "8b77c98b-192a-42d9-84a3-8ac512cdfc78",
+       "name": "Extension triceps à la poulie",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "b568897c-bcaf-483d-88c2-1270ae3c9c4b",
+        "name": "Corde / barre"
+       }
+      },
+      {
+       "exerciseId": "3db44560-e932-4771-926a-a9a38c209417",
+       "name": "Extension triceps au-dessus de la tête corde",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "6263bcef-2d6d-4d6f-a1ec-e53e239576b8",
+        "name": "Corde"
+       }
+      }
+     ],
+     "nextCursor": "eyJOYW1lIjoiRXh0ZW5zaW9uIHRyaWNlcHMgYXUtZGVzc3VzIGRlIGxhIHRcdTAwRUF0ZSBjb3JkZSIsIkV4ZXJjaXNlSWQiOiIzZGI0NDU2MC1lOTMyLTQ3NzEtOTI2YS1hOWEzOGMyMDk0MTcifQ=="
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  },
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "2fa063ae-7503-4072-9464-246f89c03a06",
+       "name": "Extension triceps au-dessus de la tête haltère",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "a0c3d2f6-1cbc-4b99-a902-ae4f8cca421c",
+       "name": "Extension triceps haltères couchée",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "d2b7d1b1-fe2c-4a06-a1b6-df276673e569",
+       "name": "Extension triceps poulie haute",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "cd5b0061-6885-431c-a586-2a3ecc7edc61",
+       "name": "Extension triceps poulie prise inversée",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "8cc0f0ba-b46d-4c61-9cb1-b819d87262e6",
+        "name": "Barre"
+       }
+      },
+      {
+       "exerciseId": "89c6bbb9-8ef2-432f-baaf-2d570479aa34",
+       "name": "Extension triceps poulie unilatérale",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "ee88deef-f292-476b-ba8b-baa0ecbaa3ee",
+       "name": "Face pull",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "6263bcef-2d6d-4d6f-a1ec-e53e239576b8",
+        "name": "Corde"
+       }
+      },
+      {
+       "exerciseId": "fc3207d0-ea26-4136-8cd6-286dd4fb55e3",
+       "name": "Farmer carry",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "d25c2772-bf0f-49f6-a62d-a7c4c8c1ef80",
+        "name": "Haltères ou kettlebells"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "fe32e80e-b85b-40c6-ac37-03c12018a019",
+       "name": "Farmer carry lourd",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "d25c2772-bf0f-49f6-a62d-a7c4c8c1ef80",
+        "name": "Haltères ou kettlebells"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "69b855e3-1cca-4f91-b800-ee383e499c8c",
+       "name": "Fente arrière",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       }
+      },
+      {
+       "exerciseId": "eed78de2-62be-4d10-8a28-6b785a74ecb3",
+       "name": "Fente avant",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       }
+      },
+      {
+       "exerciseId": "fe31a354-d951-4ed1-a528-e4284d5b99f8",
+       "name": "Fente latérale",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       }
+      },
+      {
+       "exerciseId": "0cb74028-d2f2-4a8c-95f0-d097d6c9439c",
+       "name": "Fentes avant",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "cbfe4f47-1018-4f81-a8b9-08fb65d2722b",
+       "name": "Fentes bulgares",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "e7adb7b3-e534-4f7e-b079-a5d404484b6e",
+       "name": "Fentes marchées",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       }
+      },
+      {
+       "exerciseId": "7f3f9899-0540-4fb7-b893-1dc93bf9db80",
+       "name": "Fire hydrant",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "273013a0-0e66-4f62-9e1b-cffa160318e2",
+       "name": "Frog pump",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "07507914-d428-49a8-8583-9b000ad6f5a0",
+       "name": "Front rack carry",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "6a78b07c-11b8-4223-828f-05c0411578d5",
+        "name": "Kettlebell ou haltère"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "f17f916b-b88d-4c73-904f-e8b1cdedf4c2",
+       "name": "Gainage planche",
+       "level": null,
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "f7a43796-2bb9-4756-9737-becc3e3be071",
+       "name": "Goblet squat",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "6a78b07c-11b8-4223-828f-05c0411578d5",
+        "name": "Kettlebell ou haltère"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "0b68729b-c3b1-4b3d-9365-ce3848db4b4d",
+       "name": "Good morning barre",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "5359627c-4c52-4d37-82ea-fffd4e95ed0c",
+        "name": "Rack"
+       }
+      },
+      {
+       "exerciseId": "446df0e2-391b-4e80-b269-b50d1a387630",
+       "name": "Hack squat",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "49dedba3-f764-4a5f-8629-ce5eb78ccf59",
+        "name": "Hack squat"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "4bfbc1ca-8aac-4aa1-b262-f5ef1e806300",
+       "name": "Heel touches",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "9e76db60-8656-4541-9fce-20e9410fa3e1",
+       "name": "Hip thrust barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "5d733961-ff95-47cc-aff4-bb5c618461df",
+       "name": "Hip thrust machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "a53b7992-6f03-4495-8a58-548f8625e7ea",
+        "name": "Hip thrust machine"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "5861d5dc-482d-4f67-b4c8-bd8d15b6ddb8",
+       "name": "Hip thrust unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "88d990ff-0259-44b7-8903-636175d63a05",
+       "name": "Hollow body hold",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "e8ef858f-d2c6-418d-8560-c106ef7284d5",
+       "name": "Hollow rocks",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "91689976-f239-4f88-bc94-5b66fc75483b",
+       "name": "Kettlebell swing",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "daecb6a0-4f67-4393-888a-19fa6ce6f59b",
+       "name": "Kickback à la poulie",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "df95dc65-c65d-4268-8e38-8ebca0649543",
+       "name": "Kickback fessier à la poulie",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "d5858376-071d-47eb-a826-22abdbe2034d",
+        "name": "Sangle cheville"
+       }
+      },
+      {
+       "exerciseId": "fd7a1175-1350-4a87-afcf-8e01919b6b15",
+       "name": "Kickback fessier à l'élastique",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "984ad195-1d85-437d-9cb2-3c31b53722a6",
+        "name": "Élastique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "97e1d20d-e3c4-4287-b3ba-a621ad047cc8",
+        "name": "Support fixe"
+       }
+      },
+      {
+       "exerciseId": "9f11cc0a-68c0-4439-b6cc-b18be7967ae6",
+       "name": "Kickback triceps haltère",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "f098a37b-6a55-42d5-ab0a-0449416c5380",
+       "name": "Kickback triceps poulie",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "742926a5-6b9b-4b36-8b06-2106e75b71d3",
+       "name": "Landmine press à deux mains",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "2c01d151-622c-4d35-b783-85809f3c7206",
+        "name": "Landmine"
+       }
+      },
+      {
+       "exerciseId": "88cb498a-891a-4ede-a1c8-4cc6ec1c59fd",
+       "name": "Landmine press unilatéral",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "2c01d151-622c-4d35-b783-85809f3c7206",
+        "name": "Landmine"
+       }
+      },
+      {
+       "exerciseId": "4805d663-f0ae-4d8c-855d-24c8adf009a7",
+       "name": "Leg curl allongé",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "8e314ecc-8a4d-49c0-a801-1d0ab662e622",
+        "name": "Leg curl allongé"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "afd8ee10-9814-42de-99e5-01e959771a30",
+       "name": "Leg curl assis",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "3861c61c-f455-4efb-b9c7-d622f2b9102b",
+        "name": "Leg curl assis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "9ac266b2-7ef5-4599-b5ac-3ff515ee735b",
+       "name": "Leg curl unilatéral",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "43361760-7197-42af-b5ba-a17886769d6b",
+        "name": "Leg curl"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "b88e4eae-29ff-4e56-a93d-fbf881b25905",
+       "name": "Leg extension",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "576aa00c-bbaf-4563-9a53-55f2cce79ab3",
+        "name": "Leg extension"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "d7e8bd34-4682-42bc-b790-35b7d8598c98",
+       "name": "Leg extension unilatéral",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "576aa00c-bbaf-4563-9a53-55f2cce79ab3",
+        "name": "Leg extension"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "b542d481-9658-45b2-9455-c14e2f8707d5",
+       "name": "L-sit",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "6b8e5aee-aa6f-432f-baca-d5f35ee75baf",
+        "name": "Barres parallèles ou parallettes"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "07e90b7e-1b6f-424b-aca4-fefa1b5ab626",
+       "name": "Machine abducteurs",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "c07b18c1-bbe0-4945-8a10-ae8bdc3bc725",
+        "name": "Machine abducteurs"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "e3a97b0a-fcc7-45db-b118-77d2a779f128",
+       "name": "Machine adducteurs",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "7f1f3c7c-a962-49a4-96de-cf1f53ded92c",
+        "name": "Machine adducteurs"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "96e58b6c-935b-462d-a979-0f0550d208d0",
+       "name": "Marche inclinée",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f5053d35-f196-477e-bacc-b3aa83b5d0f8",
+        "name": "Tapis de course"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "267f483f-f214-4f20-ab2f-d7dd0506a35a",
+       "name": "Marche latérale avec mini-band",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "9cf8ca5a-5029-4ffa-b73a-ef21cbaaf786",
+        "name": "Mini-band"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ab9db9f8-7832-4026-a163-ef0db2529087",
+       "name": "Marche rapide",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "71e44309-7071-4d04-b9ee-2c234651dd94",
+       "name": "Mollets à la presse",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "12115f40-c845-4ada-809e-eb3f0a468679",
+        "name": "Presse à cuisses"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "71610e69-1548-4ad0-bc96-45bde55778ca",
+       "name": "Mollets assis",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "6b85e3b1-b5e2-41e6-8c90-d5e13f338c82",
+        "name": "Machine mollets assis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "2aaddeac-118e-4a8e-aa3e-5903007cd0a9",
+       "name": "Mollets debout",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "1e549a90-19fa-4751-a3c8-a3e8f72026b5",
+       "name": "Mollets debout machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "516a6085-7865-4ea1-8bc3-686ac49a5f90",
+        "name": "Machine mollets"
+       },
+       "secondaryEquipment": null
+      }
+     ],
+     "nextCursor": "eyJOYW1lIjoiTW9sbGV0cyBkZWJvdXQgbWFjaGluZSIsIkV4ZXJjaXNlSWQiOiIxZTU0OWE5MC0xOWZhLTQ3NTEtYTNjOC1hM2U4ZjcyMDI2YjUifQ=="
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  },
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "bdc38096-81df-4a65-b6aa-85e9f52e7491",
+       "name": "Mollets unilatéraux debout",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       }
+      },
+      {
+       "exerciseId": "73f96396-8c3b-4774-83bc-60ba3c4cb0eb",
+       "name": "Monster walk",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "9cf8ca5a-5029-4ffa-b73a-ef21cbaaf786",
+        "name": "Mini-band"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "cc6cc89f-ac5f-43c9-a077-24ee612a5fd7",
+       "name": "Montée d'escaliers",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "0bc0b171-5bcf-4caf-9fc6-aa53d85774e2",
+        "name": "Escaliers"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "dd301136-7cce-4086-9215-f8ae5ebf8b28",
+       "name": "Mountain climber",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "ec96d598-b01d-4b3b-8f4f-ce981ae567aa",
+       "name": "Nordic hamstring curl",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "f7ad46d0-a00e-49bb-8cc3-622cb64f6327",
+        "name": "Support de chevilles"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "7423f08e-2349-4894-addf-649160213dd8",
+       "name": "Oiseau (élévations arrière)",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "50c8accd-abe9-4b62-9c60-42bc346640fa",
+       "name": "Oiseau haltères buste penché",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "72c11460-1740-4c24-ad41-94d7e7151845",
+       "name": "Oiseau haltères sur banc incliné",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "1fce0fe9-cbed-4807-b4b7-39ead46a46c6",
+       "name": "Overhead carry",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "d25c2772-bf0f-49f6-a62d-a7c4c8c1ef80",
+        "name": "Haltères ou kettlebells"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "947bf20b-0407-43ef-8958-af4e1e73a6ed",
+       "name": "Pallof press",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "869d1b17-f810-4232-8d49-5a246c20f973",
+        "name": "Poulie réglable"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "2017161b-240b-4256-bd57-a2c198fad421",
+       "name": "Pallof press avec élastique",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "984ad195-1d85-437d-9cb2-3c31b53722a6",
+        "name": "Élastique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "97e1d20d-e3c4-4287-b3ba-a621ad047cc8",
+        "name": "Support fixe"
+       }
+      },
+      {
+       "exerciseId": "a67a6e0b-cce4-4c3b-8a29-ee152f552920",
+       "name": "Pec deck",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "d6a17d27-0005-4b6b-92a1-72bc75a662e2",
+        "name": "Pec deck"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "0389c84f-7054-4b7b-8a8b-5f28d4046af5",
+       "name": "Planche",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "f40fc047-e139-4830-9aaa-6bde6d2ad85d",
+       "name": "Planche avec déplacement avant-arrière",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "d12b4a9e-75e1-4f1f-8a91-ea9ab9ba4bba",
+        "name": "Sliders ou TRX"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "14395ee2-6821-4b78-aae9-93c58e3f2d46",
+       "name": "Planche avec toucher d'épaule",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "642cab74-1a41-4ccb-af90-653e78e57f01",
+       "name": "Planche haute",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "e08dfb85-0219-421e-b801-ff4105eb10fe",
+       "name": "Planche latérale",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "8baa4268-4d95-4a91-bfab-65241b853c46",
+       "name": "Planche latérale avec abduction",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "e984174a-8dfa-4232-8d06-212adf4a8415",
+       "name": "Planche latérale sur genoux",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "e6524d10-d1b9-4627-a6fb-eb5610ec5c18",
+       "name": "Pompes",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "224c2efc-455c-43b6-89a1-7752fd797ce7",
+       "name": "Pompes avec élastique",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "984ad195-1d85-437d-9cb2-3c31b53722a6",
+        "name": "Élastique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "a1eca24e-e738-4814-abe0-0d59d77e3716",
+       "name": "Pompes déclinées",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "d56ee0f1-7d81-47ac-a851-e54406f3979c",
+        "name": "Box pliométrique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "560b053d-1d69-46ff-b325-a49c9e5007e3",
+       "name": "Pompes inclinées",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "51945507-8052-4d1a-b5bc-4a6809c8dced",
+       "name": "Pompes larges",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "6089b495-d8c8-4804-8509-424e4b4bbaed",
+       "name": "Pompes lestées",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "ea0cc05d-d25f-4d4a-9b56-ef5ed23d8abc",
+        "name": "Gilet lesté"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "741e649a-a9f3-403c-8f7b-b8dfba767c84",
+       "name": "Pompes pliométriques",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "64898131-56f1-4f3b-8903-d23009a76424",
+       "name": "Pompes prise serrée",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "205e2ec4-f805-4f86-b9e0-121932868e7c",
+       "name": "Pompes sur genoux",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "d298be5d-0cd9-4fe7-8ca2-ef4ff5871dbd",
+       "name": "Pont fessier au sol",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "0de86860-d2ca-4d52-b20b-9bb81e5e6113",
+       "name": "Pont fessier lesté",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "7b8443c9-a54a-4f34-8b65-14af14bcf877",
+        "name": "Barre olympique ou haltère"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "c0345e79-ac44-46f9-bbbe-f2621f4230fa",
+       "name": "Pont fessier unilatéral",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "aa0a888f-f3d8-4370-868c-6249094abcae",
+       "name": "Presse à cuisses",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "12115f40-c845-4ada-809e-eb3f0a468679",
+        "name": "Presse à cuisses"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "d920e1d7-3439-4e01-9014-3317a825dbd1",
+       "name": "Presse à cuisses unilatérale",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "12115f40-c845-4ada-809e-eb3f0a468679",
+        "name": "Presse à cuisses"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "b36899ee-cc22-40cb-a477-9499df7caf0f",
+       "name": "Pronation supination haltère",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "8cf7e4d9-d84b-45c7-9231-533263bb89b2",
+       "name": "Pull-over haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "51825b29-1237-4fea-aca7-017c36991efa",
+       "name": "Pull-over machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "256dacd2-b035-4879-9161-f726a393b4fe",
+        "name": "Machine pullover"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "74bd1216-2d80-4bf8-b7b7-1a2f7dd95792",
+       "name": "Pull-over poulie haute bras tendus",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "11b1a88d-3c39-4256-b0a8-bf4c68eb5b2a",
+        "name": "Barre ou corde"
+       }
+      },
+      {
+       "exerciseId": "aff34439-41cc-47e5-b34b-f026bf072e4f",
+       "name": "Pull-through à la poulie",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "6263bcef-2d6d-4d6f-a1ec-e53e239576b8",
+        "name": "Corde"
+       }
+      },
+      {
+       "exerciseId": "39330107-4aef-4167-860e-1946f33d38eb",
+       "name": "Rameur",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f7ef9ddd-3879-46ae-ad99-fae8f276e5f3",
+        "name": "Rameur"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "a3fae02e-21c0-40ae-ad86-3386485fe33d",
+       "name": "Relevé de genoux chaise romaine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "fe4e5761-dc31-41d6-b1af-00362f91d7f0",
+        "name": "Chaise romaine"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "d15cb893-78d0-4a76-8cf7-5e6e045f63fa",
+       "name": "Relevé de genoux suspendu",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "793e7d58-12d4-4c94-b606-ba5d883f8c1d",
+        "name": "Barre de traction"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "a49fb3f3-e566-4380-b730-771c6d48a6b6",
+       "name": "Relevé de jambes suspendu",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "793e7d58-12d4-4c94-b606-ba5d883f8c1d",
+        "name": "Barre de traction"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "aef7c8f1-cc9c-46a6-9d37-8cc27c9939dc",
+       "name": "Reverse crunch",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "a156ea4d-9b8d-4e45-9c09-093234a4f1ed",
+       "name": "Reverse fly poulie",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f0c32467-eda7-4686-a01c-e6b7f1c9a99e",
+        "name": "Vis-à-vis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "8af47179-4f2b-4a87-88cd-6ffdbdc24ad2",
+       "name": "Reverse hyperextension",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "5c390d3e-1356-4193-8463-1acd33f25da3",
+        "name": "Banc ou machine reverse hyper"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ca7a8f4c-ec15-48b1-afcf-dd6bedf21be1",
+       "name": "Reverse pec deck",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "dc946857-bc5c-4d37-8451-eac00329bccd",
+        "name": "Reverse pec deck"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "078f3b42-1d06-448c-83fa-4a0816cd14eb",
+       "name": "Rotation externe à la poulie",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "869d1b17-f810-4232-8d49-5a246c20f973",
+        "name": "Poulie réglable"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "c78461e6-39b7-49f2-ab3e-eea16d00d74e",
+       "name": "Rotation externe avec élastique",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "984ad195-1d85-437d-9cb2-3c31b53722a6",
+        "name": "Élastique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "88996ab4-9369-434a-a09b-a3b6bf88fa8e",
+       "name": "Rotation interne à la poulie",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "869d1b17-f810-4232-8d49-5a246c20f973",
+        "name": "Poulie réglable"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "0932ccd4-be57-43e6-a2cc-1b421eddf73f",
+       "name": "Rotation interne avec élastique",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "984ad195-1d85-437d-9cb2-3c31b53722a6",
+        "name": "Élastique"
+       },
+       "secondaryEquipment": null
+      }
+     ],
+     "nextCursor": "eyJOYW1lIjoiUm90YXRpb24gaW50ZXJuZSBhdmVjIFx1MDBFOWxhc3RpcXVlIiwiRXhlcmNpc2VJZCI6IjA5MzJjY2Q0LWJlNTctNDNlNi1hMmNjLTFiNDIxZWRkZjczZiJ9"
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  },
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "c9ef4b6f-a4e5-46f2-87a8-7c88691696e8",
+       "name": "Rotation russe",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "d1f1f629-7aa2-4e22-95ea-d61ae6d71098",
+       "name": "Rowing assis poulie basse",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "65566556-d00c-4532-89cc-158558bc6ef4",
+        "name": "Poignée neutre"
+       }
+      },
+      {
+       "exerciseId": "d4ea0b93-3ced-49a9-a32b-d4dbf89d694d",
+       "name": "Rowing assis prise large",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "01831873-d374-4411-91de-b55ad48aaa18",
+        "name": "Barre large"
+       }
+      },
+      {
+       "exerciseId": "d032abd5-67bd-4070-8c99-c52b02b7d8a8",
+       "name": "Rowing barre buste penché",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "10016293-b371-4950-8056-1cde04bf9a84",
+       "name": "Rowing coudes ouverts haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "1f13b93d-ed85-4567-b2ff-400a45031137",
+       "name": "Rowing haltères buste penché",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "954bc82e-f502-4631-a138-d1766b6440dc",
+       "name": "Rowing haltère unilatéral",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "f90e897a-6f28-403a-9e7c-8ebd15a08430",
+       "name": "Rowing inversé",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "54af578f-7b06-481b-b428-f267a2b90a9b",
+        "name": "Barre fixe"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "19df61e2-c589-49cd-9ac7-76462f5c4a9c",
+       "name": "Rowing inversé aux anneaux",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "a3a0cd48-ecb2-452b-802e-f423d35fd470",
+        "name": "Anneaux gymnastique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "61f2dd13-f0e3-4c59-898f-df33dd0fc986",
+       "name": "Rowing landmine unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "2c01d151-622c-4d35-b783-85809f3c7206",
+        "name": "Landmine"
+       }
+      },
+      {
+       "exerciseId": "92856d83-f32c-406c-a40b-a65e9dd9a271",
+       "name": "Rowing machine assise",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "5e356cbf-2e7b-4029-a804-f590930dba72",
+        "name": "Rowing assis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "57f8a349-1395-4952-af49-15595fb8c064",
+       "name": "Rowing machine unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "5e356cbf-2e7b-4029-a804-f590930dba72",
+        "name": "Rowing assis"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "b3f2967e-19bb-4e53-8140-49a240c7dacb",
+       "name": "Rowing poitrine appuyée haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "724b3d24-3cda-40dd-bbb1-81d4b67c6a6d",
+       "name": "Rowing poulie basse unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "3b67f1ce-aefc-48af-a437-5d985061aeb6",
+       "name": "Rowing T-bar",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "cdef8a7c-3f06-4dfa-8b19-380549380cad",
+        "name": "T-bar"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "fd8d7157-a447-43b0-9af3-520dd48b3849",
+       "name": "Russian twist",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "ad3ff105-0df4-4705-9e01-b592904edcd7",
+        "name": "Poids du corps ou medicine ball"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "078590c1-140d-407a-b368-09ece78bf4ee",
+       "name": "Sandbag carry",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "215f7f5a-9722-4c59-9b29-4346a7b44ab1",
+        "name": "Sandbag"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "87d6a8d7-6ba3-4b7a-b3df-ce946141e3f5",
+       "name": "Saut en longueur",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "d60079bd-228d-4185-ba25-af819d43b005",
+       "name": "Saut squat",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "159f8670-d184-4d18-8006-08dc0424ef4d",
+       "name": "Scaption haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "436866ff-d889-4684-9001-e17ac6ea62a0",
+       "name": "Shoulder press machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "471a624b-6358-4a6f-ab94-5dbcefd853f5",
+        "name": "Shoulder press"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "c4953188-d16e-4d9d-a3fb-b7e350c183b4",
+       "name": "Shoulder press machine unilatérale",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "471a624b-6358-4a6f-ab94-5dbcefd853f5",
+        "name": "Shoulder press"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "7258a063-337d-4394-ba3f-af4e85536b6d",
+       "name": "Shrug barre",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ffce179e-e931-4c4f-afcd-ef29cf69b8a8",
+       "name": "Shrug haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "c4b3c08d-67fa-4f30-9663-4b4c448c3868",
+       "name": "Shuttle run",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "fab25038-eb38-4a90-9008-3f5e70c46135",
+        "name": "Plots"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "81257914-1111-44e6-8d9e-ea07981eb4dc",
+       "name": "Sissy squat assisté",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "97e1d20d-e3c4-4287-b3ba-a621ad047cc8",
+        "name": "Support fixe"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "3114afa4-fef6-4c8c-aa2d-81488f998dae",
+       "name": "Sit-up",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "8125addf-6112-4128-9ae0-58eeaf8e5c9b",
+       "name": "SkiErg",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "978e1310-ff7c-43fc-8bde-f10f5410b66a",
+        "name": "SkiErg"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "cb3736db-8dd7-47b2-8715-a1f7f8bf46ca",
+       "name": "Sled drag arrière",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "6f5b4d37-db07-4ae7-8bcf-812a9d06c085",
+        "name": "Sled"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "3fcae167-398f-4a59-998e-1225418dafba",
+        "name": "Sangles"
+       }
+      },
+      {
+       "exerciseId": "f2f998d5-a5a4-458f-91ff-5580732f64f5",
+       "name": "Sled pull",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "6f5b4d37-db07-4ae7-8bcf-812a9d06c085",
+        "name": "Sled"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "ccec932a-713d-4708-aa58-5fadb60ce4d1",
+        "name": "Corde ou sangles"
+       }
+      },
+      {
+       "exerciseId": "281675d8-8fa3-4e9d-997b-8a70d90f2ee1",
+       "name": "Sled push",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "6f5b4d37-db07-4ae7-8bcf-812a9d06c085",
+        "name": "Sled"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "c9b193db-9291-4bfb-92fe-8c26d0d1c646",
+       "name": "Smith machine développé couché",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "bc95f139-6388-4ff6-b469-7ea581da57df",
+        "name": "Smith machine"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "c1b22947-dc6d-49ce-97d8-af54dfb7ae71",
+       "name": "Smith machine développé épaules",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "bc95f139-6388-4ff6-b469-7ea581da57df",
+        "name": "Smith machine"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "3ef96d88-8bc5-4715-8422-f63c6f7ccf62",
+       "name": "Smith machine développé incliné",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "bc95f139-6388-4ff6-b469-7ea581da57df",
+        "name": "Smith machine"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "eadfe14d-5329-425b-afeb-5f94e4fb696a",
+       "name": "Smith machine squat",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "bc95f139-6388-4ff6-b469-7ea581da57df",
+        "name": "Smith machine"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "139b6e9a-7aa1-4cd7-b9ac-a430101042cb",
+       "name": "Soulevé de terre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "238ed23c-d1cb-4bb4-aa5a-fb1e88d0280b",
+       "name": "Soulevé de terre jambes tendues",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "298fbc92-a17b-47cb-8b1f-e458135a5bc2",
+       "name": "Soulevé de terre roumain barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "1f63ee1f-2071-41fd-aca9-d178c8ebfcc8",
+       "name": "Soulevé de terre roumain haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "41204678-742e-4e18-9d50-e0286b57a42b",
+       "name": "Soulevé de terre roumain unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "d25c2772-bf0f-49f6-a62d-a7c4c8c1ef80",
+        "name": "Haltères ou kettlebells"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "6738f1a2-ec31-4385-8369-a8e2ee88b756",
+       "name": "Sprint extérieur",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "fab25038-eb38-4a90-9008-3f5e70c46135",
+        "name": "Plots"
+       }
+      },
+      {
+       "exerciseId": "d2d79204-e9cb-4adf-a141-2fb0d29fe5bb",
+       "name": "Sprint sur tapis",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "f5053d35-f196-477e-bacc-b3aa83b5d0f8",
+        "name": "Tapis de course"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "0a087c69-4fad-4bbb-94f9-37ceac076d87",
+       "name": "Squat",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "d4e29166-4101-4fae-bac6-7281a082c7f2",
+       "name": "Squat barre arrière",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "5359627c-4c52-4d37-82ea-fffd4e95ed0c",
+        "name": "Rack"
+       }
+      },
+      {
+       "exerciseId": "20c50ec9-62f5-4be4-a35c-e5dcdd5b8699",
+       "name": "Squat haltères",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ff8620d8-c4a5-4c3f-9079-138e8aec4265",
+       "name": "Stair climber",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "4b83fbc7-6659-4222-987b-64e978e03802",
+        "name": "Escalier / Stair Climber"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "94fa4ab5-6a42-4d6b-9e69-831024b6bcff",
+       "name": "Step cardio",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "deb28721-94c7-4b7d-a42a-27abba4ca8af",
+        "name": "Step"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "a96298b0-0c92-4129-90bd-51209b566d15",
+       "name": "Step-down",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "d56ee0f1-7d81-47ac-a851-e54406f3979c",
+        "name": "Box pliométrique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "10c19f9d-9b48-4b9b-89a0-adc4f02e9f0f",
+       "name": "Step-up",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "d56ee0f1-7d81-47ac-a851-e54406f3979c",
+        "name": "Box pliométrique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       }
+      },
+      {
+       "exerciseId": "cffa3591-ede7-41f6-8182-3dfcbcdd305b",
+       "name": "Stir the pot",
+       "level": "ADVANCED",
+       "primaryEquipment": {
+        "equipmentId": "ea914f45-c488-4ba1-9eda-b16dd8fc74aa",
+        "name": "Ballon suisse"
+       },
+       "secondaryEquipment": null
+      }
+     ],
+     "nextCursor": "eyJOYW1lIjoiU3RpciB0aGUgcG90IiwiRXhlcmNpc2VJZCI6ImNmZmEzNTkxLWVkZTctNDFmNi04MTgyLTNkZmNiY2RkMzA1YiJ9"
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  },
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "3487cf04-cf26-4987-a774-a2bac7d0e3ce",
+       "name": "Suitcase carry",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "d25c2772-bf0f-49f6-a62d-a7c4c8c1ef80",
+        "name": "Haltères ou kettlebells"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "0d2a173f-e9c6-4437-9e25-bbd82cc70efc",
+       "name": "Suitcase hold",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "d25c2772-bf0f-49f6-a62d-a7c4c8c1ef80",
+        "name": "Haltères ou kettlebells"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "348f4f16-044e-4197-90b7-6997f194d093",
+       "name": "Superman au sol",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "873d24b6-e18c-41c8-a63d-f4f6fd6ac187",
+       "name": "Suspension à la barre",
+       "level": null,
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "591c8b4e-183f-4ec6-aa0f-5de22ba5816c",
+       "name": "Tapis de course",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f5053d35-f196-477e-bacc-b3aa83b5d0f8",
+        "name": "Tapis de course"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "3e57e6fa-f87e-434d-9f3a-625aa5dc9aa0",
+       "name": "Thruster haltères",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ea30a679-a31b-44bc-8e37-54820b2b030f",
+       "name": "Tibial raise",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "0ed91974-fc4b-4426-b758-f7b9aebac41a",
+        "name": "Mur"
+       }
+      },
+      {
+       "exerciseId": "e183a428-e015-4e7f-91ec-09704786816f",
+       "name": "Tirage horizontal poulie basse",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "c040f503-d89e-459e-ad7f-4849747dc164",
+       "name": "Tirage TRX",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "d7812f6c-c26a-4b6d-b55e-38167981abe5",
+        "name": "TRX"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "10e46f4d-f444-49a8-8524-000c474643e9",
+       "name": "Tirage vertical poulie haute",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "e59dcb30-4283-4738-b288-8ce6d6b4b84b",
+        "name": "Barre longue"
+       }
+      },
+      {
+       "exerciseId": "c9274979-00a5-4dce-a5e9-e9874fbded73",
+       "name": "Tirage vertical prise neutre",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "65566556-d00c-4532-89cc-158558bc6ef4",
+        "name": "Poignée neutre"
+       }
+      },
+      {
+       "exerciseId": "c1d5e67a-103e-49c3-891c-7fcd2aea53e4",
+       "name": "Tirage vertical prise supination",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "e59dcb30-4283-4738-b288-8ce6d6b4b84b",
+        "name": "Barre longue"
+       }
+      },
+      {
+       "exerciseId": "2e56808f-9f35-4045-b61b-a7691b4f7329",
+       "name": "Tirage vertical unilatéral",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "71e4b3b6-155b-4721-b7aa-4829259ffbe7",
+        "name": "Poignée simple"
+       }
+      },
+      {
+       "exerciseId": "64520719-cc9a-4e0d-a261-8a87df234719",
+       "name": "Toe touches",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "18430ada-699e-4f7d-bdbb-ad87e35af4bd",
+       "name": "Tractions assistées",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "90cd317b-fb63-45f8-9bdb-c4a75779cf99",
+        "name": "Machine à tractions assistées"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "6bbceccd-6437-4601-b117-42d7ef33bfaf",
+       "name": "Tractions prise neutre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "793e7d58-12d4-4c94-b606-ba5d883f8c1d",
+        "name": "Barre de traction"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "f061358e-1f74-493f-baf6-e1bf6eb01b0f",
+        "name": "Poignées parallèles"
+       }
+      },
+      {
+       "exerciseId": "4ac4b286-f756-4d91-90d7-a5cb9c39f31a",
+       "name": "Tractions pronation",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "793e7d58-12d4-4c94-b606-ba5d883f8c1d",
+        "name": "Barre de traction"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "ea75cd39-e989-4ac8-9cff-6255ef4623d6",
+       "name": "Tractions supination",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "793e7d58-12d4-4c94-b606-ba5d883f8c1d",
+        "name": "Barre de traction"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "b900b872-4a52-4e47-9151-25a43fef3e00",
+       "name": "Traction / tirage vertical",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "1e67ee56-26d3-4f4e-86d2-353345a3b7ee",
+       "name": "Vélo spinning",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "94b892ef-a7f3-4d4f-92cd-4b1bc0015d14",
+        "name": "Vélo spinning"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "20d00801-3d5b-49c9-8a0f-2b22b8e2a1ce",
+       "name": "Vélo stationnaire",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "d5840864-9da6-4823-95ab-2238ead018e8",
+        "name": "Vélo"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "bbd668f3-a3e9-4d3a-8ffd-f7c63bdc6bf6",
+       "name": "V-up",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "944fec76-b2b3-4c93-9e7e-1506666fe773",
+        "name": "Sans matériel"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "28d9f8cb-7a79-407f-aaf9-cb75d37c607e",
+        "name": "Tapis de sol"
+       }
+      },
+      {
+       "exerciseId": "e60515e9-ca3e-42e0-8465-12a98c75db26",
+       "name": "Wood chop poulie basse vers haute",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "be895cf6-28d3-4354-a9fc-9c3ef1bcfe18",
+        "name": "Poulie basse"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "51b8344b-7382-4728-9da9-e0339d818e07",
+        "name": "Poignée"
+       }
+      },
+      {
+       "exerciseId": "3d894f87-19de-417c-ad9f-23d79a47c29a",
+       "name": "Wood chop poulie haute vers basse",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "f3675675-5b23-490a-a6fd-7f2a16d85cf4",
+        "name": "Poulie haute"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "51b8344b-7382-4728-9da9-e0339d818e07",
+        "name": "Poignée"
+       }
+      },
+      {
+       "exerciseId": "be170b8b-5528-419a-ad00-dfd8f55f288b",
+       "name": "Y raise haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      }
+     ],
+     "nextCursor": null
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  }
+ ]
+}

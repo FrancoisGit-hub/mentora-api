@@ -1,0 +1,79 @@
+== database locale / extensions
+  datname   | datcollate |  datctype  
+------------+------------+------------
+ mentora_db | en_US.utf8 | en_US.utf8
+(1 row)
+
+ extname 
+---------
+ plpgsql
+(1 row)
+
+== 2c: fields matched by current member search for Chest press machine: ILIKE %dév% accent-sensitive, and folded %dev%
+    EXERCISE_NAME    |  EXERCISE_NAME_EN   |                EXERCISE_SEARCH_TAGS                 | name_ilike_dev_accent | name_en_ilike_dev_accent | tags_ilike_dev_accent | name_folded | name_en_folded | tags_folded 
+---------------------+---------------------+-----------------------------------------------------+-----------------------+--------------------------+-----------------------+-------------+----------------+-------------
+ Chest press machine | Machine Chest Press | chest press ; machine pectoraux ; développé machine | f                     | f                        | t                     | f           | f              | t
+(1 row)
+
+== 2c: current member search=dév ILIKE on name, name_en, tags; first rows by name (current order)
+             EXERCISE_NAME             | in_name | in_name_en | in_tags 
+---------------------------------------+---------+------------+---------
+ Chest press machine                   | f       | f          | t
+ Développé alterné haltères            | t       | f          | t
+ Développé couché barre                | t       | f          | t
+ Développé couché haltères             | t       | f          | t
+ Développé couché prise serrée         | t       | f          | f
+ Développé couché prise serrée triceps | t       | f          | t
+ Développé décliné barre               | t       | f          | t
+ Développé décliné haltères            | t       | f          | t
+ Développé épaules barre               | t       | f          | f
+ Développé épaules haltères assis      | t       | f          | t
+ Développé épaules haltères debout     | t       | f          | t
+ Développé épaules unilatéral haltère  | t       | f          | f
+(12 rows)
+
+== 2d: how many exercises are matched by tags only for dév
+ matched_today | by_name | not_by_name 
+---------------+---------+-------------
+            22 |      20 |           2
+(1 row)
+
+== 2d: what search tags contain (most frequent tokens)
+        tag         | count 
+--------------------+-------
+ cardio             |    19
+ fessiers           |    14
+ dos                |    12
+ quadriceps         |    12
+ épaules            |    11
+ biceps             |    10
+ gainage            |    10
+ obliques           |    10
+ conditioning       |     9
+ dorsaux            |     9
+ abdominaux         |     8
+ moyen fessier      |     8
+ avant-bras         |     7
+ abdos              |     6
+ jambes             |     6
+ trapèzes           |     6
+ anti rotation      |     4
+ ischio-jambiers    |     4
+ ischios            |     4
+ pectoraux          |     4
+ triceps            |     4
+ barre              |     3
+ chaîne postérieure |     3
+ débutant           |     3
+ grip               |     3
+(25 rows)
+
+== 2d: number of exercises by number of tags
+ n_tags | count 
+--------+-------
+      2 |    48
+      3 |   161
+      4 |    39
+        |    27
+(4 rows)
+

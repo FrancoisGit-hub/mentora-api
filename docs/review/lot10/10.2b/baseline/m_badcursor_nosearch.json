@@ -1,0 +1,17 @@
+{
+ "request": {
+  "cursor": "%%%",
+  "limit": 50
+ },
+ "pages": [
+  {
+   "status": 400,
+   "body": {
+    "success": false,
+    "data": null,
+    "error": "Invalid cursor format.",
+    "statusCode": 400
+   }
+  }
+ ]
+}

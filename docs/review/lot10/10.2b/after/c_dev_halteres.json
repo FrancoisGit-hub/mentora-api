@@ -1,0 +1,569 @@
+{
+ "request": {
+  "search": "dév",
+  "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5"
+ },
+ "pages": [
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": [
+     {
+      "exerciseId": "e73d5152-5611-4d2e-a6b5-2c172c0a87ca",
+      "coachId": null,
+      "name": "Développé alterné haltères",
+      "description": "Pousser un haltère pendant que l'autre reste contrôlé en position",
+      "instructions": "Éviter toute rotation du tronc et conserver le thorax stable",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "CHEST",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": true,
+      "isActive": true,
+      "createdDate": "2026-09-29T17:46:41.616204Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX023",
+      "nameEn": "Alternating Dumbbell Bench Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée horizontale",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Alterné",
+      "startingPosition": "Allongé sur banc",
+      "gripType": "Neutre ou pronation",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "d6660410-7110-4ac5-8f08-c90ac7f1288d",
+       "name": "Pectoraux"
+      },
+      "secondaryMuscles": [
+       "Triceps brachial",
+       "Deltoïde antérieur",
+       "Abdominaux"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": {
+       "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+       "name": "Banc plat"
+      },
+      "level": "INTERMEDIATE",
+      "breathing": "Expirer lors de chaque poussée",
+      "commonMistakes": [
+       "Rotation du tronc",
+       "perte de contrôle du bras immobile"
+      ],
+      "precautions": "Utiliser une charge inférieure à celle du développé bilatéral",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "53f1426c-b80b-43fe-8c88-69a51318ff08",
+        "name": "Coordination"
+       },
+       {
+        "objectiveId": "10877d5f-edb8-408d-82fe-ae4243798a86",
+        "name": "Gainage"
+       },
+       {
+        "objectiveId": "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+        "name": "Hypertrophie"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "541e455f-b169-43a4-bfee-d586ab8420e5",
+      "coachId": null,
+      "name": "Développé couché haltères",
+      "description": "Variante avec haltères pour une amplitude accrue.",
+      "instructions": "Allongé sur un banc, un haltère dans chaque main au niveau de la poitrine, pousser vers le haut jusqu'à extension complète.",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "CHEST",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": false,
+      "isActive": true,
+      "createdDate": "2026-08-11T11:53:42.833197Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX016",
+      "nameEn": "Dumbbell Bench Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée horizontale",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Bilatéral",
+      "startingPosition": "Allongé sur banc",
+      "gripType": "Neutre ou pronation",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "d6660410-7110-4ac5-8f08-c90ac7f1288d",
+       "name": "Pectoraux"
+      },
+      "secondaryMuscles": [
+       "Triceps brachial",
+       "Deltoïde antérieur"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": {
+       "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+       "name": "Banc plat"
+      },
+      "level": "INTERMEDIATE",
+      "breathing": "Inspirer à la descente ; expirer pendant la poussée",
+      "commonMistakes": [
+       "Amplitude excessive",
+       "haltères trop écartés",
+       "poignets cassés"
+      ],
+      "precautions": "Choisir une amplitude confortable pour les épaules",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "88e02f18-6783-4826-9056-24c4e3d4914b",
+        "name": "Force"
+       },
+       {
+        "objectiveId": "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+        "name": "Hypertrophie"
+       },
+       {
+        "objectiveId": "d26a6fc4-69d7-4fda-8723-dfd22602c650",
+        "name": "Renforcement général"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "6f33b700-5d14-4432-a5ce-f1e4e96bb48c",
+      "coachId": null,
+      "name": "Développé décliné haltères",
+      "description": "Pousser les haltères depuis les côtés du thorax vers le haut",
+      "instructions": "Contrôler la descente et maintenir le thorax stable",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "CHEST",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": true,
+      "isActive": true,
+      "createdDate": "2026-09-29T17:46:41.616204Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX020",
+      "nameEn": "Decline Dumbbell Bench Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée horizontale déclinée",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Bilatéral",
+      "startingPosition": "Allongé sur banc décliné",
+      "gripType": "Neutre ou pronation",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "d6660410-7110-4ac5-8f08-c90ac7f1288d",
+       "name": "Pectoraux"
+      },
+      "secondaryMuscles": [
+       "Triceps brachial",
+       "Deltoïde antérieur"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": {
+       "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+       "name": "Banc réglable"
+      },
+      "level": "INTERMEDIATE",
+      "breathing": "Inspirer à la descente ; expirer pendant la poussée",
+      "commonMistakes": [
+       "Descente trop profonde",
+       "instabilité",
+       "haltères trop éloignés du corps"
+      ],
+      "precautions": "Sécuriser l'installation avant d'utiliser des charges importantes",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+        "name": "Hypertrophie"
+       },
+       {
+        "objectiveId": "b40152c2-2bac-404a-baaa-9e415cbf6107",
+        "name": "Renforcement"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "bf3d1bae-aca2-42e7-a809-2f5ec8927901",
+      "coachId": null,
+      "name": "Développé épaules haltères assis",
+      "description": "Pousser les haltères au-dessus de la tête puis redescendre sous contrôle",
+      "instructions": "Régler le dossier puis pousser les haltères verticalement en conservant les avant-bras alignés",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "SHOULDERS",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": true,
+      "isActive": true,
+      "createdDate": "2026-09-29T17:46:41.616204Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX077",
+      "nameEn": "Seated Dumbbell Shoulder Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée verticale",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Bilatéral",
+      "startingPosition": "Assis",
+      "gripType": "Neutre ou pronation",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "fc704ef2-1d0d-414e-8a67-5b507721584e",
+       "name": "Épaules"
+      },
+      "secondaryMuscles": [
+       "Triceps",
+       "trapèzes"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": {
+       "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+       "name": "Banc réglable"
+      },
+      "level": "BEGINNER",
+      "breathing": "Expirer à la poussée ; inspirer à la descente",
+      "commonMistakes": [
+       "Cambrure excessive",
+       "haltères qui dérivent",
+       "amplitude forcée"
+      ],
+      "precautions": "Régler l'inclinaison du dossier selon le confort",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+        "name": "Hypertrophie"
+       },
+       {
+        "objectiveId": "b40152c2-2bac-404a-baaa-9e415cbf6107",
+        "name": "Renforcement"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "5b28916a-31a6-41f7-a4cd-99624225fa92",
+      "coachId": null,
+      "name": "Développé épaules haltères debout",
+      "description": "Pousser les haltères au-dessus de la tête sans cambrer le dos",
+      "instructions": "Contracter abdominaux et fessiers puis pousser verticalement tout en maintenant le bassin stable",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "SHOULDERS",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": true,
+      "isActive": true,
+      "createdDate": "2026-09-29T17:46:41.616204Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX078",
+      "nameEn": "Standing Dumbbell Shoulder Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée verticale",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Bilatéral",
+      "startingPosition": "Debout",
+      "gripType": "Neutre ou pronation",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "fc704ef2-1d0d-414e-8a67-5b507721584e",
+       "name": "Épaules"
+      },
+      "secondaryMuscles": [
+       "Triceps",
+       "trapèzes",
+       "centre du corps"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": null,
+      "level": "INTERMEDIATE",
+      "breathing": "Expirer pendant la poussée ; inspirer à la descente",
+      "commonMistakes": [
+       "Hyperextension lombaire",
+       "jambes utilisées",
+       "trajectoire instable"
+      ],
+      "precautions": "Réduire la charge si le gainage se dégrade",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "88e02f18-6783-4826-9056-24c4e3d4914b",
+        "name": "Force"
+       },
+       {
+        "objectiveId": "10877d5f-edb8-408d-82fe-ae4243798a86",
+        "name": "Gainage"
+       },
+       {
+        "objectiveId": "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+        "name": "Hypertrophie"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "53128873-25c1-4974-a00f-bf6fc978aa4c",
+      "coachId": null,
+      "name": "Développé épaules unilatéral haltère",
+      "description": "Pousser un haltère au-dessus de la tête sans incliner le tronc",
+      "instructions": "Maintenir bassin et cage thoracique stables pendant toute la poussée unilatérale",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "SHOULDERS",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": true,
+      "isActive": true,
+      "createdDate": "2026-09-29T17:46:41.616204Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX079",
+      "nameEn": "Single Arm Dumbbell Shoulder Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée verticale",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Unilatéral",
+      "startingPosition": "Debout",
+      "gripType": "Neutre",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "fc704ef2-1d0d-414e-8a67-5b507721584e",
+       "name": "Épaules"
+      },
+      "secondaryMuscles": [
+       "Triceps",
+       "trapèzes",
+       "abdominaux"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": null,
+      "level": "INTERMEDIATE",
+      "breathing": "Expirer à la poussée ; inspirer à la descente",
+      "commonMistakes": [
+       "Inclinaison latérale",
+       "cambrure",
+       "rotation du tronc"
+      ],
+      "precautions": "Utiliser une charge permettant de rester parfaitement stable",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "89235870-f177-46c5-85c6-052d1d50686f",
+        "name": "Anti-inclinaison"
+       },
+       {
+        "objectiveId": "f007a15d-0367-491a-b704-5301c87e3920",
+        "name": "Asymétrie"
+       },
+       {
+        "objectiveId": "b40152c2-2bac-404a-baaa-9e415cbf6107",
+        "name": "Renforcement"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "374d139a-4bf8-46b1-9824-e5bc4cc2c2c0",
+      "coachId": null,
+      "name": "Développé haltères prise neutre",
+      "description": "Pousser les haltères en gardant les paumes face à face",
+      "instructions": "Conserver les coudes proches du buste et contrôler toute l'amplitude",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "CHEST",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": true,
+      "isActive": true,
+      "createdDate": "2026-09-29T17:46:41.616204Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX022",
+      "nameEn": "Neutral Grip Dumbbell Bench Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée horizontale",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Bilatéral",
+      "startingPosition": "Allongé sur banc",
+      "gripType": "Neutre",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "d6660410-7110-4ac5-8f08-c90ac7f1288d",
+       "name": "Pectoraux"
+      },
+      "secondaryMuscles": [
+       "Triceps brachial",
+       "Deltoïde antérieur"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": {
+       "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+       "name": "Banc plat"
+      },
+      "level": "BEGINNER",
+      "breathing": "Inspirer à la descente ; expirer pendant la poussée",
+      "commonMistakes": [
+       "Écarter excessivement les coudes",
+       "perte d'alignement des poignets"
+      ],
+      "precautions": "Option intéressante lorsque la prise pronation est inconfortable",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+        "name": "Hypertrophie"
+       },
+       {
+        "objectiveId": "b40152c2-2bac-404a-baaa-9e415cbf6107",
+        "name": "Renforcement"
+       },
+       {
+        "objectiveId": "b86c8f88-07f2-4841-aea2-0d6df2ccd653",
+        "name": "Reprise"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "0f32a969-62cc-4d5b-99f8-fca453db5c5a",
+      "coachId": null,
+      "name": "Développé incliné haltères",
+      "description": "Cible la portion haute des pectoraux.",
+      "instructions": "Sur un banc incliné, pousser les haltères depuis les épaules jusqu'à extension complète des bras.",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "CHEST",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": false,
+      "isActive": true,
+      "createdDate": "2026-08-11T11:53:42.833197Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX018",
+      "nameEn": "Incline Dumbbell Bench Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée horizontale inclinée",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Bilatéral",
+      "startingPosition": "Allongé sur banc incliné",
+      "gripType": "Neutre ou pronation",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "d6660410-7110-4ac5-8f08-c90ac7f1288d",
+       "name": "Pectoraux"
+      },
+      "secondaryMuscles": [
+       "Triceps brachial",
+       "Deltoïde antérieur"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": {
+       "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+       "name": "Banc réglable"
+      },
+      "level": "INTERMEDIATE",
+      "breathing": "Inspirer à la descente ; expirer pendant la poussée",
+      "commonMistakes": [
+       "Amplitude excessive",
+       "banc trop vertical",
+       "perte de contrôle"
+      ],
+      "precautions": "Adapter l'inclinaison et l'amplitude aux capacités de l'épaule",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "88e02f18-6783-4826-9056-24c4e3d4914b",
+        "name": "Force"
+       },
+       {
+        "objectiveId": "d13ad9a3-ca3c-42c6-87ef-ab2567a289cf",
+        "name": "Hypertrophie"
+       }
+      ],
+      "video": null
+     },
+     {
+      "exerciseId": "673d476e-6327-43e2-9ae6-aa0752b22cc0",
+      "coachId": null,
+      "name": "Développé unilatéral haltère",
+      "description": "Pousser un haltère avec un seul bras en stabilisant le tronc",
+      "instructions": "Empêcher le bassin et le thorax de tourner pendant le mouvement",
+      "videoUrl": null,
+      "imageUrl": null,
+      "muscleGroup": "CHEST",
+      "equipment": "DUMBBELL",
+      "isPolyarticular": true,
+      "isActive": true,
+      "createdDate": "2026-09-29T17:46:41.616204Z",
+      "updatedDate": "2026-09-29T17:46:41.616204Z",
+      "sourceCode": "EX024",
+      "nameEn": "Single Arm Dumbbell Bench Press",
+      "category": "Musculation",
+      "movementPattern": "Poussée horizontale",
+      "exerciseType": "Polyarticulaire",
+      "laterality": "Unilatéral",
+      "startingPosition": "Allongé sur banc",
+      "gripType": "Neutre ou pronation",
+      "primaryMuscleGroup": {
+       "muscleGroupId": "d6660410-7110-4ac5-8f08-c90ac7f1288d",
+       "name": "Pectoraux"
+      },
+      "secondaryMuscles": [
+       "Triceps brachial",
+       "Deltoïde antérieur",
+       "Abdominaux"
+      ],
+      "primaryEquipment": {
+       "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+       "name": "Haltères"
+      },
+      "secondaryEquipment": {
+       "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+       "name": "Banc plat"
+      },
+      "level": "INTERMEDIATE",
+      "breathing": "Expirer pendant la poussée",
+      "commonMistakes": [
+       "Rotation du bassin",
+       "charge trop importante",
+       "perte d'appui"
+      ],
+      "precautions": "Garder les deux pieds fermement au sol",
+      "coachTip": null,
+      "objectives": [
+       {
+        "objectiveId": "3589c4a7-e78f-4680-8a36-20091a1c20af",
+        "name": "Anti-rotation"
+       },
+       {
+        "objectiveId": "10877d5f-edb8-408d-82fe-ae4243798a86",
+        "name": "Gainage"
+       },
+       {
+        "objectiveId": "b40152c2-2bac-404a-baaa-9e415cbf6107",
+        "name": "Renforcement"
+       }
+      ],
+      "video": null
+     }
+    ],
+    "error": null,
+    "statusCode": 200
+   }
+  }
+ ]
+}

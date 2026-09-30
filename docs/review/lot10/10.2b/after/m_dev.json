@@ -1,0 +1,286 @@
+{
+ "request": {
+  "search": "dév",
+  "limit": 50
+ },
+ "pages": [
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "e73d5152-5611-4d2e-a6b5-2c172c0a87ca",
+       "name": "Développé alterné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "1194fd80-be00-4630-907e-80609ef0f331",
+       "name": "Développé couché barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "541e455f-b169-43a4-bfee-d586ab8420e5",
+       "name": "Développé couché haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "66ae331e-b0dc-49b4-af8a-4d41318877d1",
+       "name": "Développé couché prise serrée",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "0c136095-eee3-45ab-8b0a-669e2540136f",
+       "name": "Développé couché prise serrée triceps",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "cba57937-62db-4fd4-99b5-b9ccccbb5d8a",
+       "name": "Développé décliné barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "6f33b700-5d14-4432-a5ce-f1e4e96bb48c",
+       "name": "Développé décliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "0680ade4-af1f-4d3a-b420-de563aa86243",
+       "name": "Développé épaules barre",
+       "level": null,
+       "primaryEquipment": null,
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "bf3d1bae-aca2-42e7-a809-2f5ec8927901",
+       "name": "Développé épaules haltères assis",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "5b28916a-31a6-41f7-a4cd-99624225fa92",
+       "name": "Développé épaules haltères debout",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "53128873-25c1-4974-a00f-bf6fc978aa4c",
+       "name": "Développé épaules unilatéral haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "374d139a-4bf8-46b1-9824-e5bc4cc2c2c0",
+       "name": "Développé haltères prise neutre",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "1425ffae-1cf5-4b49-b6f6-4bfc3bb0b4f9",
+       "name": "Développé incliné barre",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "0f32a969-62cc-4d5b-99f8-fca453db5c5a",
+       "name": "Développé incliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "ba9b0cf2-74d4-44b0-b011-044fc759bccf",
+       "name": "Développé militaire barre assis",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "74895d1d-ccb9-4458-b37e-fd899f146dce",
+        "name": "Banc"
+       }
+      },
+      {
+       "exerciseId": "965456ec-2304-463a-a383-956923dd9b46",
+       "name": "Développé militaire barre debout",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "04dbd52c-185c-4fab-928b-19d904473e25",
+        "name": "Barre olympique"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "673d476e-6327-43e2-9ae6-aa0752b22cc0",
+       "name": "Développé unilatéral haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "c9b193db-9291-4bfb-92fe-8c26d0d1c646",
+       "name": "Smith machine développé couché",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "bc95f139-6388-4ff6-b469-7ea581da57df",
+        "name": "Smith machine"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "c1b22947-dc6d-49ce-97d8-af54dfb7ae71",
+       "name": "Smith machine développé épaules",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "bc95f139-6388-4ff6-b469-7ea581da57df",
+        "name": "Smith machine"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "3ef96d88-8bc5-4715-8422-f63c6f7ccf62",
+       "name": "Smith machine développé incliné",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "bc95f139-6388-4ff6-b469-7ea581da57df",
+        "name": "Smith machine"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "5841b9d8-a996-4ea1-8592-bff1986e1f85",
+       "name": "Chest press machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "31994d77-8028-497c-ba64-6509e2844d06",
+        "name": "Chest press"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "436866ff-d889-4684-9001-e17ac6ea62a0",
+       "name": "Shoulder press machine",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "471a624b-6358-4a6f-ab94-5dbcefd853f5",
+        "name": "Shoulder press"
+       },
+       "secondaryEquipment": null
+      }
+     ],
+     "nextCursor": null
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  }
+ ]
+}

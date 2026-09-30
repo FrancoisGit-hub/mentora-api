@@ -1,0 +1,133 @@
+{
+ "request": {
+  "search": "dév",
+  "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+  "limit": 50
+ },
+ "pages": [
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [
+      {
+       "exerciseId": "e73d5152-5611-4d2e-a6b5-2c172c0a87ca",
+       "name": "Développé alterné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "541e455f-b169-43a4-bfee-d586ab8420e5",
+       "name": "Développé couché haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "6f33b700-5d14-4432-a5ce-f1e4e96bb48c",
+       "name": "Développé décliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "bf3d1bae-aca2-42e7-a809-2f5ec8927901",
+       "name": "Développé épaules haltères assis",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "5b28916a-31a6-41f7-a4cd-99624225fa92",
+       "name": "Développé épaules haltères debout",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "53128873-25c1-4974-a00f-bf6fc978aa4c",
+       "name": "Développé épaules unilatéral haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": null
+      },
+      {
+       "exerciseId": "374d139a-4bf8-46b1-9824-e5bc4cc2c2c0",
+       "name": "Développé haltères prise neutre",
+       "level": "BEGINNER",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      },
+      {
+       "exerciseId": "0f32a969-62cc-4d5b-99f8-fca453db5c5a",
+       "name": "Développé incliné haltères",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "57a46241-6f14-446d-aaf9-41106c35908f",
+        "name": "Banc réglable"
+       }
+      },
+      {
+       "exerciseId": "673d476e-6327-43e2-9ae6-aa0752b22cc0",
+       "name": "Développé unilatéral haltère",
+       "level": "INTERMEDIATE",
+       "primaryEquipment": {
+        "equipmentId": "63b68ad4-a46f-44c0-89ba-23c56be801e5",
+        "name": "Haltères"
+       },
+       "secondaryEquipment": {
+        "equipmentId": "06f5c91a-2bc1-4808-a1a5-237b534bc2fa",
+        "name": "Banc plat"
+       }
+      }
+     ],
+     "nextCursor": null
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  }
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "request": {
+  "search": "dev",
+  "limit": 50
+ },
+ "pages": [
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": {
+     "items": [],
+     "nextCursor": null
+    },
+    "error": null,
+    "statusCode": 200
+   }
+  }
+ ]
+}

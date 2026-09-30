@@ -1,0 +1,16 @@
+{
+ "request": {
+  "search": "zzzzqq"
+ },
+ "pages": [
+  {
+   "status": 200,
+   "body": {
+    "success": true,
+    "data": [],
+    "error": null,
+    "statusCode": 200
+   }
+  }
+ ]
+}
