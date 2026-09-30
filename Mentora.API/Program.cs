@@ -346,6 +346,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await MuscleGroupSeeder.SeedAsync(scope.ServiceProvider);
     await CatalogSeeder.SeedAsync(scope.ServiceProvider);
     await ProgramTemplateSeeder.SeedAsync(scope.ServiceProvider);
+    await QuizQuestionSeeder.SeedAsync(scope.ServiceProvider);
 }
 
 // Must run first so downstream middleware (and Request.Scheme in URL generation) see the

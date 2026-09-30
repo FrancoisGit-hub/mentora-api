@@ -1835,6 +1835,279 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.ToTable("PROGRAM_TEMPLATES", (string)null);
                 });
 
+            modelBuilder.Entity("Mentora.Core.Entities.QuizDeviceClaim", b =>
+                {
+                    b.Property<Guid>("QuizDeviceClaimId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_DEVICE_CLAIM_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("QuizDeviceClaimCoachId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_DEVICE_CLAIM_COACH_ID");
+
+                    b.Property<DateTime>("QuizDeviceClaimCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_DEVICE_CLAIM_CREATED_DATE");
+
+                    b.Property<string>("QuizDeviceClaimDeviceId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("QUIZ_DEVICE_CLAIM_DEVICE_ID");
+
+                    b.Property<int>("QuizDeviceClaimPoints")
+                        .HasColumnType("integer")
+                        .HasColumnName("QUIZ_DEVICE_CLAIM_POINTS");
+
+                    b.HasKey("QuizDeviceClaimId");
+
+                    b.HasIndex("QuizDeviceClaimCoachId")
+                        .HasDatabaseName("IX_QUIZ_DEVICE_CLAIMS_COACH_ID");
+
+                    b.HasIndex("QuizDeviceClaimDeviceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_QUIZ_DEVICE_CLAIMS_DEVICE_ID");
+
+                    b.ToTable("QUIZ_DEVICE_CLAIMS", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.QuizQuestion", b =>
+                {
+                    b.Property<Guid>("QuizQuestionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_QUESTION_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("QuizQuestionAnswerA")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("QUIZ_QUESTION_ANSWER_A");
+
+                    b.Property<string>("QuizQuestionAnswerB")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("QUIZ_QUESTION_ANSWER_B");
+
+                    b.Property<string>("QuizQuestionAnswerC")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("QUIZ_QUESTION_ANSWER_C");
+
+                    b.Property<string>("QuizQuestionAnswerD")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("QUIZ_QUESTION_ANSWER_D");
+
+                    b.Property<string>("QuizQuestionCardCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("QUIZ_QUESTION_CARD_CODE");
+
+                    b.Property<string>("QuizQuestionCardTitle")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("QUIZ_QUESTION_CARD_TITLE");
+
+                    b.Property<string>("QuizQuestionChapter")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("QUIZ_QUESTION_CHAPTER");
+
+                    b.Property<string>("QuizQuestionChapterCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("QUIZ_QUESTION_CHAPTER_CODE");
+
+                    b.Property<string>("QuizQuestionCorrectAnswer")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("QUIZ_QUESTION_CORRECT_ANSWER");
+
+                    b.Property<DateTime>("QuizQuestionCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_QUESTION_CREATED_DATE");
+
+                    b.Property<string>("QuizQuestionDifficulty")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("QUIZ_QUESTION_DIFFICULTY");
+
+                    b.Property<string>("QuizQuestionExplanation")
+                        .HasColumnType("text")
+                        .HasColumnName("QUIZ_QUESTION_EXPLANATION");
+
+                    b.Property<bool>("QuizQuestionIsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("QUIZ_QUESTION_IS_ACTIVE");
+
+                    b.Property<int>("QuizQuestionPoints")
+                        .HasColumnType("integer")
+                        .HasColumnName("QUIZ_QUESTION_POINTS");
+
+                    b.Property<string>("QuizQuestionSourceCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("QUIZ_QUESTION_SOURCE_CODE");
+
+                    b.Property<string>("QuizQuestionSourceStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("QUIZ_QUESTION_SOURCE_STATUS");
+
+                    b.Property<string>("QuizQuestionSubject")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("QUIZ_QUESTION_SUBJECT");
+
+                    b.Property<string>("QuizQuestionSubjectCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("QUIZ_QUESTION_SUBJECT_CODE");
+
+                    b.Property<string>("QuizQuestionText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("QUIZ_QUESTION_TEXT");
+
+                    b.Property<DateTime>("QuizQuestionUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_QUESTION_UPDATED_DATE");
+
+                    b.HasKey("QuizQuestionId");
+
+                    b.HasIndex("QuizQuestionSourceCode")
+                        .IsUnique()
+                        .HasDatabaseName("UX_QUIZ_QUESTIONS_SOURCE_CODE");
+
+                    b.ToTable("QUIZ_QUESTIONS", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.QuizSession", b =>
+                {
+                    b.Property<Guid>("QuizSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_SESSION_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid?>("QuizSessionCoachId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_SESSION_COACH_ID");
+
+                    b.Property<DateTime?>("QuizSessionCompletedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_SESSION_COMPLETED_DATE");
+
+                    b.Property<int?>("QuizSessionCorrectCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("QUIZ_SESSION_CORRECT_COUNT");
+
+                    b.Property<DateTime>("QuizSessionCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_SESSION_CREATED_DATE");
+
+                    b.Property<string>("QuizSessionDeviceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("QUIZ_SESSION_DEVICE_ID");
+
+                    b.Property<DateTime>("QuizSessionExpiresDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_SESSION_EXPIRES_DATE");
+
+                    b.Property<int>("QuizSessionQuestionCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_COUNT");
+
+                    b.Property<int?>("QuizSessionScore")
+                        .HasColumnType("integer")
+                        .HasColumnName("QUIZ_SESSION_SCORE");
+
+                    b.Property<string>("QuizSessionStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("QUIZ_SESSION_STATUS");
+
+                    b.Property<DateTime>("QuizSessionUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_SESSION_UPDATED_DATE");
+
+                    b.HasKey("QuizSessionId");
+
+                    b.HasIndex("QuizSessionCoachId")
+                        .HasDatabaseName("IX_QUIZ_SESSIONS_COACH_ID");
+
+                    b.HasIndex("QuizSessionDeviceId")
+                        .HasDatabaseName("IX_QUIZ_SESSIONS_DEVICE_ID");
+
+                    b.ToTable("QUIZ_SESSIONS", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.QuizSessionQuestion", b =>
+                {
+                    b.Property<Guid>("QuizSessionQuestionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("QuizSessionQuestionChosenAnswer")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_CHOSEN_ANSWER");
+
+                    b.Property<DateTime>("QuizSessionQuestionCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_CREATED_DATE");
+
+                    b.Property<bool?>("QuizSessionQuestionIsCorrect")
+                        .HasColumnType("boolean")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_IS_CORRECT");
+
+                    b.Property<int?>("QuizSessionQuestionPointsEarned")
+                        .HasColumnType("integer")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_POINTS_EARNED");
+
+                    b.Property<int>("QuizSessionQuestionPosition")
+                        .HasColumnType("integer")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_POSITION");
+
+                    b.Property<Guid>("QuizSessionQuestionQuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_QUESTION_ID");
+
+                    b.Property<Guid>("QuizSessionQuestionSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_SESSION_ID");
+
+                    b.Property<DateTime>("QuizSessionQuestionUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QUIZ_SESSION_QUESTION_UPDATED_DATE");
+
+                    b.HasKey("QuizSessionQuestionId");
+
+                    b.HasIndex("QuizSessionQuestionQuestionId")
+                        .HasDatabaseName("IX_QUIZ_SESSION_QUESTIONS_QUESTION_ID");
+
+                    b.HasIndex("QuizSessionQuestionSessionId", "QuizSessionQuestionPosition")
+                        .IsUnique()
+                        .HasDatabaseName("UX_QUIZ_SESSION_QUESTIONS_SESSION_POSITION");
+
+                    b.HasIndex("QuizSessionQuestionSessionId", "QuizSessionQuestionQuestionId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_QUIZ_SESSION_QUESTIONS_SESSION_QUESTION");
+
+                    b.ToTable("QUIZ_SESSION_QUESTIONS", (string)null);
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.Session", b =>
                 {
                     b.Property<Guid>("SessionId")
@@ -2696,6 +2969,46 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.Navigation("Coach");
                 });
 
+            modelBuilder.Entity("Mentora.Core.Entities.QuizDeviceClaim", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.Coach", "Coach")
+                        .WithMany()
+                        .HasForeignKey("QuizDeviceClaimCoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Coach");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.QuizSession", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.Coach", "Coach")
+                        .WithMany()
+                        .HasForeignKey("QuizSessionCoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Coach");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.QuizSessionQuestion", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.QuizQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuizSessionQuestionQuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mentora.Core.Entities.QuizSession", "Session")
+                        .WithMany("Questions")
+                        .HasForeignKey("QuizSessionQuestionSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("Session");
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.Session", b =>
                 {
                     b.HasOne("Mentora.Core.Entities.Coach", "Coach")
@@ -2877,6 +3190,11 @@ namespace Mentora.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Mentora.Core.Entities.ProductPack", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.QuizSession", b =>
+                {
+                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.User", b =>

@@ -501,4 +501,24 @@ public static class EnumMappings
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ProgramSessionStatus enum value.");
         }
     }
+
+    public static class QuizSessionStatusMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["IN_PROGRESS", "COMPLETED"]);
+
+        public static QuizSessionStatus Parse(string value)
+        {
+            if (value == "IN_PROGRESS") return QuizSessionStatus.InProgress;
+            if (value == "COMPLETED")   return QuizSessionStatus.Completed;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown QuizSessionStatus wire value.");
+        }
+
+        public static string ToWire(QuizSessionStatus value)
+        {
+            if (value == QuizSessionStatus.InProgress) return "IN_PROGRESS";
+            if (value == QuizSessionStatus.Completed)  return "COMPLETED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown QuizSessionStatus enum value.");
+        }
+    }
 }

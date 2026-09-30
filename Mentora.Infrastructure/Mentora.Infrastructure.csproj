@@ -26,6 +26,11 @@
     <EmbeddedResource Include="Seeding\Catalog\EXERCICES_MUSCLES.csv" LogicalName="Mentora.Catalog.EXERCICES_MUSCLES.csv" />
   </ItemGroup>
 
+  <!-- Quiz question sheet export read by QuizQuestionSeeder. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Seeding\Quiz\QUESTIONS.csv" LogicalName="Mentora.Quiz.QUESTIONS.csv" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
