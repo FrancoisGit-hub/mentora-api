@@ -1,0 +1,5 @@
+ sessions_l102 | claims_l102 | sessions_coaches_since_start | users_coach_b | coaches_coach_b | quiz_questions 
+---------------+-------------+------------------------------+---------------+-----------------+----------------
+             0 |           0 |                            0 |             0 |               0 |            900
+(1 row)
+

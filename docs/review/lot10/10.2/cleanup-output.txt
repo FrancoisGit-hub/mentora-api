@@ -1,0 +1,57 @@
+BEGIN
+ fixture_sessions | sessions_total | fixture_claims | claims_total | questions_total | fixture_users 
+------------------+----------------+----------------+--------------+-----------------+---------------
+               32 |             32 |              1 |            1 |             900 |             1
+(1 row)
+
+      deleted_from      |  n  
+------------------------+-----
+ QUIZ_SESSION_QUESTIONS | 384
+(1 row)
+
+ deleted_from  | n  
+---------------+----
+ QUIZ_SESSIONS | 32
+(1 row)
+
+    deleted_from    | n 
+--------------------+---
+ QUIZ_DEVICE_CLAIMS | 1
+(1 row)
+
+       deleted_from       | n 
+--------------------------+---
+ OFFER_PROGRAMS (coach B) | 4
+(1 row)
+
+        deleted_from        | n 
+----------------------------+---
+ COACH_PARAMETERS (coach B) | 1
+(1 row)
+
+       deleted_from       | n 
+--------------------------+---
+ AUTH_OTPS (coach B user) | 3
+(1 row)
+
+            deleted_from            | n 
+------------------------------------+---
+ AUTH_REFRESH_TOKENS (coach B user) | 3
+(1 row)
+
+   deleted_from    | n 
+-------------------+---
+ COACHES (coach B) | 1
+(1 row)
+
+  deleted_from   | n 
+-----------------+---
+ USERS (coach B) | 1
+(1 row)
+
+ fixture_sessions | sessions_total | session_questions_total | claims_total | questions_total | fixture_users | fixture_coaches | fixture_offer_programs | users_total 
+------------------+----------------+-------------------------+--------------+-----------------+---------------+-----------------+------------------------+-------------
+                0 |              0 |                       0 |            0 |             900 |             0 |               0 |                      0 |           2
+(1 row)
+
+COMMIT
