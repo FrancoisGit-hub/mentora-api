@@ -406,9 +406,6 @@ public class ExerciseService(
         return EnumMappings.ExerciseLevelMapping.Parse(normalized);
     }
 
-    /// <summary>Escapes LIKE wildcards; paired with the backslash escape character in the ILIKE call.</summary>
-    private static string EscapeLike(string value) => ExerciseSearch.EscapeLike(value);
-
     // ── Cursor helpers ─────────────────────────────────────────────────────────
 
     private static string EncodeCursor(string name, Guid exerciseId)

@@ -21,7 +21,6 @@ public class QuizBasicService(
     IValidator<QuizOwner> ownerValidator,
     IValidator<QuizSubmitRequest> submitValidator) : IQuizBasicService
 {
-    private const int DefaultLimit = 20;
     private const int MaxLimit = 50;
 
     private readonly QuizOptions _options = options.Value;
