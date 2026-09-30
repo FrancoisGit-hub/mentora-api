@@ -24,7 +24,7 @@ public class MemberExercisesController(IExerciseService exerciseService) : Contr
     /// Optional level (<c>BEGINNER</c>, <c>INTERMEDIATE</c>, <c>ADVANCED</c>): returns exercises whose minimum
     /// level is lower than or equal to it. Exercises with an unknown level are excluded when given.
     /// </param>
-    /// <param name="search">Optional case-insensitive substring on name, English name and search tags (2 to 60 characters).</param>
+    /// <param name="search">Optional search (case and accent insensitive). Matches the exercise name and its alternative names (English name, search aliases) only, never descriptions or instructions. Results are ranked by relevance: name starts with the term, then a word of the name starts with it, then the name contains it, then alternative names only; ties by name. 2 to 60 characters.</param>
     /// <param name="limit">Page size, from 1 to 100. Defaults to 50.</param>
     /// <param name="cursor">Opaque cursor returned as <c>nextCursor</c> by the previous page.</param>
     /// <param name="ct">Cancellation token.</param>

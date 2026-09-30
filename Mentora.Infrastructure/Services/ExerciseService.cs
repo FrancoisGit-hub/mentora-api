@@ -40,12 +40,6 @@ public class ExerciseService(
         if (!includeInactive)
             query = query.Where(e => e.ExerciseIsActive);
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var likePattern = "%" + EscapeLike(search.Trim()) + "%";
-            query = query.Where(e => EF.Functions.ILike(e.ExerciseName, likePattern, "\\"));
-        }
-
         if (muscleGroupFilter is not null)
             query = query.Where(e => e.ExerciseMuscleGroup == muscleGroupFilter.Value);
 
@@ -53,6 +47,21 @@ public class ExerciseService(
             query = query.Where(e => e.ExerciseEquipment == equipmentFilter.Value);
 
         query = ApplyCatalogFilters(query, muscleGroupId, equipmentId, objectiveId, maxLevel);
+
+        // Search matches the name and alternative names only and ranks by relevance (best first);
+        // without a search the order is unchanged (by name).
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var ranked = await ExerciseSearch.WithRank(WithDetail(query).AsNoTracking(), search)
+                .Where(r => r.Rank <= ExerciseSearch.MaxRank)
+                .OrderBy(r => r.Rank)
+                .ThenBy(r => r.Exercise.ExerciseName)
+                .ThenBy(r => r.Exercise.ExerciseId)
+                .AsSplitQuery()
+                .ToListAsync(ct);
+
+            return ranked.Select(r => ToResponse(r.Exercise)).ToList();
+        }
 
         var exercises = await WithDetail(query)
             .AsNoTracking()
@@ -148,50 +157,82 @@ public class ExerciseService(
 
         var maxLevel = ParseLevelFilter(level);
 
-        string? likePattern = null;
+        string? term = null;
         if (search is not null)
         {
-            var term = search.Trim();
+            term = search.Trim();
             if (term.Length is < SearchMinLength or > SearchMaxLength)
                 throw new InvalidOperationException(
                     $"search must be between {SearchMinLength} and {SearchMaxLength} characters (got {term.Length}).");
-            likePattern = "%" + EscapeLike(term) + "%";
         }
-
-        var cursorPayload = cursor is null ? null : DecodeCursor(cursor);
 
         var query = ApplyCatalogFilters(VisibleToMember(memberId), muscleGroupId, equipmentId, objectiveId, maxLevel);
 
-        if (likePattern is not null)
-            query = query.Where(e => EF.Functions.ILike(e.ExerciseName, likePattern, "\\")
-                                  || (e.ExerciseNameEn != null && EF.Functions.ILike(e.ExerciseNameEn, likePattern, "\\"))
-                                  || (e.ExerciseSearchTags != null && EF.Functions.ILike(e.ExerciseSearchTags, likePattern, "\\")));
-
-        if (cursorPayload is not null)
-        {
-            var cursorName = cursorPayload.Name;
-            var cursorId   = cursorPayload.ExerciseId;
-            query = query.Where(e => e.ExerciseName.CompareTo(cursorName) > 0
-                                  || (e.ExerciseName == cursorName && e.ExerciseId.CompareTo(cursorId) > 0));
-        }
-
         // Single query: fetch limit+1 to know whether a next page exists.
-        var rows = await query
-            .AsNoTracking()
-            .OrderBy(e => e.ExerciseName)
-            .ThenBy(e => e.ExerciseId)
-            .Take(limit + 1)
-            .Select(e => new
+        List<ListRow> rows;
+        if (term is null)
+        {
+            var cursorPayload = cursor is null ? null : DecodeCursor(cursor);
+            if (cursorPayload is not null)
             {
-                e.ExerciseId,
-                e.ExerciseName,
-                e.ExerciseMinLevel,
-                PrimaryId     = e.ExercisePrimaryEquipmentId,
-                PrimaryName   = e.PrimaryEquipment != null ? e.PrimaryEquipment.EquipmentName : null,
-                SecondaryId   = e.ExerciseSecondaryEquipmentId,
-                SecondaryName = e.SecondaryEquipment != null ? e.SecondaryEquipment.EquipmentName : null,
-            })
-            .ToListAsync(ct);
+                var cursorName = cursorPayload.Name;
+                var cursorId   = cursorPayload.ExerciseId;
+                query = query.Where(e => e.ExerciseName.CompareTo(cursorName) > 0
+                                      || (e.ExerciseName == cursorName && e.ExerciseId.CompareTo(cursorId) > 0));
+            }
+
+            rows = await query
+                .AsNoTracking()
+                .OrderBy(e => e.ExerciseName)
+                .ThenBy(e => e.ExerciseId)
+                .Take(limit + 1)
+                .Select(e => new ListRow(
+                    e.ExerciseId,
+                    e.ExerciseName,
+                    e.ExerciseMinLevel,
+                    e.ExercisePrimaryEquipmentId,
+                    e.PrimaryEquipment != null ? e.PrimaryEquipment.EquipmentName : null,
+                    e.ExerciseSecondaryEquipmentId,
+                    e.SecondaryEquipment != null ? e.SecondaryEquipment.EquipmentName : null,
+                    0))
+                .ToListAsync(ct);
+        }
+        else
+        {
+            // Search: name and alternative names only, ranked by relevance (see ExerciseSearch),
+            // then by name, then by id. The cursor carries the rank as well.
+            var ranked = ExerciseSearch.WithRank(query.AsNoTracking(), term)
+                .Where(r => r.Rank <= ExerciseSearch.MaxRank);
+
+            var cursorPayload = cursor is null ? null : DecodeSearchCursor(cursor);
+            if (cursorPayload is not null)
+            {
+                var cursorRank = cursorPayload.Rank!.Value;
+                var cursorName = cursorPayload.Name;
+                var cursorId   = cursorPayload.ExerciseId;
+                ranked = ranked.Where(r => r.Rank > cursorRank
+                                        || (r.Rank == cursorRank
+                                            && (r.Exercise.ExerciseName.CompareTo(cursorName) > 0
+                                                || (r.Exercise.ExerciseName == cursorName
+                                                    && r.Exercise.ExerciseId.CompareTo(cursorId) > 0))));
+            }
+
+            rows = await ranked
+                .OrderBy(r => r.Rank)
+                .ThenBy(r => r.Exercise.ExerciseName)
+                .ThenBy(r => r.Exercise.ExerciseId)
+                .Take(limit + 1)
+                .Select(r => new ListRow(
+                    r.Exercise.ExerciseId,
+                    r.Exercise.ExerciseName,
+                    r.Exercise.ExerciseMinLevel,
+                    r.Exercise.ExercisePrimaryEquipmentId,
+                    r.Exercise.PrimaryEquipment != null ? r.Exercise.PrimaryEquipment.EquipmentName : null,
+                    r.Exercise.ExerciseSecondaryEquipmentId,
+                    r.Exercise.SecondaryEquipment != null ? r.Exercise.SecondaryEquipment.EquipmentName : null,
+                    r.Rank))
+                .ToListAsync(ct);
+        }
 
         var hasNext  = rows.Count > limit;
         var pageRows = hasNext ? rows.Take(limit).ToList() : rows;
@@ -209,7 +250,9 @@ public class ExerciseService(
         if (hasNext)
         {
             var last = pageRows[^1];
-            nextCursor = EncodeCursor(last.ExerciseName, last.ExerciseId);
+            nextCursor = term is null
+                ? EncodeCursor(last.ExerciseName, last.ExerciseId)
+                : EncodeSearchCursor(last.Rank, last.ExerciseName, last.ExerciseId);
         }
 
         return new ExerciseListResponseDto(items, nextCursor);
@@ -364,8 +407,7 @@ public class ExerciseService(
     }
 
     /// <summary>Escapes LIKE wildcards; paired with the backslash escape character in the ILIKE call.</summary>
-    private static string EscapeLike(string value) =>
-        value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+    private static string EscapeLike(string value) => ExerciseSearch.EscapeLike(value);
 
     // ── Cursor helpers ─────────────────────────────────────────────────────────
 
@@ -391,6 +433,35 @@ public class ExerciseService(
     }
 
     private sealed record CursorPayload(string Name, Guid ExerciseId);
+
+    // Search cursor: the position in the (rank, name, id) order. A cursor of the plain (name, id)
+    // format has no rank and is rejected like any cursor of the wrong shape.
+    private static string EncodeSearchCursor(int rank, string name, Guid exerciseId)
+    {
+        var payload = JsonSerializer.Serialize(new SearchCursorPayload(rank, name, exerciseId));
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(payload));
+    }
+
+    private static SearchCursorPayload DecodeSearchCursor(string cursor)
+    {
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
+            var payload = JsonSerializer.Deserialize<SearchCursorPayload>(json);
+            if (payload is null || payload.Name is null || payload.Rank is not (>= 0 and <= ExerciseSearch.MaxRank))
+                throw new InvalidOperationException("Invalid cursor.");
+            return payload;
+        }
+        catch (FormatException)   { throw new InvalidOperationException("Invalid cursor format."); }
+        catch (JsonException)     { throw new InvalidOperationException("Invalid cursor format."); }
+        catch (ArgumentException) { throw new InvalidOperationException("Invalid cursor format."); }
+    }
+
+    private sealed record SearchCursorPayload(int? Rank, string Name, Guid ExerciseId);
+
+    private sealed record ListRow(
+        Guid ExerciseId, string ExerciseName, ExerciseLevel? ExerciseMinLevel,
+        Guid? PrimaryId, string? PrimaryName, Guid? SecondaryId, string? SecondaryName, int Rank);
 
     // ── Mapping ────────────────────────────────────────────────────────────────
 

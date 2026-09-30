@@ -51,6 +51,12 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Lot 10.2b - PostgreSQL translate() for accent-insensitive exercise search (built-in: no schema change).
+        modelBuilder.HasDbFunction(typeof(MentoraDbFunctions).GetMethod(
+                nameof(MentoraDbFunctions.Translate), [typeof(string), typeof(string), typeof(string)])!)
+            .HasName("translate")
+            .IsBuiltIn();
+
         modelBuilder.Entity<HealthCheck>(entity =>
         {
             entity.HasKey(e => e.Id);

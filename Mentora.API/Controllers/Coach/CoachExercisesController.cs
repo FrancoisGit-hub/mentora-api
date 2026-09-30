@@ -17,7 +17,7 @@ public class CoachExercisesController(IExerciseService exerciseService) : Contro
     /// Lists exercises visible to the authenticated coach: shared Mentora catalogue entries
     /// plus the coach's own.
     /// </summary>
-    /// <param name="search">Optional case-insensitive substring filter on the exercise name.</param>
+    /// <param name="search">Optional search (case and accent insensitive). Matches the exercise name and its alternative names (English name, search aliases) only, never descriptions or instructions. Results are ranked by relevance: name starts with the term, then a word of the name starts with it, then the name contains it, then alternative names only; ties by name.</param>
     /// <param name="muscleGroup">Deprecated since Lot 9, use <c>muscleGroupId</c>. Removed in Lot 10. Legacy muscle group filter (wire value, e.g. <c>CHEST</c>).</param>
     /// <param name="equipment">Deprecated since Lot 9, use <c>equipmentId</c>. Removed in Lot 10. Legacy equipment filter (wire value, e.g. <c>BARBELL</c>).</param>
     /// <param name="muscleGroupId">Optional primary muscle group filter.</param>
