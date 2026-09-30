@@ -1,0 +1,45 @@
+BEGIN
+           t            | count 
+------------------------+-------
+ QUIZ_QUESTIONS         |   900
+ QUIZ_SESSIONS          |     0
+ QUIZ_SESSION_QUESTIONS |     0
+ QUIZ_DEVICE_CLAIMS     |     0
+(4 rows)
+
+ source_status | count 
+---------------+-------
+ Brouillon     |   900
+(1 row)
+
+ correct_answer | count 
+----------------+-------
+ A              |   324
+ B              |   232
+ C              |   189
+ D              |   155
+(4 rows)
+
+ sum_points | min_points | max_points 
+------------+------------+------------
+       7825 |          5 |         15
+(1 row)
+
+  code   | correct | points |                           question                           
+---------+---------+--------+--------------------------------------------------------------
+ QUE-001 | B       |      5 | Quel principe consiste à augmenter progressivement les contr
+ QUE-002 | C       |      5 | Pourquoi la récupération est-elle essentielle dans l’entraîn
+ QUE-003 | B       |     10 | Que décrit le principe de surcompensation ?
+(3 rows)
+
+ csv_codes | found_in_table | missing 
+-----------+----------------+---------
+       900 |            900 |       0
+(1 row)
+
+ extra_in_table_not_in_csv 
+---------------------------
+                         0
+(1 row)
+
+ROLLBACK

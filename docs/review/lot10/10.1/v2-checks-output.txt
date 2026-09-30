@@ -1,0 +1,54 @@
+BEGIN
+SAVEPOINT
+ERROR:  23514: new row for relation "QUIZ_QUESTIONS" violates check constraint "CK_QUIZ_QUESTIONS_CORRECT_ANSWER"
+DETAIL:  Failing row contains (f5c7b1bd-433d-4cea-9cc2-274c83f3d118, T-E, null, null, null, null, null, null, q, a, b, c, d, E, null, null, 5, null, t, 2026-09-30 09:05:32.789694+00, 2026-09-30 09:05:32.789694+00).
+SCHEMA NAME:  public
+TABLE NAME:  QUIZ_QUESTIONS
+CONSTRAINT NAME:  CK_QUIZ_QUESTIONS_CORRECT_ANSWER
+LOCATION:  ExecConstraints, execMain.c:2057
+ROLLBACK
+SAVEPOINT
+ERROR:  23514: new row for relation "QUIZ_QUESTIONS" violates check constraint "CK_QUIZ_QUESTIONS_POINTS"
+DETAIL:  Failing row contains (8a33c71f-def5-4cb7-ac10-7f583924fdb9, T-NEG, null, null, null, null, null, null, q, a, b, c, d, A, null, null, -1, null, t, 2026-09-30 09:05:32.789694+00, 2026-09-30 09:05:32.789694+00).
+SCHEMA NAME:  public
+TABLE NAME:  QUIZ_QUESTIONS
+CONSTRAINT NAME:  CK_QUIZ_QUESTIONS_POINTS
+LOCATION:  ExecConstraints, execMain.c:2057
+ROLLBACK
+SAVEPOINT
+ERROR:  23514: new row for relation "QUIZ_SESSIONS" violates check constraint "CK_QUIZ_SESSIONS_OWNER"
+DETAIL:  Failing row contains (49b085e7-c007-434c-9327-d703a74a76a6, null, null, IN_PROGRESS, 10, null, null, null, 2026-09-30 09:05:32.789694+00, 2026-09-30 09:05:32.789694+00, 2026-09-30 09:05:32.789694+00).
+SCHEMA NAME:  public
+TABLE NAME:  QUIZ_SESSIONS
+CONSTRAINT NAME:  CK_QUIZ_SESSIONS_OWNER
+LOCATION:  ExecConstraints, execMain.c:2057
+ROLLBACK
+SAVEPOINT
+ERROR:  23514: new row for relation "QUIZ_SESSIONS" violates check constraint "CK_QUIZ_SESSIONS_COMPLETION"
+DETAIL:  Failing row contains (e6fad1b0-ec6d-4e64-a8b6-526ca7827378, null, dev-check, COMPLETED, 10, null, null, null, 2026-09-30 09:05:32.789694+00, 2026-09-30 09:05:32.789694+00, 2026-09-30 09:05:32.789694+00).
+SCHEMA NAME:  public
+TABLE NAME:  QUIZ_SESSIONS
+CONSTRAINT NAME:  CK_QUIZ_SESSIONS_COMPLETION
+LOCATION:  ExecConstraints, execMain.c:2057
+ROLLBACK
+SAVEPOINT
+INSERT 0 1
+         result         | count 
+------------------------+-------
+ valid session inserted |     1
+(1 row)
+
+SAVEPOINT
+ERROR:  23514: new row for relation "QUIZ_SESSION_QUESTIONS" violates check constraint "CK_QUIZ_SESSION_QUESTIONS_ANSWER_STATE"
+DETAIL:  Failing row contains (a6702f6b-1eb9-4ad6-a85f-241acbfffd53, 00000000-0000-0000-0000-0000000000a5, 63f4a673-ec9d-4ead-8ad1-029f1d89fe4e, 1, A, null, null, 2026-09-30 09:05:32.789694+00, 2026-09-30 09:05:32.789694+00).
+SCHEMA NAME:  public
+TABLE NAME:  QUIZ_SESSION_QUESTIONS
+CONSTRAINT NAME:  CK_QUIZ_SESSION_QUESTIONS_ANSWER_STATE
+LOCATION:  ExecConstraints, execMain.c:2057
+ROLLBACK
+ROLLBACK
+               result               | count 
+------------------------------------+-------
+ after rollback: test sessions left |     0
+(1 row)
+
