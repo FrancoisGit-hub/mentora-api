@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
+using Mentora.API.Authorization;
 using Mentora.API.Hubs;
 using Mentora.API.Middleware;
 using Mentora.API.Swagger;
@@ -15,8 +16,10 @@ using Mentora.Infrastructure.Persistence;
 using Mentora.Infrastructure.Seeding;
 using Mentora.Infrastructure.Services;
 using Mentora.Infrastructure.Services.Email;
+using Mentora.Infrastructure.Services.Quiz;
 using Mentora.Infrastructure.Services.Visio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -182,7 +185,13 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("MemberOnly", policy =>
         policy.RequireClaim("memberId")
               .RequireClaim("userType", "MEMBER"));
+
+    // Lot 10.2 — anonymous device (no Authorization header) or coach; see QuizPlayerHandler.
+    options.AddPolicy(QuizPlayerRequirement.PolicyName, policy =>
+        policy.AddRequirements(new QuizPlayerRequirement()));
 });
+
+builder.Services.AddSingleton<IAuthorizationHandler, QuizPlayerHandler>();
 
 // Lot 1
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -262,6 +271,18 @@ builder.Services.AddOptions<LiveKitOptions>()
     .Validate(o => o.JoinAfterEndMinutes >= 0, "LiveKit:JoinAfterEndMinutes must not be negative.")
     .ValidateOnStart();
 builder.Services.AddScoped<IVisioTokenService, VisioTokenService>();
+
+// Lot 10.2 — Basic quiz. Options fail loudly at startup when out of range.
+builder.Services.AddOptions<QuizOptions>()
+    .Bind(builder.Configuration.GetSection(QuizOptions.SectionName))
+    .Validate(o => o.QuestionCount is >= 1 and <= 50, "Quiz:QuestionCount must be between 1 and 50.")
+    .Validate(o => o.SessionLifetimeMinutes > 0, "Quiz:SessionLifetimeMinutes must be greater than 0.")
+    .Validate(o => o.AnonymousPermitLimit > 0, "Quiz:AnonymousPermitLimit must be greater than 0.")
+    .Validate(o => o.AnonymousWindowMinutes > 0, "Quiz:AnonymousWindowMinutes must be greater than 0.")
+    .ValidateOnStart();
+builder.Services.AddScoped<IQuizBasicService, QuizBasicService>();
+builder.Services.AddScoped<IQuizDeviceClaimService, QuizDeviceClaimService>();
+builder.Services.AddRateLimiter(o => o.AddQuizPolicy());
 
 // Lot 3.3 — SignalR (enum serialization mirrors the REST JSON convention)
 builder.Services.AddSignalR()
@@ -369,6 +390,7 @@ app.UseSwaggerUI(c =>
 app.UseCors("MentoraCorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 // Health check endpoint — lit la BDD
 app.MapGet("/api/v1/health", async (MentoraDbContext db) =>
