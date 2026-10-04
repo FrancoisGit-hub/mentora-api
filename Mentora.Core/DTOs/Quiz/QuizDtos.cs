@@ -112,6 +112,58 @@ public record QuizHistoryResponse(
     IReadOnlyList<QuizHistoryItemDto> Items,
     string? NextCursor);
 
+/// <summary>A question of a session as replayed by the review endpoint.</summary>
+/// <param name="Position">1-based position in the session.</param>
+/// <param name="QuestionId">Question identifier.</param>
+/// <param name="Text">Question text (read live from the question bank).</param>
+/// <param name="Answers">The four choices, A to D.</param>
+/// <param name="ChosenAnswer">Answer given, <c>null</c> while the session is in progress.</param>
+/// <param name="CorrectAnswer">"A" to "D".</param>
+/// <param name="IsCorrect">Whether the answer given is right, <c>null</c> while the session is in progress.</param>
+/// <param name="PointsEarned">Points earned, <c>null</c> while the session is in progress.</param>
+/// <param name="Points">Points earned for a correct answer.</param>
+/// <param name="Explanation">Explanation, if any.</param>
+/// <param name="Difficulty">Difficulty label as in the sheet.</param>
+/// <param name="Subject">Subject label.</param>
+/// <param name="Chapter">Chapter label.</param>
+public record QuizSessionReviewQuestionDto(
+    int Position,
+    Guid QuestionId,
+    string Text,
+    IReadOnlyList<QuizAnswerOptionDto> Answers,
+    string? ChosenAnswer,
+    string CorrectAnswer,
+    bool? IsCorrect,
+    int? PointsEarned,
+    int Points,
+    string? Explanation,
+    string? Difficulty,
+    string? Subject,
+    string? Chapter);
+
+/// <summary>A quiz session replayed from its id, in progress or completed.</summary>
+/// <param name="SessionId">Session identifier.</param>
+/// <param name="Status">"IN_PROGRESS" or "COMPLETED".</param>
+/// <param name="IsExpired">True when the session is still in progress and past its expiry (computed at read time).</param>
+/// <param name="QuestionCount">Number of questions drawn.</param>
+/// <param name="Score">Stored score, <c>null</c> while in progress.</param>
+/// <param name="CorrectCount">Stored number of correct answers, <c>null</c> while in progress.</param>
+/// <param name="CreatedAt">Creation instant (UTC).</param>
+/// <param name="ExpiresAt">Last instant at which the session can be submitted (UTC).</param>
+/// <param name="CompletedAt">Completion instant (UTC), <c>null</c> while in progress.</param>
+/// <param name="Questions">Questions ordered by position.</param>
+public record QuizSessionReviewResponse(
+    Guid SessionId,
+    string Status,
+    bool IsExpired,
+    int QuestionCount,
+    int? Score,
+    int? CorrectCount,
+    DateTime CreatedAt,
+    DateTime ExpiresAt,
+    DateTime? CompletedAt,
+    IReadOnlyList<QuizSessionReviewQuestionDto> Questions);
+
 /// <summary>Claim of an anonymous device by a coach.</summary>
 /// <param name="DeviceId">Device id (16 to 64 characters, ASCII letters, digits and hyphen).</param>
 public record QuizClaimDeviceRequest(string? DeviceId);
@@ -134,6 +186,9 @@ public record QuizSessionEnvelope(bool Success, QuizSessionResponse Data, string
 
 /// <summary>Envelope of a submission result.</summary>
 public record QuizSubmitEnvelope(bool Success, QuizSubmitResponse Data, string? Error, int StatusCode);
+
+/// <summary>Envelope of a session review.</summary>
+public record QuizSessionReviewEnvelope(bool Success, QuizSessionReviewResponse Data, string? Error, int StatusCode);
 
 /// <summary>Envelope of the history.</summary>
 public record QuizHistoryEnvelope(bool Success, QuizHistoryResponse Data, string? Error, int StatusCode);

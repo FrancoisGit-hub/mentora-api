@@ -94,12 +94,7 @@ public class QuizBasicService(
                 i + 1,
                 q.QuizQuestionId,
                 q.QuizQuestionText,
-                [
-                    new QuizAnswerOptionDto("A", q.QuizQuestionAnswerA),
-                    new QuizAnswerOptionDto("B", q.QuizQuestionAnswerB),
-                    new QuizAnswerOptionDto("C", q.QuizQuestionAnswerC),
-                    new QuizAnswerOptionDto("D", q.QuizQuestionAnswerD),
-                ],
+                BuildAnswers(q.QuizQuestionAnswerA, q.QuizQuestionAnswerB, q.QuizQuestionAnswerC, q.QuizQuestionAnswerD),
                 q.QuizQuestionCorrectAnswer,
                 q.QuizQuestionExplanation,
                 q.QuizQuestionPoints,
@@ -216,6 +211,99 @@ public class QuizBasicService(
             session.QuizSessionQuestionCount, now, totalPoints, results);
     }
 
+    // ── GET sessions/{id} ──────────────────────────────────────────────────────
+
+    public async Task<QuizSessionReviewResponse> GetSessionAsync(
+        QuizOwner owner, Guid sessionId, CancellationToken ct)
+    {
+        await ownerValidator.ValidateAndThrowAsync(owner, ct);
+
+        // Ownership is part of the WHERE (same rule as SubmitAsync): a foreign session is never loaded.
+        var owned = db.QuizSessions.AsNoTracking().Where(s => s.QuizSessionId == sessionId);
+        if (owner.IsCoachMode)
+        {
+            var coachId = owner.CoachId!.Value;
+            owned = owned.Where(s => s.QuizSessionCoachId == coachId);
+        }
+        else
+        {
+            var deviceId = owner.DeviceId!;
+            owned = owned.Where(s => s.QuizSessionDeviceId == deviceId && s.QuizSessionCoachId == null);
+        }
+
+        var header = await owned
+            .Select(s => new
+            {
+                s.QuizSessionStatus,
+                s.QuizSessionQuestionCount,
+                s.QuizSessionScore,
+                s.QuizSessionCorrectCount,
+                s.QuizSessionCreatedDate,
+                s.QuizSessionExpiresDate,
+                s.QuizSessionCompletedDate,
+            })
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException($"Quiz session {sessionId} not found.");
+
+        // Question content is read live, with no IsActive filter: a question deactivated since the draw is still replayed.
+        var rows = await db.QuizSessionQuestions
+            .AsNoTracking()
+            .Where(sq => sq.QuizSessionQuestionSessionId == sessionId)
+            .OrderBy(sq => sq.QuizSessionQuestionPosition)
+            .Select(sq => new
+            {
+                sq.QuizSessionQuestionPosition,
+                sq.QuizSessionQuestionQuestionId,
+                sq.QuizSessionQuestionChosenAnswer,
+                sq.QuizSessionQuestionIsCorrect,
+                sq.QuizSessionQuestionPointsEarned,
+                sq.Question.QuizQuestionText,
+                sq.Question.QuizQuestionAnswerA,
+                sq.Question.QuizQuestionAnswerB,
+                sq.Question.QuizQuestionAnswerC,
+                sq.Question.QuizQuestionAnswerD,
+                sq.Question.QuizQuestionCorrectAnswer,
+                sq.Question.QuizQuestionExplanation,
+                sq.Question.QuizQuestionPoints,
+                sq.Question.QuizQuestionDifficulty,
+                sq.Question.QuizQuestionSubject,
+                sq.Question.QuizQuestionChapter,
+            })
+            .ToListAsync(ct);
+
+        var now = DateTime.UtcNow;
+        var inProgress = header.QuizSessionStatus == QuizSessionStatus.InProgress;
+
+        var questions = rows
+            .Select(r => new QuizSessionReviewQuestionDto(
+                r.QuizSessionQuestionPosition,
+                r.QuizSessionQuestionQuestionId,
+                r.QuizQuestionText,
+                BuildAnswers(r.QuizQuestionAnswerA, r.QuizQuestionAnswerB, r.QuizQuestionAnswerC, r.QuizQuestionAnswerD),
+                r.QuizSessionQuestionChosenAnswer,
+                r.QuizQuestionCorrectAnswer,
+                r.QuizSessionQuestionIsCorrect,
+                r.QuizSessionQuestionPointsEarned,
+                r.QuizQuestionPoints,
+                r.QuizQuestionExplanation,
+                r.QuizQuestionDifficulty,
+                r.QuizQuestionSubject,
+                r.QuizQuestionChapter))
+            .ToList();
+
+        return new QuizSessionReviewResponse(
+            sessionId,
+            EnumMappings.QuizSessionStatusMapping.ToWire(header.QuizSessionStatus),
+            inProgress && now > header.QuizSessionExpiresDate,
+            header.QuizSessionQuestionCount,
+            header.QuizSessionScore,
+            header.QuizSessionCorrectCount,
+            header.QuizSessionCreatedDate,
+            header.QuizSessionExpiresDate,
+            header.QuizSessionCompletedDate,
+            questions);
+    }
+
     // ── GET me ─────────────────────────────────────────────────────────────────
 
     public async Task<QuizHistoryResponse> GetHistoryAsync(
@@ -277,6 +365,14 @@ public class QuizBasicService(
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    private static QuizAnswerOptionDto[] BuildAnswers(string a, string b, string c, string d) =>
+    [
+        new QuizAnswerOptionDto("A", a),
+        new QuizAnswerOptionDto("B", b),
+        new QuizAnswerOptionDto("C", c),
+        new QuizAnswerOptionDto("D", d),
+    ];
 
     /// <summary>Completed sessions of the owner: the coach's, or the device's still-unclaimed ones.</summary>
     private IQueryable<QuizSession> OwnedCompleted(QuizOwner owner)

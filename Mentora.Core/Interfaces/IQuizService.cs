@@ -10,6 +10,9 @@ public interface IQuizBasicService
     /// <summary>Scores a session server-side. Unknown or foreign session: 404.</summary>
     Task<QuizSubmitResponse> SubmitAsync(QuizOwner owner, Guid sessionId, QuizSubmitRequest request, CancellationToken ct);
 
+    /// <summary>Replays a session (in progress or completed). Unknown or foreign session: 404.</summary>
+    Task<QuizSessionReviewResponse> GetSessionAsync(QuizOwner owner, Guid sessionId, CancellationToken ct);
+
     /// <summary>Completed sessions of the owner, with totals computed at read time.</summary>
     Task<QuizHistoryResponse> GetHistoryAsync(QuizOwner owner, int limit, string? cursor, CancellationToken ct);
 }

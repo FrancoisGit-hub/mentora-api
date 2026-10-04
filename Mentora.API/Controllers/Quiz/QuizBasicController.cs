@@ -58,6 +58,27 @@ public class QuizBasicController(IQuizBasicService quizService) : ControllerBase
         return Ok(new QuizSubmitEnvelope(true, result, null, 200));
     }
 
+    /// <summary>
+    /// Replays a session of the caller, in progress or completed, with per-question answers and corrections.
+    /// Unknown or foreign session: 404.
+    /// </summary>
+    /// <param name="sessionId">Session identifier.</param>
+    /// <param name="deviceId">Device mode only (no Authorization header).</param>
+    /// <param name="ct">Cancellation token.</param>
+    [HttpGet("sessions/{sessionId:guid}")]
+    [ProducesResponseType(typeof(QuizSessionReviewEnvelope), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> GetSession(
+        Guid sessionId, [FromHeader(Name = QuizRateLimiting.DeviceIdHeader)] string? deviceId, CancellationToken ct)
+    {
+        var result = await quizService.GetSessionAsync(ResolveOwner(deviceId), sessionId, ct);
+        return Ok(new QuizSessionReviewEnvelope(true, result, null, 200));
+    }
+
     /// <summary>Completed sessions of the caller with totals, newest first (cursor pagination).</summary>
     /// <param name="limit">Page size, 1 to 50 (default 20).</param>
     /// <param name="cursor">Opaque cursor returned as <c>nextCursor</c>.</param>
