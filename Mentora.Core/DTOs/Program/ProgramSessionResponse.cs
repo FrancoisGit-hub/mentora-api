@@ -7,6 +7,7 @@ namespace Mentora.Core.DTOs.Program;
 /// SESSION_SCHEDULED_AT becomes authoritative instead, and this formula is never evaluated for it.
 /// </param>
 /// <param name="Nature">STANDARD | EVALUATION.</param>
+/// <param name="SessionId">Linked booking (SESSIONS row) id, null when not linked.</param>
 public record ProgramSessionResponse(
     Guid ProgramSessionId,
     string Name,
@@ -19,5 +20,6 @@ public record ProgramSessionResponse(
     DateTime? CompletedDate,
     string? MemberFeedback,
     string? CoachNote,
+    Guid? SessionId,
     List<ProgramCircuitResponse> Circuits
 );

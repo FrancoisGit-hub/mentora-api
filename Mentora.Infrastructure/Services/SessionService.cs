@@ -625,15 +625,20 @@ public class SessionService(
     // query in the surrounding transaction.
     private async Task LinkToProgramSessionAsync(Guid memberId, Session session, CancellationToken ct)
     {
-        // a. The member must have an ACTIVE program, else do nothing.
+        // a. The member must have an ACTIVE program of THIS booking's coach, else do nothing.
+        var coachId = session.SessionCoachId;
         var program = await db.Programs
-            .FirstOrDefaultAsync(p => p.ProgramMemberId == memberId && p.ProgramStatus == ProgramStatus.Active, ct);
+            .FirstOrDefaultAsync(p => p.ProgramMemberId == memberId
+                                   && p.ProgramCoachId == coachId
+                                   && p.ProgramStatus == ProgramStatus.Active, ct);
         if (program is null)
             return;
 
-        var offerTypeWire = EnumMappings.OfferTypeMapping.ToWire(session.SessionOfferType);
+        var compatibleTypes = ProgramSessionTypes.CompatibleWithOffer(session.SessionOfferType);
+        if (compatibleTypes.Length == 0)
+            return;
 
-        // b. Candidates: PLANNED, unlinked, this member, matching type.
+        // b. Candidates: PLANNED, unlinked, this member and coach, compatible type.
         var candidates = await (
             from ps in db.ProgramSessions
             join pb in db.ProgramBlocks on ps.ProgramSessionBlockId equals pb.ProgramBlockId
@@ -641,7 +646,8 @@ public class SessionService(
                && ps.ProgramSessionMemberId == memberId
                && ps.ProgramSessionStatus == ProgramSessionStatus.Planned
                && ps.ProgramSessionSessionId == null
-               && ps.ProgramSessionType == offerTypeWire
+               && ps.ProgramSessionCoachId == coachId
+               && compatibleTypes.Contains(ps.ProgramSessionType)
             select new { ProgramSession = ps, pb.ProgramBlockWeekNumber })
             .ToListAsync(ct);
 

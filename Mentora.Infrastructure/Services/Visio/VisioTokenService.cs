@@ -71,9 +71,10 @@ public class VisioTokenService(MentoraDbContext db, IOptions<LiveKitOptions> liv
         var opensAt  = session.SessionScheduledAt.AddMinutes(-_options.JoinBeforeMinutes);
         var closesAt = session.SessionScheduledAt.AddMinutes(session.SessionDurationMinutes + _options.JoinAfterEndMinutes);
 
-        // Only individual VISIO sessions are eligible — a group session has a null
-        // SessionMemberId and is out of scope for Lot 8 (no circuit state, no LiveKit API calls).
-        if (session.SessionOfferType != OfferType.Visio || session.SessionMemberId is null)
+        // Only individual VISIO or PRESENTIEL_SOLO sessions are eligible (an in-person session may
+        // be run by visio) — a group session has a null SessionMemberId and is out of scope.
+        if ((session.SessionOfferType != OfferType.Visio && session.SessionOfferType != OfferType.PresentielSolo)
+            || session.SessionMemberId is null)
             throw Conflict(session.SessionId, "NOT_ELIGIBLE", opensAt, closesAt);
 
         if (session.SessionStatus == SessionStatus.Cancelled)

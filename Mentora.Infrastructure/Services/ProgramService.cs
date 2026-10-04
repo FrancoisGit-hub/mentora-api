@@ -247,7 +247,7 @@ public class ProgramService(
                 throw new NotFoundException($"Session {sessionId} not found.");
 
             var sessionOfferTypeWire = EnumMappings.OfferTypeMapping.ToWire(session.SessionOfferType);
-            if (sessionOfferTypeWire != programSession.ProgramSessionType)
+            if (!ProgramSessionTypes.IsCompatibleWithOffer(programSession.ProgramSessionType, session.SessionOfferType))
                 throw new ConflictException(
                     "Session and program session types do not match.",
                     new { sessionType = sessionOfferTypeWire, programSessionType = programSession.ProgramSessionType });
@@ -485,6 +485,7 @@ public class ProgramService(
             programSession.ProgramSessionCompletedDate,
             programSession.ProgramSessionMemberFeedback,
             programSession.ProgramSessionCoachNote,
+            programSession.ProgramSessionSessionId,
             BuildCircuitResponses(programSession.ProgramSessionId, circuitsBySession, exercisesByCircuit, exerciseDetails, lastPerformedByExercise));
     }
 
@@ -646,6 +647,7 @@ public class ProgramService(
                     s.ProgramSessionPosition, EnumMappings.ProgramSessionStatusMapping.ToWire(s.ProgramSessionStatus),
                     ComputeSessionDate(program, block.ProgramBlockWeekNumber, s.ProgramSessionDayOfWeek, s.ProgramSessionSessionId, sessionDatesById),
                     s.ProgramSessionCompletedDate, s.ProgramSessionMemberFeedback, s.ProgramSessionCoachNote,
+                    s.ProgramSessionSessionId,
                     BuildCircuitResponses(s.ProgramSessionId, circuitsBySession, exercisesByCircuit, exerciseDetails, lastPerformedByExercise))).ToList()
                 : [];
 
