@@ -39,7 +39,7 @@ dotnet ef database update --project Mentora.Infrastructure --startup-project Men
 
 - **Mentora.Core** — Domain entities only. No dependencies on other projects.
 - **Mentora.Infrastructure** — EF Core `MentoraDbContext` + migrations. References Core. Uses Npgsql (PostgreSQL).
-- **Mentora.API** — Minimal API endpoints, DI wiring, Swagger. References both Core and Infrastructure.
+- **Mentora.API** — Controllers (not Minimal APIs), middlewares, authorization policies, DI wiring, Swagger. References both Core and Infrastructure.
 
 ## Domain Model
 
@@ -85,21 +85,27 @@ avoid premature indirection. If this is revisited, start at the service boundary
 
 Authorization policies in `Program.cs`:
 - `CoachOnly`  — requires `userType` = `COACH` or `BOTH`
-- `MemberOnly` — requires `memberId` claim to be present
+- `MemberOnly` — requires the `memberId` claim AND `userType` = `MEMBER` (`Program.cs:185-187`)
+- `QuizPlayer` — quiz routes: no `Authorization` header = anonymous device mode (`X-Device-Id`); invalid token → 401; member token → 403
 
 ### Exception → HTTP status mapping
-`GlobalExceptionMiddleware` handles all Lot 2 controller exceptions:
-- `NotFoundException`       → 404
-- `ConflictException`       → 409
+`GlobalExceptionMiddleware` maps:
+- `NotFoundException`        → 404
+- `UnauthorizedException`    → 401
+- `ForbiddenException`       → 403
+- `ConflictException`        → 409 (+ details)
+- FluentValidation `ValidationException` → 422 (+ errors)
 - `InvalidOperationException` → 400
-- `Exception`               → 500
+- any other `Exception`      → 500
 
-Lot 1 controllers still use inline try/catch — they are **not** affected by the
+Lot 1 auth controllers still use inline try/catch — they are **not** affected by the
 middleware and will be retrofitted in a later lot.
 
 ### Startup seeders
-After `db.Database.MigrateAsync()`, two idempotent seeders run:
+After `db.Database.MigrateAsync()`, these idempotent seeders run (`Program.cs`):
 - `CoachParameterSeeder` — creates default parameters (50 €/h, 24 h delay) for
   every coach that has no `COACH_PARAMETERS` row.
 - `OfferProgramSeeder`   — seeds 4 default programs for every coach that has zero
   active `OFFER_PROGRAMS` rows.
+- `ExerciseSeeder`, `MuscleGroupSeeder`, `CatalogSeeder`, `ProgramTemplateSeeder`, `QuizQuestionSeeder` — reference data
+  (exercises, muscle groups, catalog, program templates, quiz questions).
