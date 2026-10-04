@@ -40,6 +40,12 @@ public class ProgramBlockConfiguration : IEntityTypeConfiguration<ProgramBlock>
         builder.Property(e => e.ProgramBlockWeekNumber)
             .HasColumnName("PROGRAM_BLOCK_WEEK_NUMBER");
 
+        builder.Property(e => e.ProgramBlockLoadPercent)
+            .HasColumnName("PROGRAM_BLOCK_LOAD_PERCENT")
+            .HasColumnType("numeric(4,1)");
+
+        // CHECK (LOAD_PERCENT IS NULL OR (LEVEL = 'MESOCYCLE' AND LOAD_PERCENT IN (100, 102.5, 105, 110)))
+        // is created via raw SQL in the migration (CK_PROGRAM_BLOCKS_LOAD_PERCENT).
         // CHECK (LEVEL='MACROCYCLE' implies PARENT_ID IS NULL) and
         // CHECK (WEEK_NUMBER IS NOT NULL iff LEVEL='MICROCYCLE') are created via raw SQL in the
         // migration — cross-column business rules kept explicit rather than via the fluent

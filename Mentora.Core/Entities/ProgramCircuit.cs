@@ -13,5 +13,6 @@ public class ProgramCircuit
     public string ProgramCircuitMode { get; set; } = null!;   // STANDARD | INTERVAL
     public int? ProgramCircuitRounds { get; set; }
     public int? ProgramCircuitRestBetweenRoundsSeconds { get; set; }
+    public int? ProgramCircuitRestAfterSeconds { get; set; }
     public string? ProgramCircuitNote { get; set; }
 }

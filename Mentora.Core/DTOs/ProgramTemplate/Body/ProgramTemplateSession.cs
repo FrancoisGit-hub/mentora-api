@@ -4,8 +4,14 @@ public class ProgramTemplateSession
 {
     public string Name { get; set; } = null!;
 
-    /// <summary>PRESENTIEL_SOLO | PRESENTIEL_GROUPE | VISIO | A_DISTANCE.</summary>
+    /// <summary>
+    /// PRESENTIEL_SOLO | PRESENTIEL_GROUPE | VISIO | AUTONOME | PRESENTIEL_OU_VISIO.
+    /// AUTONOME = done by the member without the coach, never booked.
+    /// </summary>
     public string Type { get; set; } = null!;
+
+    /// <summary>STANDARD | EVALUATION. Null or absent means STANDARD.</summary>
+    public string? Nature { get; set; }
 
     /// <summary>1 (Monday) through 7 (Sunday).</summary>
     public int DayOfWeek { get; set; }

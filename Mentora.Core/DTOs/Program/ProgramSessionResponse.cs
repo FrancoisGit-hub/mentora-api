@@ -6,10 +6,12 @@ namespace Mentora.Core.DTOs.Program;
 /// AUTHORITY RULE: once this session is linked to a booked SESSIONS row, that row's own
 /// SESSION_SCHEDULED_AT becomes authoritative instead, and this formula is never evaluated for it.
 /// </param>
+/// <param name="Nature">STANDARD | EVALUATION.</param>
 public record ProgramSessionResponse(
     Guid ProgramSessionId,
     string Name,
     string Type,
+    string Nature,
     int DayOfWeek,
     int Position,
     string Status,

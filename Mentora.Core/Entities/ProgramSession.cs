@@ -18,7 +18,8 @@ public class ProgramSession
     public Guid? ProgramSessionSessionId { get; set; }
 
     public string ProgramSessionName { get; set; } = null!;
-    public string ProgramSessionType { get; set; } = null!;   // PRESENTIEL_SOLO | PRESENTIEL_GROUPE | VISIO | A_DISTANCE
+    public string ProgramSessionType { get; set; } = null!;   // PRESENTIEL_SOLO | PRESENTIEL_GROUPE | VISIO | AUTONOME | PRESENTIEL_OU_VISIO
+    public string ProgramSessionNature { get; set; } = "STANDARD"; // STANDARD | EVALUATION
     public int ProgramSessionDayOfWeek { get; set; }          // 1..7
     public int ProgramSessionPosition { get; set; }
 

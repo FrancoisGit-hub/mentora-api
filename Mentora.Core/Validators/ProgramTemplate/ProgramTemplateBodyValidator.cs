@@ -1,5 +1,6 @@
 using FluentValidation;
 using Mentora.Core.DTOs.ProgramTemplate.Body;
+using Mentora.Core.Enums;
 using Mentora.Core.Interfaces;
 
 namespace Mentora.Core.Validators.ProgramTemplate;
@@ -26,8 +27,10 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
         ["MICROCYCLE"] = 3,
     };
 
-    private static readonly HashSet<string> ValidSessionTypes =
-        ["PRESENTIEL_SOLO", "PRESENTIEL_GROUPE", "VISIO", "A_DISTANCE"];
+    // Exact decimal comparison. Allowed only on MESOCYCLE blocks.
+    private static readonly decimal[] ValidLoadPercents = [100m, 102.5m, 105m, 110m];
+
+    private const int MaxRestAfterSeconds = 600;
 
     private static readonly HashSet<string> ValidLoadTypes = ["KG", "BODYWEIGHT"];
 
@@ -111,6 +114,11 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
             if (string.IsNullOrWhiteSpace(block.Name))
                 context.AddFailure($"{itemPath}.Name", "Name is required.");
 
+            if (block.LoadPercent is { } loadPercent
+                && (block.Level != "MESOCYCLE" || !ValidLoadPercents.Contains(loadPercent)))
+                context.AddFailure($"{itemPath}.LoadPercent",
+                    "LoadPercent is only allowed on MESOCYCLE blocks and must be one of: 100, 102.5, 105, 110.");
+
             var isMicrocycle = block.Level == "MICROCYCLE";
 
             if (isMicrocycle)
@@ -174,6 +182,11 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
                 context.AddFailure($"{itemPath}.DayOfWeek", "DayOfWeek must be between 1 and 7.");
 
             ValidateSessionType(session.Type, $"{itemPath}.Type", context);
+
+            if (session.Nature is not null && !ProgramSessionNatures.All.Contains(session.Nature))
+                context.AddFailure($"{itemPath}.Nature",
+                    $"Nature must be one of: {string.Join(", ", ProgramSessionNatures.All)}.");
+
             ValidateCircuits(session.Circuits, $"{itemPath}.Circuits", context, exerciseIds);
         }
     }
@@ -187,8 +200,8 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
             return;
         }
 
-        if (type is null || !ValidSessionTypes.Contains(type))
-            context.AddFailure(path, $"Type must be one of: {string.Join(", ", ValidSessionTypes)}.");
+        if (type is null || !ProgramSessionTypes.All.Contains(type))
+            context.AddFailure(path, $"Type must be one of: {string.Join(", ", ProgramSessionTypes.All)}.");
     }
 
     private void ValidateCircuits(
@@ -215,6 +228,10 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
 
             if (isInterval && circuit.Rounds is null)
                 context.AddFailure($"{itemPath}.Rounds", "Rounds is required when Mode is INTERVAL.");
+
+            if (circuit.RestAfterSeconds is < 0 or > MaxRestAfterSeconds)
+                context.AddFailure($"{itemPath}.RestAfterSeconds",
+                    $"RestAfterSeconds must be between 0 and {MaxRestAfterSeconds}.");
 
             ValidateExercises(circuit.Exercises, circuit.Mode, $"{itemPath}.Exercises", context, exerciseIds);
         }

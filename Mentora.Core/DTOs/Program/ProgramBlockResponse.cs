@@ -7,6 +7,7 @@ public record ProgramBlockResponse(
     string Name,
     int Position,
     int? WeekNumber,
+    decimal? LoadPercent,
     List<ProgramBlockResponse> Blocks,
     List<ProgramSessionResponse> Sessions
 );

@@ -44,6 +44,11 @@ public class ProgramCircuitConfiguration : IEntityTypeConfiguration<ProgramCircu
         builder.Property(e => e.ProgramCircuitRestBetweenRoundsSeconds)
             .HasColumnName("PROGRAM_CIRCUIT_REST_BETWEEN_ROUNDS_SECONDS");
 
+        // CHECK (REST_AFTER_SECONDS IS NULL OR BETWEEN 0 AND 600) is created via raw SQL in the
+        // migration (CK_PROGRAM_CIRCUITS_REST_AFTER_SECONDS).
+        builder.Property(e => e.ProgramCircuitRestAfterSeconds)
+            .HasColumnName("PROGRAM_CIRCUIT_REST_AFTER_SECONDS");
+
         builder.Property(e => e.ProgramCircuitNote)
             .HasColumnName("PROGRAM_CIRCUIT_NOTE")
             .HasColumnType("text");

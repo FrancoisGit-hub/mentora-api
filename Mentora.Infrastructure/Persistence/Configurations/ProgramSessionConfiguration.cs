@@ -50,6 +50,12 @@ public class ProgramSessionConfiguration : IEntityTypeConfiguration<ProgramSessi
             .IsRequired()
             .HasMaxLength(40);
 
+        builder.Property(e => e.ProgramSessionNature)
+            .HasColumnName("PROGRAM_SESSION_NATURE")
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasDefaultValue("STANDARD");
+
         builder.Property(e => e.ProgramSessionDayOfWeek)
             .HasColumnName("PROGRAM_SESSION_DAY_OF_WEEK")
             .IsRequired();
@@ -80,9 +86,11 @@ public class ProgramSessionConfiguration : IEntityTypeConfiguration<ProgramSessi
             .HasColumnName("PROGRAM_SESSION_COACH_NOTE")
             .HasColumnType("text");
 
-        // CHECK (TYPE <> 'A_DISTANCE' OR SESSION_ID IS NULL) is created via raw SQL in the
-        // migration: an A_DISTANCE session never carries a booking. The converse is NOT enforced —
-        // a PRESENTIEL_SOLO/PRESENTIEL_GROUPE/VISIO session legitimately has no booking yet (the
+        // CHECK (TYPE <> 'AUTONOME' OR SESSION_ID IS NULL) is created via raw SQL in the
+        // migration: an AUTONOME session (done by the member without the coach) never carries a
+        // booking. CK_PROGRAM_SESSIONS_TYPE and CK_PROGRAM_SESSIONS_NATURE restrict the wire
+        // values. The converse is NOT enforced —
+        // a PRESENTIEL_SOLO/PRESENTIEL_GROUPE/VISIO/PRESENTIEL_OU_VISIO session legitimately has no booking yet (the
         // program is written weeks ahead of the slot being reserved). No date column — the date is
         // computed by ProgramService from PROGRAM_START_DATE, the parent MICROCYCLE's WEEK_NUMBER,
         // WEEK_OFFSET and DAY_OF_WEEK.

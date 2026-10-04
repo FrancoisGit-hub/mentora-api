@@ -171,7 +171,7 @@ public static class ProgramTemplateSeeder
         [
             new ProgramTemplateSession
             {
-                Name = "Séance A — Cardio et renforcement", Type = "A_DISTANCE", DayOfWeek = 1, Position = 1,
+                Name = "Séance A — Cardio et renforcement", Type = "AUTONOME", DayOfWeek = 1, Position = 1,
                 Circuits =
                 [
                     new ProgramTemplateCircuit

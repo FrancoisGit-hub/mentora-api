@@ -13,4 +13,5 @@ public class ProgramBlock
     public string ProgramBlockName { get; set; } = null!;
     public int ProgramBlockPosition { get; set; }
     public int? ProgramBlockWeekNumber { get; set; }          // MICROCYCLE only
+    public decimal? ProgramBlockLoadPercent { get; set; }     // MESOCYCLE only: 100 | 102.5 | 105 | 110
 }

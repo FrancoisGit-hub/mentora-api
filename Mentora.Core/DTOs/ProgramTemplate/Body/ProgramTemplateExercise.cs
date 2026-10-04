@@ -13,6 +13,10 @@ public class ProgramTemplateExercise
     public int? PrescribedReps { get; set; }
 
     public decimal? PrescribedWeightKg { get; set; }
+    /// <summary>
+    /// Rest after each set of this exercise (in an alternating circuit, rest after this
+    /// exercise's set before the next one).
+    /// </summary>
     public int? RestSeconds { get; set; }
 
     /// <summary>INTERVAL circuits only.</summary>

@@ -1524,6 +1524,10 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("PROGRAM_BLOCK_LEVEL");
 
+                    b.Property<decimal?>("ProgramBlockLoadPercent")
+                        .HasColumnType("numeric(4,1)")
+                        .HasColumnName("PROGRAM_BLOCK_LOAD_PERCENT");
+
                     b.Property<string>("ProgramBlockName")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -1590,6 +1594,10 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ProgramCircuitProgramSessionId")
                         .HasColumnType("uuid")
                         .HasColumnName("PROGRAM_CIRCUIT_PROGRAM_SESSION_ID");
+
+                    b.Property<int?>("ProgramCircuitRestAfterSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("PROGRAM_CIRCUIT_REST_AFTER_SECONDS");
 
                     b.Property<int?>("ProgramCircuitRestBetweenRoundsSeconds")
                         .HasColumnType("integer")
@@ -1738,6 +1746,14 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)")
                         .HasColumnName("PROGRAM_SESSION_NAME");
+
+                    b.Property<string>("ProgramSessionNature")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("STANDARD")
+                        .HasColumnName("PROGRAM_SESSION_NATURE");
 
                     b.Property<int>("ProgramSessionPosition")
                         .HasColumnType("integer")

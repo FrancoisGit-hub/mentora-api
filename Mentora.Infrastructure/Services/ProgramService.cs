@@ -477,6 +477,7 @@ public class ProgramService(
             programSession.ProgramSessionId,
             programSession.ProgramSessionName,
             programSession.ProgramSessionType,
+            programSession.ProgramSessionNature,
             programSession.ProgramSessionDayOfWeek,
             programSession.ProgramSessionPosition,
             EnumMappings.ProgramSessionStatusMapping.ToWire(programSession.ProgramSessionStatus),
@@ -518,6 +519,7 @@ public class ProgramService(
                 ProgramBlockName       = tb.Name,
                 ProgramBlockPosition   = tb.Position,
                 ProgramBlockWeekNumber = tb.WeekNumber,
+                ProgramBlockLoadPercent = tb.LoadPercent,
             });
 
             foreach (var ts in tb.Sessions)
@@ -533,6 +535,8 @@ public class ProgramService(
                     ProgramSessionSessionId = null,
                     ProgramSessionName      = ts.Name,
                     ProgramSessionType      = ts.Type,
+                    // Path W3a copies a stored template without validation: null means STANDARD.
+                    ProgramSessionNature    = ts.Nature ?? ProgramSessionNatures.Standard,
                     ProgramSessionDayOfWeek = ts.DayOfWeek,
                     ProgramSessionPosition  = ts.Position,
                     ProgramSessionStatus    = ProgramSessionStatus.Planned,
@@ -551,6 +555,7 @@ public class ProgramService(
                         ProgramCircuitMode                     = tc.Mode,
                         ProgramCircuitRounds                   = tc.Rounds,
                         ProgramCircuitRestBetweenRoundsSeconds = tc.RestBetweenRoundsSeconds,
+                        ProgramCircuitRestAfterSeconds         = tc.RestAfterSeconds,
                         ProgramCircuitNote                     = tc.Note,
                     });
 
@@ -637,7 +642,7 @@ public class ProgramService(
         List<ProgramSessionResponse> BuildSessions(ProgramBlock block) =>
             sessionsByBlock.TryGetValue(block.ProgramBlockId, out var list)
                 ? list.Select(s => new ProgramSessionResponse(
-                    s.ProgramSessionId, s.ProgramSessionName, s.ProgramSessionType, s.ProgramSessionDayOfWeek,
+                    s.ProgramSessionId, s.ProgramSessionName, s.ProgramSessionType, s.ProgramSessionNature, s.ProgramSessionDayOfWeek,
                     s.ProgramSessionPosition, EnumMappings.ProgramSessionStatusMapping.ToWire(s.ProgramSessionStatus),
                     ComputeSessionDate(program, block.ProgramBlockWeekNumber, s.ProgramSessionDayOfWeek, s.ProgramSessionSessionId, sessionDatesById),
                     s.ProgramSessionCompletedDate, s.ProgramSessionMemberFeedback, s.ProgramSessionCoachNote,
@@ -648,7 +653,7 @@ public class ProgramService(
             blocksByParent.TryGetValue(parentId ?? Guid.Empty, out var list)
                 ? list.Select(b => new ProgramBlockResponse(
                     b.ProgramBlockId, b.ProgramBlockParentId, b.ProgramBlockLevel, b.ProgramBlockName,
-                    b.ProgramBlockPosition, b.ProgramBlockWeekNumber,
+                    b.ProgramBlockPosition, b.ProgramBlockWeekNumber, b.ProgramBlockLoadPercent,
                     BuildBlocks(b.ProgramBlockId), BuildSessions(b))).ToList()
                 : [];
 
@@ -732,7 +737,7 @@ public class ProgramService(
             .OrderBy(c => c.ProgramCircuitPosition)
             .Select(c => new ProgramCircuitResponse(
                 c.ProgramCircuitId, c.ProgramCircuitName, c.ProgramCircuitPosition, c.ProgramCircuitMode,
-                c.ProgramCircuitRounds, c.ProgramCircuitRestBetweenRoundsSeconds, c.ProgramCircuitNote,
+                c.ProgramCircuitRounds, c.ProgramCircuitRestBetweenRoundsSeconds, c.ProgramCircuitRestAfterSeconds, c.ProgramCircuitNote,
                 BuildExerciseResponses(c.ProgramCircuitId, exercisesByCircuit, exerciseDetails, lastPerformedByExercise)))
             .ToList();
 
