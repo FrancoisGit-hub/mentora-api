@@ -14,15 +14,18 @@ namespace Mentora.API.Controllers.Coach;
 public class CoachProgramSessionsController(IProgramService programService) : ControllerBase
 {
     /// <summary>
-    /// Links or detaches a program session's booking. Passing a sessionId attaches (or
-    /// reassigns) it; passing null detaches — clearing the link without touching the booking
-    /// itself (voucher, participant registration, session row all stay as they are).
+    /// Links or detaches a program session's booking. Passing a sessionId attaches it; passing
+    /// null detaches — clearing the link without touching the booking itself (voucher,
+    /// participant registration, session row all stay as they are).
     /// </summary>
     /// <param name="programSessionId">Unique identifier of the program session to correct.</param>
     /// <param name="request">The booking to link, or null to detach.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <remarks>
     /// 404 for any ownership mismatch (program session, session, or member), never 403.
+    /// Same booking as the current link: 200, nothing written. 409 PROGRAM_SESSION_ALREADY_LINKED
+    /// (details programSessionId, currentSessionId) if the program session is linked to another,
+    /// non-cancelled booking: detach first. A link to a CANCELLED booking is simply replaced.
     /// 409 if the session's offer type doesn't match the program session's type, or if the
     /// member already has a different program session linked to that same booking.
     /// </remarks>

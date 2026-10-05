@@ -77,18 +77,29 @@ public class CoachProgramsController(IProgramService programService) : Controlle
     }
 
     /// <summary>
-    /// Fully replaces name, goal, startDate and the whole tree of an existing program owned by
-    /// the authenticated coach. Never partial — deletes and reinserts the tree in one transaction.
+    /// Replaces name, goal, startDate and the whole tree of an existing program owned by the
+    /// authenticated coach, in one transaction. Nodes are matched by their optional id: a node
+    /// with an id is updated in place (booking link, status and realised values kept), a node
+    /// without id is inserted, an existing node absent from the tree is deleted.
     /// </summary>
     /// <param name="programId">Unique identifier of the program to update.</param>
     /// <param name="request">The replacement program data.</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <remarks>
+    /// 409 PROGRAM_NOT_EDITABLE on an archived or completed program. 422 for an id that is not a
+    /// node of that kind in this program, or a duplicated id. 409 PROGRAM_HAS_HISTORY
+    /// (details programSessionIds, programExerciseIds) when a node with history (non-cancelled
+    /// booking link, status other than PLANNED, realised values) would be deleted or moved to
+    /// another parent. 409 PROGRAM_SESSION_TYPE_INCOMPATIBLE when a booked session gets a type
+    /// incompatible with its booking. Nothing is written on any error.
+    /// </remarks>
     [HttpPut("training-programs/{programId:guid}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Update(Guid programId, [FromBody] UpdateProgramRequest request, CancellationToken ct)
     {

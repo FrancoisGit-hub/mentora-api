@@ -2,11 +2,13 @@ using System.Data;
 using System.Text.Json;
 using FluentValidation;
 using Mentora.Core.DTOs.Program;
+using Mentora.Core.DTOs.Program.Body;
 using Mentora.Core.DTOs.ProgramTemplate.Body;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
+using Mentora.Core.Validators.Program;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +18,7 @@ public class ProgramService(
     MentoraDbContext db,
     IValidator<ProgramTemplateBody> bodyValidator,
     IValidator<UpdateProgramRequest> updateValidator,
+    IValidator<UpdateProgramBody> nodeIdsValidator,
     IValidator<UpdateProgramSessionCompletionRequest> completionValidator) : IProgramService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -166,6 +169,12 @@ public class ProgramService(
             .FirstOrDefaultAsync(p => p.ProgramId == programId && p.ProgramCoachId == coachId, ct)
             ?? throw new NotFoundException($"Program {programId} not found.");
 
+        // Lot 11.2c: an archived or completed program is read only.
+        if (program.ProgramStatus == ProgramStatus.Archived || program.ProgramStatus == ProgramStatus.Completed)
+            throw new ConflictException(
+                "This program is not editable.",
+                new { reason = "PROGRAM_NOT_EDITABLE", programStatus = EnumMappings.ProgramStatusMapping.ToWire(program.ProgramStatus) });
+
         var validationContext = new ValidationContext<UpdateProgramRequest>(request);
         validationContext.RootContextData["CoachId"] = coachId;
 
@@ -175,39 +184,300 @@ public class ProgramService(
 
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
-        // Full replacement: delete the existing tree (children first) and reinsert, in one
-        // transaction. Never partial.
+        // Diff by ids (Lot 11.2c), never a blind delete-and-reinsert: a node with an id updates its
+        // row in place (booking link, status and realised values kept), a node without id is
+        // inserted, an existing node absent from the request is deleted unless it carries history.
+        // The whole existing tree is loaded in four flat queries, tracked.
+        var existingBlocks    = await db.ProgramBlocks.Where(b => b.ProgramBlockProgramId == programId).ToListAsync(ct);
+        var existingSessions  = await db.ProgramSessions.Where(s => s.ProgramSessionProgramId == programId).ToListAsync(ct);
+        var existingCircuits  = await db.ProgramCircuits.Where(c => c.ProgramCircuitProgramId == programId).ToListAsync(ct);
         var existingExercises = await db.ProgramExercises.Where(e => e.ProgramExerciseProgramId == programId).ToListAsync(ct);
-        var existingCircuits   = await db.ProgramCircuits.Where(c => c.ProgramCircuitProgramId == programId).ToListAsync(ct);
-        var existingSessions   = await db.ProgramSessions.Where(s => s.ProgramSessionProgramId == programId).ToListAsync(ct);
-        var existingBlocks     = await db.ProgramBlocks.Where(b => b.ProgramBlockProgramId == programId).ToListAsync(ct);
 
-        db.ProgramExercises.RemoveRange(existingExercises);
-        db.ProgramCircuits.RemoveRange(existingCircuits);
-        db.ProgramSessions.RemoveRange(existingSessions);
-        db.ProgramBlocks.RemoveRange(existingBlocks);
+        var idsContext = new ValidationContext<UpdateProgramBody>(request.Body);
+        idsContext.RootContextData["ExistingNodeIds"] = new ExistingProgramNodeIds(
+            existingBlocks.Select(b => b.ProgramBlockId).ToHashSet(),
+            existingSessions.Select(s => s.ProgramSessionId).ToHashSet(),
+            existingCircuits.Select(c => c.ProgramCircuitId).ToHashSet(),
+            existingExercises.Select(e => e.ProgramExerciseId).ToHashSet());
 
+        var idsResult = await nodeIdsValidator.ValidateAsync(idsContext, ct);
+        if (!idsResult.IsValid)
+            throw new ValidationException(idsResult.Errors);
+
+        var plan = new TreePlan();
+        PlanTree(request.Body.Blocks, null, plan);
+
+        // Linked bookings, one query for the whole tree, only when a session is linked.
+        var linkedBookingIds = existingSessions
+            .Where(s => s.ProgramSessionSessionId.HasValue)
+            .Select(s => s.ProgramSessionSessionId!.Value)
+            .Distinct()
+            .ToList();
+        var bookings = linkedBookingIds.Count > 0
+            ? (await db.Sessions.AsNoTracking()
+                .Where(s => linkedBookingIds.Contains(s.SessionId))
+                .Select(s => new { s.SessionId, s.SessionOfferType, s.SessionStatus })
+                .ToListAsync(ct))
+                .ToDictionary(s => s.SessionId, s => (OfferType: s.SessionOfferType, Status: s.SessionStatus))
+            : new Dictionary<Guid, (OfferType OfferType, SessionStatus Status)>();
+
+        // 11.AJ: a link to a CANCELLED booking does not count — not history, not checked for type.
+        bool HasLiveLink(ProgramSession s) =>
+            s.ProgramSessionSessionId is { } bookingId
+            && bookings.TryGetValue(bookingId, out var booking)
+            && booking.Status != SessionStatus.Cancelled;
+
+        bool SessionHasOwnHistory(ProgramSession s) =>
+            HasLiveLink(s)
+            || s.ProgramSessionStatus != ProgramSessionStatus.Planned
+            || s.ProgramSessionCompletedDate is not null
+            || s.ProgramSessionMemberFeedback is not null
+            || s.ProgramSessionCoachNote is not null;
+
+        // ── 409 PROGRAM_HAS_HISTORY: computed before any write ───────────────────
+        var blockingSessionIds  = new List<Guid>();
+        var blockingExerciseIds = new List<Guid>();
+
+        var blocksByParent     = existingBlocks.Where(b => b.ProgramBlockParentId.HasValue).ToLookup(b => b.ProgramBlockParentId!.Value);
+        var sessionsByBlock    = existingSessions.ToLookup(s => s.ProgramSessionBlockId);
+        var circuitsBySession  = existingCircuits.ToLookup(c => c.ProgramCircuitProgramSessionId);
+        var exercisesByCircuit = existingExercises.ToLookup(e => e.ProgramExerciseCircuitId);
+
+        void AddExerciseHistory(ProgramExercise e)
+        {
+            if (ExerciseHasHistory(e))
+                blockingExerciseIds.Add(e.ProgramExerciseId);
+        }
+
+        void AddCircuitHistory(ProgramCircuit c)
+        {
+            foreach (var e in exercisesByCircuit[c.ProgramCircuitId])
+                AddExerciseHistory(e);
+        }
+
+        void AddSessionHistory(ProgramSession s)
+        {
+            if (SessionHasOwnHistory(s))
+                blockingSessionIds.Add(s.ProgramSessionId);
+            foreach (var c in circuitsBySession[s.ProgramSessionId])
+                AddCircuitHistory(c);
+        }
+
+        void AddBlockHistory(ProgramBlock b)
+        {
+            foreach (var s in sessionsByBlock[b.ProgramBlockId])
+                AddSessionHistory(s);
+            foreach (var child in blocksByParent[b.ProgramBlockId])
+                AddBlockHistory(child);
+        }
+
+        // Deleted: an existing node absent from the request. Anything under it is either deleted
+        // too (and checked here) or kept under another parent (and checked as a move below).
+        foreach (var s in existingSessions.Where(s => !plan.SessionParents.ContainsKey(s.ProgramSessionId)))
+            if (SessionHasOwnHistory(s))
+                blockingSessionIds.Add(s.ProgramSessionId);
+        foreach (var e in existingExercises.Where(e => !plan.ExerciseParents.ContainsKey(e.ProgramExerciseId)))
+            AddExerciseHistory(e);
+
+        // Moved: a kept node that has or contains history must keep its parent (reordering within
+        // the same parent is fine). "Contains" is read on the existing tree.
+        foreach (var b in existingBlocks.Where(b => plan.BlockParents.TryGetValue(b.ProgramBlockId, out var parentId)
+                                                 && parentId != b.ProgramBlockParentId))
+            AddBlockHistory(b);
+        foreach (var s in existingSessions.Where(s => plan.SessionParents.TryGetValue(s.ProgramSessionId, out var blockId)
+                                                   && blockId != s.ProgramSessionBlockId))
+            AddSessionHistory(s);
+        foreach (var c in existingCircuits.Where(c => plan.CircuitParents.TryGetValue(c.ProgramCircuitId, out var sessionId)
+                                                   && sessionId != c.ProgramCircuitProgramSessionId))
+            AddCircuitHistory(c);
+        foreach (var e in existingExercises.Where(e => plan.ExerciseParents.TryGetValue(e.ProgramExerciseId, out var circuitId)
+                                                    && circuitId != e.ProgramExerciseCircuitId))
+            AddExerciseHistory(e);
+
+        if (blockingSessionIds.Count > 0 || blockingExerciseIds.Count > 0)
+            throw new ConflictException(
+                "Program nodes with history cannot be deleted or moved to another parent.",
+                new
+                {
+                    reason             = "PROGRAM_HAS_HISTORY",
+                    programSessionIds  = blockingSessionIds.Distinct().ToList(),
+                    programExerciseIds = blockingExerciseIds.Distinct().ToList(),
+                });
+
+        // ── 409 PROGRAM_SESSION_TYPE_INCOMPATIBLE: kept sessions with a live link ──
+        var sessionsById = existingSessions.ToDictionary(s => s.ProgramSessionId);
+        var incompatible = plan.Sessions
+            .Where(p => sessionsById.TryGetValue(p.Id, out var s) && HasLiveLink(s)
+                     && !ProgramSessionTypes.IsCompatibleWithOffer(p.Node.Type, bookings[s.ProgramSessionSessionId!.Value].OfferType))
+            .Select(p => new { programSessionId = p.Id, sessionId = sessionsById[p.Id].ProgramSessionSessionId })
+            .ToList();
+        if (incompatible.Count > 0)
+            throw new ConflictException(
+                "A booked program session cannot take a type incompatible with its booking.",
+                new { reason = "PROGRAM_SESSION_TYPE_INCOMPATIBLE", conflicts = incompatible });
+
+        // ── Writes: nothing above touched an entity ──────────────────────────────
         program.ProgramName          = request.Name.Trim();
         program.ProgramGoal          = EnumMappings.ProgramGoalMapping.Parse(request.Goal);
         program.ProgramStartDate     = request.StartDate;
         program.ProgramDurationWeeks = request.DurationWeeks;
         program.ProgramUpdatedDate   = DateTime.UtcNow;
 
-        var blocks    = new List<ProgramBlock>();
-        var sessions  = new List<ProgramSession>();
-        var circuits  = new List<ProgramCircuit>();
-        var exercises = new List<ProgramExercise>();
-        CopyBlockTree(programId, coachId, program.ProgramMemberId, request.Body.Blocks, null, blocks, sessions, circuits, exercises);
+        var blocksById    = existingBlocks.ToDictionary(b => b.ProgramBlockId);
+        var circuitsById  = existingCircuits.ToDictionary(c => c.ProgramCircuitId);
+        var exercisesById = existingExercises.ToDictionary(e => e.ProgramExerciseId);
 
-        db.ProgramBlocks.AddRange(blocks);
-        db.ProgramSessions.AddRange(sessions);
-        db.ProgramCircuits.AddRange(circuits);
-        db.ProgramExercises.AddRange(exercises);
+        foreach (var (id, parentId, node) in plan.Blocks)
+        {
+            if (!blocksById.TryGetValue(id, out var block))
+            {
+                block = new ProgramBlock { ProgramBlockId = id, ProgramBlockProgramId = programId };
+                db.ProgramBlocks.Add(block);
+            }
+            block.ProgramBlockParentId    = parentId;
+            block.ProgramBlockLevel       = node.Level;
+            block.ProgramBlockName        = node.Name;
+            block.ProgramBlockPosition    = node.Position;
+            block.ProgramBlockWeekNumber  = node.WeekNumber;
+            block.ProgramBlockLoadPercent = node.LoadPercent;
+        }
 
+        foreach (var (id, blockId, node) in plan.Sessions)
+        {
+            if (!sessionsById.TryGetValue(id, out var session))
+            {
+                session = new ProgramSession
+                {
+                    ProgramSessionId        = id,
+                    ProgramSessionProgramId = programId,
+                    ProgramSessionCoachId   = coachId,
+                    ProgramSessionMemberId  = program.ProgramMemberId,
+                    ProgramSessionSessionId = null,
+                    ProgramSessionStatus    = ProgramSessionStatus.Planned,
+                };
+                db.ProgramSessions.Add(session);
+            }
+            // Link, status, completed date, feedback and coach note are never written here.
+            session.ProgramSessionBlockId   = blockId;
+            session.ProgramSessionName      = node.Name;
+            session.ProgramSessionType      = node.Type;
+            session.ProgramSessionNature    = node.Nature ?? ProgramSessionNatures.Standard;
+            session.ProgramSessionDayOfWeek = node.DayOfWeek;
+            session.ProgramSessionPosition  = node.Position;
+
+            // A dead link (cancelled booking, 11.AJ) is dropped when the new type no longer fits
+            // its offer type — required for AUTONOME by CK_PROGRAM_SESSIONS_AUTONOME_HAS_NO_BOOKING.
+            if (session.ProgramSessionSessionId is { } bookingId
+                && bookings.TryGetValue(bookingId, out var booking)
+                && booking.Status == SessionStatus.Cancelled
+                && !ProgramSessionTypes.IsCompatibleWithOffer(node.Type, booking.OfferType))
+                session.ProgramSessionSessionId = null;
+        }
+
+        foreach (var (id, sessionId, node) in plan.Circuits)
+        {
+            if (!circuitsById.TryGetValue(id, out var circuit))
+            {
+                circuit = new ProgramCircuit { ProgramCircuitId = id, ProgramCircuitProgramId = programId };
+                db.ProgramCircuits.Add(circuit);
+            }
+            circuit.ProgramCircuitProgramSessionId         = sessionId;
+            circuit.ProgramCircuitName                     = node.Name;
+            circuit.ProgramCircuitPosition                 = node.Position;
+            circuit.ProgramCircuitMode                     = node.Mode;
+            circuit.ProgramCircuitRounds                   = node.Rounds;
+            circuit.ProgramCircuitRestBetweenRoundsSeconds = node.RestBetweenRoundsSeconds;
+            circuit.ProgramCircuitRestAfterSeconds         = node.RestAfterSeconds;
+            circuit.ProgramCircuitNote                     = node.Note;
+        }
+
+        foreach (var (id, circuitId, node) in plan.Exercises)
+        {
+            if (!exercisesById.TryGetValue(id, out var exercise))
+            {
+                exercise = new ProgramExercise { ProgramExerciseId = id, ProgramExerciseProgramId = programId };
+                db.ProgramExercises.Add(exercise);
+            }
+            // Prescribed values only — the ACTUAL_* columns and MEMBER_FEEDBACK are never written here.
+            exercise.ProgramExerciseCircuitId          = circuitId;
+            exercise.ProgramExerciseExerciseId         = node.ExerciseId;
+            exercise.ProgramExercisePosition           = node.Position;
+            exercise.ProgramExerciseLoadType           = node.LoadType;
+            exercise.ProgramExerciseCustomNote         = node.CustomNote;
+            exercise.ProgramExercisePrescribedSets     = node.PrescribedSets;
+            exercise.ProgramExercisePrescribedReps     = node.PrescribedReps;
+            exercise.ProgramExercisePrescribedWeightKg = node.PrescribedWeightKg;
+            exercise.ProgramExerciseRestSeconds        = node.RestSeconds;
+            exercise.ProgramExerciseWorkSeconds        = node.WorkSeconds;
+            exercise.ProgramExerciseRestWorkSeconds    = node.RestWorkSeconds;
+        }
+
+        db.ProgramExercises.RemoveRange(existingExercises.Where(e => !plan.ExerciseParents.ContainsKey(e.ProgramExerciseId)));
+        db.ProgramCircuits.RemoveRange(existingCircuits.Where(c => !plan.CircuitParents.ContainsKey(c.ProgramCircuitId)));
+        db.ProgramSessions.RemoveRange(existingSessions.Where(s => !plan.SessionParents.ContainsKey(s.ProgramSessionId)));
+        db.ProgramBlocks.RemoveRange(existingBlocks.Where(b => !plan.BlockParents.ContainsKey(b.ProgramBlockId)));
+
+        // One SaveChanges: EF orders the INSERT/UPDATE/DELETE commands from the FK graph.
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
         return await BuildResponseAsync(program, ct);
+    }
+
+    private static bool ExerciseHasHistory(ProgramExercise e) =>
+        e.ProgramExerciseActualSets is not null
+        || e.ProgramExerciseActualReps is not null
+        || e.ProgramExerciseActualWeightKg is not null
+        || e.ProgramExerciseActualRpe is not null
+        || e.ProgramExerciseMemberFeedback is not null;
+
+    // Flat view of the requested tree: every node with its id (existing, or generated for a new
+    // node) and its parent id. The *Parents maps double as "kept or new" id sets.
+    private sealed class TreePlan
+    {
+        public List<(Guid Id, Guid? ParentId, UpdateProgramBlock Node)> Blocks { get; } = [];
+        public List<(Guid Id, Guid BlockId, UpdateProgramSession Node)> Sessions { get; } = [];
+        public List<(Guid Id, Guid SessionId, UpdateProgramCircuit Node)> Circuits { get; } = [];
+        public List<(Guid Id, Guid CircuitId, UpdateProgramExercise Node)> Exercises { get; } = [];
+
+        public Dictionary<Guid, Guid?> BlockParents { get; } = [];
+        public Dictionary<Guid, Guid> SessionParents { get; } = [];
+        public Dictionary<Guid, Guid> CircuitParents { get; } = [];
+        public Dictionary<Guid, Guid> ExerciseParents { get; } = [];
+    }
+
+    private static void PlanTree(List<UpdateProgramBlock> blocks, Guid? parentId, TreePlan plan)
+    {
+        foreach (var b in blocks)
+        {
+            var blockId = b.Id ?? Guid.NewGuid();
+            plan.Blocks.Add((blockId, parentId, b));
+            plan.BlockParents[blockId] = parentId;
+
+            foreach (var s in b.Sessions ?? [])
+            {
+                var sessionId = s.Id ?? Guid.NewGuid();
+                plan.Sessions.Add((sessionId, blockId, s));
+                plan.SessionParents[sessionId] = blockId;
+
+                foreach (var c in s.Circuits ?? [])
+                {
+                    var circuitId = c.Id ?? Guid.NewGuid();
+                    plan.Circuits.Add((circuitId, sessionId, c));
+                    plan.CircuitParents[circuitId] = sessionId;
+
+                    foreach (var e in c.Exercises ?? [])
+                    {
+                        var exerciseId = e.Id ?? Guid.NewGuid();
+                        plan.Exercises.Add((exerciseId, circuitId, e));
+                        plan.ExerciseParents[exerciseId] = circuitId;
+                    }
+                }
+            }
+
+            if (b.Blocks is { Count: > 0 })
+                PlanTree(b.Blocks, blockId, plan);
+        }
     }
 
     public async Task DeleteAsync(Guid coachId, Guid programId, CancellationToken ct)
@@ -246,6 +516,22 @@ public class ProgramService(
             if (!sessionHasMember)
                 throw new NotFoundException($"Session {sessionId} not found.");
 
+            // Lot 11.2c (11.AD): a live link is never replaced silently. Same booking: nothing to
+            // write. Another booking: the coach detaches first (sessionId null).
+            if (programSession.ProgramSessionSessionId == sessionId)
+                return ToBookingResponse(programSession);
+
+            if (programSession.ProgramSessionSessionId is { } currentSessionId)
+            {
+                // 11.AJ: a link to a CANCELLED booking does not count — the new link replaces it.
+                var currentIsCancelled = await db.Sessions.AnyAsync(
+                    s => s.SessionId == currentSessionId && s.SessionStatus == SessionStatus.Cancelled, ct);
+                if (!currentIsCancelled)
+                    throw new ConflictException(
+                        "This program session is already linked to another booking. Detach it first.",
+                        new { reason = "PROGRAM_SESSION_ALREADY_LINKED", programSessionId, currentSessionId });
+            }
+
             var sessionOfferTypeWire = EnumMappings.OfferTypeMapping.ToWire(session.SessionOfferType);
             if (!ProgramSessionTypes.IsCompatibleWithOffer(programSession.ProgramSessionType, session.SessionOfferType))
                 throw new ConflictException(
@@ -274,13 +560,15 @@ public class ProgramService(
 
         await db.SaveChangesAsync(ct);
 
-        return new ProgramSessionBookingResponse(
-            programSession.ProgramSessionId,
-            programSession.ProgramSessionSessionId,
-            programSession.ProgramSessionName,
-            programSession.ProgramSessionType,
-            EnumMappings.ProgramSessionStatusMapping.ToWire(programSession.ProgramSessionStatus));
+        return ToBookingResponse(programSession);
     }
+
+    private static ProgramSessionBookingResponse ToBookingResponse(ProgramSession programSession) => new(
+        programSession.ProgramSessionId,
+        programSession.ProgramSessionSessionId,
+        programSession.ProgramSessionName,
+        programSession.ProgramSessionType,
+        EnumMappings.ProgramSessionStatusMapping.ToWire(programSession.ProgramSessionStatus));
 
     // ── Coach-side — completion (Lot 6.6) ─────────────────────────────────────────
 
