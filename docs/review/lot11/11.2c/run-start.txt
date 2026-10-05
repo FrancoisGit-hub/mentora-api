@@ -1,0 +1,2 @@
+Lot 11.2c run start (database time, SELECT now(), before any fixture write):
+2026-10-05 20:51:03.170555+00
