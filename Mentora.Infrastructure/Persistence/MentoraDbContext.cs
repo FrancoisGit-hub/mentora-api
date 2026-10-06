@@ -39,6 +39,7 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<ExerciseObjective> ExerciseObjectives => Set<ExerciseObjective>();
     public DbSet<ExerciseVideo> ExerciseVideos => Set<ExerciseVideo>();
     public DbSet<ProgramTemplate> ProgramTemplates => Set<ProgramTemplate>();
+    public DbSet<SessionTemplate> SessionTemplates => Set<SessionTemplate>();
     public DbSet<Program> Programs => Set<Program>();
     public DbSet<ProgramBlock> ProgramBlocks => Set<ProgramBlock>();
     public DbSet<ProgramSession> ProgramSessions => Set<ProgramSession>();

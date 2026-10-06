@@ -200,6 +200,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Lot 2.1
 builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
 builder.Services.AddScoped<ICoachSessionPreferencesService, CoachSessionPreferencesService>();
+builder.Services.AddScoped<ISessionTemplateService, SessionTemplateService>(); // Lot 11.5
 builder.Services.AddScoped<IOfferProgramService, OfferProgramService>();
 builder.Services.AddScoped<ISessionSlotService, SessionSlotService>();
 

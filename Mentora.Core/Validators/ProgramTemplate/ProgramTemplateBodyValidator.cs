@@ -30,10 +30,6 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
     // Exact decimal comparison. Allowed only on MESOCYCLE blocks.
     private static readonly decimal[] ValidLoadPercents = [100m, 102.5m, 105m, 110m];
 
-    private const int MaxRestAfterSeconds = 600;
-
-    private static readonly HashSet<string> ValidLoadTypes = ["KG", "BODYWEIGHT"];
-
     private readonly IExerciseService exerciseService;
 
     public ProgramTemplateBodyValidator(IExerciseService exerciseService)
@@ -96,7 +92,6 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
         }
 
         ValidatePositions(blocks, b => b.Position, path, context);
-
         foreach (var block in blocks)
         {
             var itemPath = $"{path}[{block.Position}]";
@@ -204,90 +199,18 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
             context.AddFailure(path, $"Type must be one of: {string.Join(", ", ProgramSessionTypes.All)}.");
     }
 
-    private void ValidateCircuits(
+    // Circuit and exercise rules live in ProgramCircuitRules (shared with the session template validator).
+    private static void ValidateCircuits(
         List<ProgramTemplateCircuit> circuits, string path,
-        ValidationContext<ProgramTemplateBody> context, HashSet<Guid> exerciseIds)
-    {
-        if (circuits is not { Count: > 0 })
-            return;
-
-        ValidatePositions(circuits, c => c.Position, path, context);
-
-        foreach (var circuit in circuits)
-        {
-            var itemPath = $"{path}[{circuit.Position}]";
-
-            if (string.IsNullOrWhiteSpace(circuit.Name))
-                context.AddFailure($"{itemPath}.Name", "Name is required.");
-
-            var isStandard = circuit.Mode == "STANDARD";
-            var isInterval = circuit.Mode == "INTERVAL";
-
-            if (!isStandard && !isInterval)
-                context.AddFailure($"{itemPath}.Mode", "Mode must be one of: STANDARD, INTERVAL.");
-
-            if (isInterval && circuit.Rounds is null)
-                context.AddFailure($"{itemPath}.Rounds", "Rounds is required when Mode is INTERVAL.");
-
-            if (circuit.RestAfterSeconds is < 0 or > MaxRestAfterSeconds)
-                context.AddFailure($"{itemPath}.RestAfterSeconds",
-                    $"RestAfterSeconds must be between 0 and {MaxRestAfterSeconds}.");
-
-            ValidateExercises(circuit.Exercises, circuit.Mode, $"{itemPath}.Exercises", context, exerciseIds);
-        }
-    }
-
-    private void ValidateExercises(
-        List<ProgramTemplateExercise> exercises, string? mode, string path,
-        ValidationContext<ProgramTemplateBody> context, HashSet<Guid> exerciseIds)
-    {
-        if (exercises is not { Count: > 0 })
-        {
-            context.AddFailure(path, "A circuit must contain at least one exercise.");
-            return;
-        }
-
-        ValidatePositions(exercises, e => e.Position, path, context);
-
-        foreach (var exercise in exercises)
-        {
-            var itemPath = $"{path}[{exercise.Position}]";
-
-            exerciseIds.Add(exercise.ExerciseId);
-
-            if (exercise.LoadType == "ELASTIC")
-                context.AddFailure($"{itemPath}.LoadType", "ELASTIC is not supported in V1.");
-            else if (exercise.LoadType is null || !ValidLoadTypes.Contains(exercise.LoadType))
-                context.AddFailure($"{itemPath}.LoadType", $"LoadType must be one of: {string.Join(", ", ValidLoadTypes)}.");
-
-            if (mode == "STANDARD")
-            {
-                if (exercise.PrescribedSets is null || exercise.PrescribedReps is null)
-                    context.AddFailure(itemPath, "STANDARD circuits require PrescribedSets and PrescribedReps on every exercise.");
-
-                if (exercise.WorkSeconds is not null || exercise.RestWorkSeconds is not null)
-                    context.AddFailure(itemPath, "STANDARD circuits must not carry WorkSeconds or RestWorkSeconds.");
-            }
-            else if (mode == "INTERVAL")
-            {
-                if (exercise.WorkSeconds is null || exercise.RestWorkSeconds is null)
-                    context.AddFailure(itemPath, "INTERVAL circuits require WorkSeconds and RestWorkSeconds on every exercise.");
-
-                if (exercise.PrescribedSets is not null || exercise.PrescribedReps is not null)
-                    context.AddFailure(itemPath, "INTERVAL circuits must not carry PrescribedSets or PrescribedReps.");
-            }
-        }
-    }
+        ValidationContext<ProgramTemplateBody> context, HashSet<Guid> exerciseIds) =>
+        ProgramCircuitRules.ValidateCircuits(
+            circuits, path,
+            (key, message) => context.AddFailure(key, message),
+            (_, exerciseId) => exerciseIds.Add(exerciseId));
 
     // ── Shared ─────────────────────────────────────────────────────────────────
 
     private static void ValidatePositions<T>(
-        List<T> items, Func<T, int> selector, string path, ValidationContext<ProgramTemplateBody> context)
-    {
-        var positions = items.Select(selector).OrderBy(p => p).ToList();
-        var expected = Enumerable.Range(1, items.Count);
-
-        if (!positions.SequenceEqual(expected))
-            context.AddFailure(path, $"Positions must be unique and contiguous starting from 1 (found: {string.Join(", ", positions)}).");
-    }
+        List<T> items, Func<T, int> selector, string path, ValidationContext<ProgramTemplateBody> context) =>
+        ProgramCircuitRules.ValidatePositions(items, selector, path, (key, message) => context.AddFailure(key, message));
 }

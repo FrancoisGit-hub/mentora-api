@@ -2359,6 +2359,73 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Mentora.Core.Entities.SessionTemplate", b =>
+                {
+                    b.Property<Guid>("SessionTemplateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("SESSION_TEMPLATE_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid?>("SessionTemplateCoachId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("COACH_ID");
+
+                    b.Property<string>("SessionTemplateContent")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("SESSION_TEMPLATE_CONTENT");
+
+                    b.Property<DateTime>("SessionTemplateCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("SESSION_TEMPLATE_CREATED_DATE");
+
+                    b.Property<string>("SessionTemplateDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("SESSION_TEMPLATE_DESCRIPTION");
+
+                    b.Property<bool>("SessionTemplateIsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("SESSION_TEMPLATE_IS_ACTIVE");
+
+                    b.Property<string>("SessionTemplateName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("SESSION_TEMPLATE_NAME");
+
+                    b.Property<string>("SessionTemplateNature")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("SESSION_TEMPLATE_NATURE");
+
+                    b.Property<string>("SessionTemplateSessionType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("SESSION_TEMPLATE_SESSION_TYPE");
+
+                    b.Property<string>("SessionTemplateSourceCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("SESSION_TEMPLATE_SOURCE_CODE");
+
+                    b.Property<DateTime>("SessionTemplateUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("SESSION_TEMPLATE_UPDATED_DATE");
+
+                    b.HasKey("SessionTemplateId");
+
+                    b.HasIndex("SessionTemplateCoachId")
+                        .HasDatabaseName("IX_SESSION_TEMPLATES_COACH_ID");
+
+                    b.ToTable("SESSION_TEMPLATES", (string)null);
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.SessionVoucher", b =>
                 {
                     b.Property<Guid>("VoucherId")
@@ -3110,6 +3177,16 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Coach");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.SessionTemplate", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.Coach", "Coach")
+                        .WithMany()
+                        .HasForeignKey("SessionTemplateCoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Coach");
                 });
