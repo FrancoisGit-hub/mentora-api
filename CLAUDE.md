@@ -109,3 +109,12 @@ After `db.Database.MigrateAsync()`, these idempotent seeders run (`Program.cs`):
   active `OFFER_PROGRAMS` rows.
 - `ExerciseSeeder`, `MuscleGroupSeeder`, `CatalogSeeder`, `ProgramTemplateSeeder`, `QuizQuestionSeeder` — reference data
   (exercises, muscle groups, catalog, program templates, quiz questions).
+
+## Email routing
+
+Environment variables only, never in an appsettings file, never a value in a doc: `EmailRouting__Mode`, `EmailRouting__TestRecipients`, `EmailRouting__ProductionBcc`, `Email__Provider` (`Smtp` or `Logging`), `Email__FromAddress`, and the `Email__Smtp__*` keys (`Host`, `Port`, `UseStartTls`, `Username`, `Password`).
+- Any `EmailRouting__Mode` other than `Production` is TEST mode: every mail goes only to `EmailRouting__TestRecipients`.
+- The API refuses to start (read before migrations) when `EmailRouting__TestRecipients` is empty or holds an invalid or duplicate address, even in Production mode.
+- Production mode also requires `EmailRouting__ProductionBcc` with at least one valid address.
+- With `Email__Provider=Smtp`, the refusal covers `Email__Smtp__Host`, `Email__Smtp__Port`, `Email__FromAddress`, `Email__Smtp__Username` and `Email__Smtp__Password`; `Logging` needs none of them.
+- api-demo stays in test mode until the Alpha.

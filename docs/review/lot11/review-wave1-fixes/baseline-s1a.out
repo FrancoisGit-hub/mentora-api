@@ -1,0 +1,4 @@
+nullBlocks {"status":500,"error":"An unexpected error occurred."}
+nullSessions {"status":500,"error":"An unexpected error occurred."}
+nullCircuits {"status":500,"error":"An unexpected error occurred."}
+nullExercises {"status":500,"error":"An unexpected error occurred."}

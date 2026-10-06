@@ -1,0 +1,2 @@
+Lot 11 wave 1 review fixes run start (database time, SELECT now(), before any fixture write):
+2026-10-06 07:58:35.064101+00

@@ -1,0 +1,21 @@
+BEGIN
+WARNING:  there is already a transaction in progress
+  step  |         PROGRAM_EXERCISE_ID          | PROGRAM_EXERCISE_LOAD_TYPE | sets | reps | kg | rpe 
+--------+--------------------------------------+----------------------------+------+------+----+-----
+ before | 38a272c1-1e32-49db-8afc-74b44028d088 | BODYWEIGHT                 |      |      |    |    
+ before | 78aca3c2-f528-489f-9c1e-5203e2f5db77 | KG                         |      |      |    |    
+ before | 7d6d6bd4-b2c3-4e26-8692-a78ceaeb58a8 | KG                         |      |      |    |    
+ before | cc674e8c-d712-4797-8918-c15024418abe | KG                         |      |      |    |    
+(4 rows)
+
+UPDATE 4
+ step  |         PROGRAM_EXERCISE_ID          | PROGRAM_EXERCISE_LOAD_TYPE | sets | reps |  kg   | rpe 
+-------+--------------------------------------+----------------------------+------+------+-------+-----
+ after | 38a272c1-1e32-49db-8afc-74b44028d088 | BODYWEIGHT                 |    3 |    8 |       |   8
+ after | 78aca3c2-f528-489f-9c1e-5203e2f5db77 | KG                         |    3 |    8 | 22.50 |   8
+ after | 7d6d6bd4-b2c3-4e26-8692-a78ceaeb58a8 | KG                         |    3 |    8 | 22.50 |   8
+ after | cc674e8c-d712-4797-8918-c15024418abe | KG                         |    3 |    8 | 22.50 |   8
+(4 rows)
+
+ROLLBACK
+WARNING:  there is no transaction in progress

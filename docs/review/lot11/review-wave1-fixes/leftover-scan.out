@@ -1,0 +1,42 @@
+BEGIN
+ created_date_columns 
+----------------------
+                   31
+(1 row)
+
+       table_name       |            column_name             | rows_since_run_start 
+------------------------+------------------------------------+----------------------
+ AGENT_TOKENS           | AGENT_TOKEN_CREATED_DATE           |                    0
+ AUTH_OTPS              | AUTH_OTP_CREATED_DATE              |                    0
+ AUTH_REFRESH_TOKENS    | AUTH_REFRESH_TOKEN_CREATED_DATE    |                    0
+ CARTS                  | CART_CREATED_DATE                  |                    0
+ COACHES                | COACH_CREATED_DATE                 |                    0
+ COACH_PARAMETERS       | COACH_PARAMETER_CREATED_DATE       |                    0
+ CONVERSATIONS          | CONVERSATION_CREATED_DATE          |                    0
+ EQUIPMENT              | EQUIPMENT_CREATED_DATE             |                    0
+ EXERCISES              | EXERCISE_CREATED_DATE              |                    0
+ EXERCISE_VIDEOS        | EXERCISE_VIDEO_CREATED_DATE        |                    0
+ MEMBERS                | MEMBER_CREATED_DATE                |                    0
+ MEMBER_PARAMETERS      | MEMBER_PARAMETER_CREATED_DATE      |                    0
+ MUSCLE_GROUPS          | MUSCLE_GROUP_CREATED_DATE          |                    0
+ OBJECTIVES             | OBJECTIVE_CREATED_DATE             |                    0
+ OFFER_PROGRAMS         | OFFER_PROGRAM_CREATED_DATE         |                    0
+ ORDERS                 | ORDER_CREATED_DATE                 |                    0
+ PRODUCTS               | PRODUCT_CREATED_DATE               |                    0
+ PRODUCT_PACKS          | PRODUCT_PACK_CREATED_DATE          |                    0
+ PROGRAMS               | PROGRAM_CREATED_DATE               |                    0
+ PROGRAM_TEMPLATES      | PROGRAM_TEMPLATE_CREATED_DATE      |                    0
+ QUIZ_DEVICE_CLAIMS     | QUIZ_DEVICE_CLAIM_CREATED_DATE     |                    0
+ QUIZ_QUESTIONS         | QUIZ_QUESTION_CREATED_DATE         |                    0
+ QUIZ_SESSIONS          | QUIZ_SESSION_CREATED_DATE          |                    0
+ QUIZ_SESSION_QUESTIONS | QUIZ_SESSION_QUESTION_CREATED_DATE |                    0
+ SESSIONS               | SESSION_CREATED_DATE               |                    0
+ SESSION_PARTICIPANTS   | SESSION_PARTICIPANT_CREATED_DATE   |                    0
+ SESSION_SLOTS          | SESSION_SLOT_CREATED_DATE          |                    0
+ SESSION_TEMPLATES      | SESSION_TEMPLATE_CREATED_DATE      |                    0
+ SESSION_VOUCHERS       | VOUCHER_CREATED_DATE               |                    0
+ USERS                  | USER_CREATED_DATE                  |                    0
+ USER_DEVICES           | USER_DEVICE_CREATED_DATE           |                    0
+(31 rows)
+
+ROLLBACK

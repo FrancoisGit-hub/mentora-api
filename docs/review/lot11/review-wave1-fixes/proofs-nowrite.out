@@ -1,0 +1,37 @@
+== fingerprint BEFORE (count, md5 of rows + xmin)
+PROGRAM_BLOCKS|4|2f6fddd4533e65836a9fbf367a576456
+PROGRAM_CIRCUITS|16|ff046f3a82e73c7d250cc0a04b57ea48
+PROGRAM_EXERCISES|36|1e9c35b635771d6ccbd3aa3f229844c1
+PROGRAMS|1|443519079fcbe30667fea9a33b275177
+PROGRAM_SESSIONS|12|72def20e08043fefc1f5794db16afbcd
+PROGRAM_TEMPLATES|0|d41d8cd98f00b204e9800998ecf8427e
+SESSION_TEMPLATES|0|d41d8cd98f00b204e9800998ecf8427e
+
+== S1-b PUT coach/training-programs/{id}, expected 422
+S1-b PUT nullBlocks                422 errors={"Body.Blocks":["Entries must not be null."],"Body":["WeekNumber values must be contiguous from 1 to DurationWeeks (4); found: ."]}
+S1-b PUT nullSessions              422 errors={"Body.Blocks[1].Sessions":["Entries must not be null."]}
+S1-b PUT nullCircuits              422 errors={"Body.Blocks[1].Sessions[1].Circuits":["Entries must not be null."]}
+S1-b PUT nullExercises             422 errors={"Body.Blocks[1].Sessions[1].Circuits[1].Exercises":["Entries must not be null."]}
+
+== S1-b POST coach/session-templates, expected 422 (blocks/sessions do not exist on this body)
+S1-b POST circuits:[null]          422 errors={"Circuits":["Entries must not be null."]}
+S1-b POST exercises:[null]         422 errors={"Circuits[1].Exercises":["Entries must not be null."]}
+
+== S1-c POST coach/program-templates blocks:[null] (shared validator)
+S1-c POST blocks:[null]            422 errors={"Body.Blocks":["Entries must not be null."],"Body":["WeekNumber values must be contiguous from 1 to DurationWeeks (1); found: ."]}
+
+== S2-a, S2-b, S2-f (delete), expected 409
+S2-a change exerciseId of X1       409 details={"reason":"PROGRAM_HAS_HISTORY","programSessionIds":[],"programExerciseIds":["78aca3c2-f528-489f-9c1e-5203e2f5db77"]}
+S2-b X2 loadType KG -> BODYWEIGHT  409 details={"reason":"PROGRAM_HAS_HISTORY","programSessionIds":[],"programExerciseIds":["7d6d6bd4-b2c3-4e26-8692-a78ceaeb58a8"]}
+S2-f delete X4 (actuals)           409 details={"reason":"PROGRAM_HAS_HISTORY","programSessionIds":[],"programExerciseIds":["38a272c1-1e32-49db-8afc-74b44028d088"]}
+
+== fingerprint AFTER all non-writing proofs
+PROGRAM_BLOCKS|4|2f6fddd4533e65836a9fbf367a576456
+PROGRAM_CIRCUITS|16|ff046f3a82e73c7d250cc0a04b57ea48
+PROGRAM_EXERCISES|36|1e9c35b635771d6ccbd3aa3f229844c1
+PROGRAMS|1|443519079fcbe30667fea9a33b275177
+PROGRAM_SESSIONS|12|72def20e08043fefc1f5794db16afbcd
+PROGRAM_TEMPLATES|0|d41d8cd98f00b204e9800998ecf8427e
+SESSION_TEMPLATES|0|d41d8cd98f00b204e9800998ecf8427e
+
+S2-e / S1 no-write: fingerprints identical = true

@@ -1,0 +1,24 @@
+BEGIN
+WARNING:  there is already a transaction in progress
+CREATE TABLE
+CREATE VIEW
+INSERT 0 8
+DELETE 1
+DELETE 1
+DELETE 2
+DELETE 2
+INSERT 0 8
+         tbl         | before | after | deleted 
+---------------------+--------+-------+---------
+ AUTH_OTPS           |      2 |     0 |       2
+ AUTH_REFRESH_TOKENS |      2 |     0 |       2
+ PROGRAM_BLOCKS      |      4 |     0 |       4
+ PROGRAM_CIRCUITS    |     16 |     0 |      16
+ PROGRAM_EXERCISES   |     36 |     0 |      36
+ PROGRAMS            |      1 |     0 |       1
+ PROGRAM_SESSIONS    |     12 |     0 |      12
+ SESSION_TEMPLATES   |      1 |     0 |       1
+(8 rows)
+
+ROLLBACK
+WARNING:  there is no transaction in progress

@@ -1,0 +1,31 @@
+== actuals BEFORE (id|sets|reps|kg|rpe|feedback)
+38a272c1-1e32-49db-8afc-74b44028d088|3|8||8|
+78aca3c2-f528-489f-9c1e-5203e2f5db77|3|8|22.50|8|
+7d6d6bd4-b2c3-4e26-8692-a78ceaeb58a8|3|8|22.50|8|
+cc674e8c-d712-4797-8918-c15024418abe|3|8|22.50|8|
+
+== S1-d valid payloads unchanged
+S1-d PUT current tree unchanged (rename) 200
+S1-d POST session-template valid   201
+
+== S2-c same exercise, only prescribed reps X3 15 -> 16
+S2-c X3 prescribedReps 16          200
+38a272c1-1e32-49db-8afc-74b44028d088|3|8||8|
+78aca3c2-f528-489f-9c1e-5203e2f5db77|3|8|22.50|8|
+7d6d6bd4-b2c3-4e26-8692-a78ceaeb58a8|3|8|22.50|8|
+cc674e8c-d712-4797-8918-c15024418abe|3|8|22.50|8|
+S2-c ACTUAL_* identical before and after = true
+S2-c X3 prescribed reps in DB: 16
+
+== S2-d exercise without realised values changes exerciseId (N1)
+S2-d N1 exerciseId changed         200
+S2-d N1 exercise in DB is the new one = true
+
+== S2-f clean reorder (swap N1 and N2 positions), expected 200
+S2-f reorder N1 <-> N2             200
+positions in DB (N1|N2): 65402458-a0e8-4c3e-b1a2-166a6841d57d|2 ; 7f6b6efb-3e78-4cf2-8b3f-c6c38946e69a|1
+
+actuals AFTER the whole write group identical to BEFORE = true
+
+== fixture rows created after run start (session templates of coach A)
+6585da24-e584-4dbb-8cc3-024033575fd0|l11fix-template
