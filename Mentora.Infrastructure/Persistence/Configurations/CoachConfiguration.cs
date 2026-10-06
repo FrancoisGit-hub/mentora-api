@@ -22,6 +22,21 @@ public class CoachConfiguration : IEntityTypeConfiguration<Coach>
         builder.Property(e => e.CoachIsActive).HasColumnName("COACH_IS_ACTIVE").IsRequired();
         builder.Property(e => e.UserId).HasColumnName("USER_ID").IsRequired();
 
+        // Lot 11.3 - session preferences (information only)
+        builder.Property(e => e.CoachOffersVisio)
+            .HasColumnName("COACH_OFFERS_VISIO")
+            .IsRequired()
+            .HasDefaultValue(false);
+        builder.Property(e => e.CoachOffersInPersonSolo)
+            .HasColumnName("COACH_OFFERS_IN_PERSON_SOLO")
+            .IsRequired()
+            .HasDefaultValue(false);
+        builder.Property(e => e.CoachInPersonLocations)
+            .HasColumnName("COACH_IN_PERSON_LOCATIONS")
+            .HasColumnType("jsonb")
+            .IsRequired()
+            .HasDefaultValueSql("'[]'::jsonb");
+
         builder.HasOne(e => e.AgentToken)
             .WithOne(t => t.Coach)
             .HasForeignKey<AgentToken>(t => t.CoachId)

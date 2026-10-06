@@ -246,6 +246,13 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("COACH_FIRST_NAME");
 
+                    b.Property<List<string>>("CoachInPersonLocations")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("COACH_IN_PERSON_LOCATIONS")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.Property<bool>("CoachIsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("COACH_IS_ACTIVE");
@@ -255,6 +262,18 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("COACH_LAST_NAME");
+
+                    b.Property<bool>("CoachOffersInPersonSolo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("COACH_OFFERS_IN_PERSON_SOLO");
+
+                    b.Property<bool>("CoachOffersVisio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("COACH_OFFERS_VISIO");
 
                     b.Property<string>("CoachPhone")
                         .HasMaxLength(20)

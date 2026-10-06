@@ -1,4 +1,5 @@
 using Mentora.Core.Entities;
+using Mentora.Core.Text;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,8 +24,9 @@ internal static class ExerciseSearch
 
     // Accent folding without the unaccent extension (the schema has none): both the column and the
     // term go through the same translate() + lower(), so "dev", "DÉV" and "dév" are the same term.
-    private const string Accented = "àâäÀÂÄéèêëÉÈÊËîïÎÏôöÔÖùûüÙÛÜÿŸçÇ";
-    private const string Plain    = "aaaAAAeeeeEEEEiiIIooOOuuuUUUyYcC";
+    // The map lives in Mentora.Core.Text.AccentFolding (shared with the coach location duplicate check).
+    private const string Accented = AccentFolding.Accented;
+    private const string Plain    = AccentFolding.Plain;
 
     public static string EscapeLike(string value) =>
         value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");

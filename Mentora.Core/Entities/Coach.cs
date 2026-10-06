@@ -9,6 +9,11 @@ public class Coach
     public DateTime CoachCreatedDate { get; set; }
     public bool CoachIsActive { get; set; }
 
+    // Lot 11.3 - information only, nothing reads these to block an offer or a slot.
+    public bool CoachOffersVisio { get; set; } = false;
+    public bool CoachOffersInPersonSolo { get; set; } = false;
+    public List<string> CoachInPersonLocations { get; set; } = new List<string>();
+
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 
