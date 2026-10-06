@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -299,12 +300,29 @@ builder.Services.Configure<RefreshTokenPurgeOptions>(
 builder.Services.AddHostedService<RefreshTokenPurgeService>();
 
 // Lot 3.0 — Email (OTP delivery)
-builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
-var emailProvider = builder.Configuration["Email:Provider"] ?? "Logging";
-if (string.Equals(emailProvider, "Smtp", StringComparison.OrdinalIgnoreCase))
-    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
-else
-    builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
+// Lot 11.4 — options fail loudly at startup (messages never print a value or an address).
+builder.Services.AddOptions<EmailOptions>()
+    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<EmailOptions>, EmailOptionsValidator>();
+builder.Services.AddOptions<EmailRoutingOptions>()
+    .Bind(builder.Configuration.GetSection(EmailRoutingOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<EmailRoutingOptions>, EmailRoutingOptionsValidator>();
+// Every mail goes through RoutingEmailSender (11.Z): concrete providers are registered as themselves,
+// IEmailSender always resolves to the decorator.
+builder.Services.AddScoped<SmtpEmailSender>();
+builder.Services.AddScoped<LoggingEmailSender>();
+builder.Services.AddScoped<IEmailSender>(sp =>
+{
+    IEmailSender provider = sp.GetRequiredService<IOptions<EmailOptions>>().Value.IsSmtp
+        ? sp.GetRequiredService<SmtpEmailSender>()
+        : sp.GetRequiredService<LoggingEmailSender>();
+    return new RoutingEmailSender(
+        provider,
+        sp.GetRequiredService<IOptions<EmailRoutingOptions>>().Value,
+        sp.GetRequiredService<ILogger<RoutingEmailSender>>());
+});
 
 builder.Services.AddControllers(options =>
     {
@@ -355,6 +373,20 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+
+// Lot 11.4 — reading .Value runs the validators now, so an invalid email setup stops the API
+// before migrations and seeders. Counts only: no address in the startup line.
+{
+    var emailOpts = app.Services.GetRequiredService<IOptions<EmailOptions>>().Value;
+    var routingOpts = app.Services.GetRequiredService<IOptions<EmailRoutingOptions>>().Value;
+    if (routingOpts.IsUnrecognizedMode)
+        app.Logger.LogWarning(
+            "[EMAIL] EmailRouting:Mode is set but is not \"Production\": TEST routing applies.");
+    app.Logger.LogInformation(
+        "[EMAIL] routing mode={Mode} provider={Provider} testRecipients={TestCount} productionBcc={BccCount}",
+        routingOpts.ModeLabel, emailOpts.EffectiveProvider,
+        routingOpts.TestRecipientList.Count, routingOpts.ProductionBccList.Count);
+}
 
 // Auto-migrate and seed at startup
 await using (var scope = app.Services.CreateAsyncScope())

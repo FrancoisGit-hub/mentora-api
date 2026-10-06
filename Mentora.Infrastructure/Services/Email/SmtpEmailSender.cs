@@ -14,9 +14,11 @@ public sealed class SmtpEmailSender(
 {
     private readonly EmailOptions _opts = options.Value;
 
-    public async Task<bool> SendAsync(string toAddress, string subject, string htmlBody, string textBody, CancellationToken ct)
+    public async Task<bool> SendAsync(EmailMessage envelope, CancellationToken ct)
     {
-        var message = BuildMessage(toAddress, subject, htmlBody, textBody);
+        var message = BuildMessage(envelope);
+        var toAddress = string.Join(",", envelope.To);
+        var subject = envelope.Subject;
 
         var maxAttempts = Math.Max(1, _opts.Retry.MaxAttempts);
         var delay = TimeSpan.FromSeconds(Math.Max(0, _opts.Retry.DelaySeconds));
@@ -64,18 +66,23 @@ public sealed class SmtpEmailSender(
         return false;
     }
 
-    private MimeMessage BuildMessage(string toAddress, string subject, string htmlBody, string textBody)
+    private MimeMessage BuildMessage(EmailMessage envelope)
     {
         var msg = new MimeMessage();
         msg.From.Add(new MailboxAddress(_opts.FromDisplayName, _opts.FromAddress));
-        msg.To.Add(MailboxAddress.Parse(toAddress));
-        msg.Subject = subject;
+        foreach (var to in envelope.To)
+            msg.To.Add(MailboxAddress.Parse(to));
+        // MailKit's SmtpClient puts Bcc recipients in the SMTP envelope (RCPT TO) and hides the
+        // Bcc header from the transmitted message, so blind copies stay blind.
+        foreach (var bcc in envelope.Bcc)
+            msg.Bcc.Add(MailboxAddress.Parse(bcc));
+        msg.Subject = envelope.Subject;
         msg.ReplyTo.Add(new MailboxAddress(_opts.FromDisplayName, _opts.FromAddress));
 
         var builder = new BodyBuilder
         {
-            HtmlBody = htmlBody,
-            TextBody = textBody
+            HtmlBody = envelope.HtmlBody,
+            TextBody = envelope.TextBody
         };
         msg.Body = builder.ToMessageBody();
         return msg;

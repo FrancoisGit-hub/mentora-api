@@ -24,6 +24,9 @@ public class AuthService(
     IValidator<LogoutRequest> logoutValidator,
     ILogger<AuthService> logger) : IAuthService
 {
+    // Single source for the OTP expiry and for the "expires in N minutes" text of the OTP mail.
+    private const int OtpLifetimeMinutes = 10;
+
     private readonly JwtSettings _jwt = jwtOptions.Value;
 
     public async Task RequestOtpAsync(string email, bool? isCoach)
@@ -35,7 +38,7 @@ public class AuthService(
             .FirstOrDefaultAsync(u => u.UserEmail == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
 
-        ResolveEffectiveIsCoach(user, isCoach, email);
+        var effectiveIsCoach = ResolveEffectiveIsCoach(user, isCoach, email);
 
         // Invalidate any previous unused OTPs for this user
         var previousOtps = await db.AuthOtps
@@ -49,7 +52,7 @@ public class AuthService(
         {
             AuthOtpCodeHash = BCrypt.Net.BCrypt.HashPassword(plainOtp),
             AuthOtpCreatedDate = DateTime.UtcNow,
-            AuthOtpExpirationDate = DateTime.UtcNow.AddMinutes(10),
+            AuthOtpExpirationDate = DateTime.UtcNow.AddMinutes(OtpLifetimeMinutes),
             AuthOtpIsUsed = false,
             UserId = user.UserId
         });
@@ -57,13 +60,33 @@ public class AuthService(
 
         Console.WriteLine($"[OTP] {email} → {plainOtp}");
 
-        var subject = $"Votre code Mentora : {plainOtp}";
+        var firstName = SanitizeFirstName(effectiveIsCoach
+            ? user.Coach?.CoachFirstName
+            : user.Member?.MemberFirstName);
+        var subject = firstName == null
+            ? "Votre code Mentora"
+            : $"{firstName}, votre code Mentora";
         _ = await emailSender.SendAsync(
-            user.UserEmail,
-            subject,
-            BuildOtpHtmlBody(plainOtp),
-            BuildOtpTextBody(plainOtp),
+            EmailMessage.ForRecipient(
+                user.UserEmail,
+                subject,
+                BuildOtpHtmlBody(plainOtp, OtpLifetimeMinutes),
+                BuildOtpTextBody(plainOtp, OtpLifetimeMinutes)),
             CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Trims, drops control characters (CR, LF, tab, any char.IsControl), caps at 50 characters.
+    /// Returns null when nothing is left (first name unknown).
+    /// </summary>
+    private static string? SanitizeFirstName(string? firstName)
+    {
+        if (firstName == null)
+            return null;
+        var cleaned = new string(firstName.Trim().Where(c => !char.IsControl(c)).ToArray()).Trim();
+        if (cleaned.Length > 50)
+            cleaned = cleaned[..50].TrimEnd();
+        return cleaned.Length == 0 ? null : cleaned;
     }
 
     public async Task<AuthResponse> VerifyOtpAsync(string email, string code, bool? isCoach)
@@ -321,7 +344,7 @@ public class AuthService(
         return Convert.ToBase64String(bytes);
     }
 
-    private static string BuildOtpHtmlBody(string otpCode) => $@"
+    private static string BuildOtpHtmlBody(string otpCode, int lifetimeMinutes) => $@"
 <!DOCTYPE html>
 <html>
 <head><meta charset=""utf-8""></head>
@@ -332,20 +355,20 @@ public class AuthService(
   <p style=""font-size: 32px; font-weight: bold; letter-spacing: 4px; background: #f4f4f4; padding: 16px 24px; display: inline-block; border-radius: 8px;"">
     {otpCode}
   </p>
-  <p>Ce code expire dans 15 minutes.</p>
+  <p>Ce code expire dans {lifetimeMinutes} minutes.</p>
   <p style=""color: #666; font-size: 13px; margin-top: 32px;"">
     Si vous n'avez pas demandé ce code, ignorez ce message.
   </p>
 </body>
 </html>";
 
-    private static string BuildOtpTextBody(string otpCode) => $@"Mentora
+    private static string BuildOtpTextBody(string otpCode, int lifetimeMinutes) => $@"Mentora
 
 Bonjour,
 
 Voici votre code de connexion : {otpCode}
 
-Ce code expire dans 15 minutes.
+Ce code expire dans {lifetimeMinutes} minutes.
 
 Si vous n'avez pas demandé ce code, ignorez ce message.";
 }
