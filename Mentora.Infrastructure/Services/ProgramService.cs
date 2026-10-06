@@ -294,9 +294,17 @@ public class ProgramService(
                                                     && circuitId != e.ProgramExerciseCircuitId))
             AddExerciseHistory(e);
 
+        // Swapped: a kept exercise with realised values keeps its movement and its load type, or the
+        // actuals would be read as another movement. Prescribed values stay free to change.
+        var keptExercisesById = existingExercises.ToDictionary(e => e.ProgramExerciseId);
+        foreach (var (id, _, node) in plan.Exercises)
+            if (keptExercisesById.TryGetValue(id, out var kept) && ExerciseHasHistory(kept)
+                && (kept.ProgramExerciseExerciseId != node.ExerciseId || kept.ProgramExerciseLoadType != node.LoadType))
+                blockingExerciseIds.Add(id);
+
         if (blockingSessionIds.Count > 0 || blockingExerciseIds.Count > 0)
             throw new ConflictException(
-                "Program nodes with history cannot be deleted or moved to another parent.",
+                "Program nodes with history cannot be deleted, moved to another parent, or changed to another exercise or load type.",
                 new
                 {
                     reason             = "PROGRAM_HAS_HISTORY",

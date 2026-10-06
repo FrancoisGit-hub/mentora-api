@@ -90,8 +90,9 @@ public class CoachProgramsController(IProgramService programService) : Controlle
     /// node of that kind in this program, or a duplicated id. 409 PROGRAM_HAS_HISTORY
     /// (details programSessionIds, programExerciseIds) when a node with history (non-cancelled
     /// booking link, status other than PLANNED, realised values) would be deleted or moved to
-    /// another parent. 409 PROGRAM_SESSION_TYPE_INCOMPATIBLE when a booked session gets a type
-    /// incompatible with its booking. Nothing is written on any error.
+    /// another parent, or when a kept exercise with realised values changes its exerciseId or
+    /// loadType (prescribed values stay editable). 409 PROGRAM_SESSION_TYPE_INCOMPATIBLE when a
+    /// booked session gets a type incompatible with its booking. Nothing is written on any error.
     /// </remarks>
     [HttpPut("training-programs/{programId:guid}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
