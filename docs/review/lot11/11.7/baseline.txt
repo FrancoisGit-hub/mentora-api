@@ -1,0 +1,25 @@
+$ psql < snapshot.sql   (read only, BEFORE applying Lot11_7_RestFieldsJsonKeys; fixtures l11rn- already committed)
+BEGIN
+       store       | row_count | old_restseconds | old_restafterseconds | new_afterseries | new_afterexercices | between_rounds |          aggregate_md5
+-------------------+-----------+-----------------+----------------------+-----------------+--------------------+----------------+----------------------------------
+ PROGRAM_TEMPLATES |         3 |              91 |                    2 |               0 |                  0 |             34 | aa821dc5c728f4ff54c261c347b8ef05
+ SESSION_TEMPLATES |         1 |               3 |                    2 |               0 |                  0 |              2 | 43783a7d51555d94512e043ac2f5597c
+(2 rows)
+
+       store       |                  id                  |             md5_body             | old_restseconds | old_restafterseconds | new_afterseries | new_afterexercices | between_rounds
+-------------------+--------------------------------------+----------------------------------+-----------------+----------------------+-----------------+--------------------+----------------
+ PROGRAM_TEMPLATES | 11700000-0000-4000-8000-0000000000a1 | 871504be5e94e01b11a3f00d88bd73f4 |               3 |                    2 |               0 |                  0 |              2
+ SESSION_TEMPLATES | 11700000-0000-4000-8000-0000000000a2 | 43783a7d51555d94512e043ac2f5597c |               3 |                    2 |               0 |                  0 |              2
+(2 rows)
+
+      seeded_template      |                                                                                               old_exercise_rest_values                                                                                               | new_exercise_rest_values | old_circuit_rest_values | new_circuit_rest_values
+---------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+-------------------------+-------------------------
+ Prise de masse — débutant | [90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45, 90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45, 90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45, 90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45] | []                       | []                      | []
+(1 row)
+
+ exercises_rows | exercise_rest_sum | circuits_rows | circuit_rest_sum
+----------------+-------------------+---------------+------------------
+ 0 |                 0 |             0 |                0
+(1 row)
+
+ROLLBACK

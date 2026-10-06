@@ -1,0 +1,11 @@
+$ psql < fixture.sql   (COMMIT version, run 2026-10-06, run start date 2026-10-06 09:28:00.636468+00)
+BEGIN
+INSERT 0 1
+INSERT 0 1
+       store       |                  id                  |             md5_body             | old_restseconds | old_restafterseconds | new_afterseries | new_afterexercices | between_rounds
+-------------------+--------------------------------------+----------------------------------+-----------------+----------------------+-----------------+--------------------+----------------
+ PROGRAM_TEMPLATES | 11700000-0000-4000-8000-0000000000a1 | 871504be5e94e01b11a3f00d88bd73f4 |               3 |                    2 |               0 |                  0 |              2
+ SESSION_TEMPLATES | 11700000-0000-4000-8000-0000000000a2 | 43783a7d51555d94512e043ac2f5597c |               3 |                    2 |               0 |                  0 |              2
+(2 rows)
+
+COMMIT

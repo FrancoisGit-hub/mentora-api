@@ -1,0 +1,30 @@
+$ dotnet ef database update
+Applying migration '20261006092320_Lot11_7_RestFieldsJsonKeys'.
+Done.
+$ psql < snapshot.sql
+BEGIN
+       store       | row_count | old_restseconds | old_restafterseconds | new_afterseries | new_afterexercices | between_rounds |          aggregate_md5
+-------------------+-----------+-----------------+----------------------+-----------------+--------------------+----------------+----------------------------------
+ PROGRAM_TEMPLATES |         3 |               0 |                    0 |              91 |                  2 |             34 | cec763eb57376f38c308a0461a8018c8
+ SESSION_TEMPLATES |         1 |               0 |                    0 |               3 |                  2 |              2 | 283234ec3d68144bdc4079eb76ec7daa
+(2 rows)
+
+       store       |                  id                  |             md5_body             | old_restseconds | old_restafterseconds | new_afterseries | new_afterexercices | between_rounds
+-------------------+--------------------------------------+----------------------------------+-----------------+----------------------+-----------------+--------------------+----------------
+ PROGRAM_TEMPLATES | 11700000-0000-4000-8000-0000000000a1 | ec1cde4f025cee9d91996ccee800cdd9 |               0 |                    0 |               3 |                  2 |              2
+ SESSION_TEMPLATES | 11700000-0000-4000-8000-0000000000a2 | 283234ec3d68144bdc4079eb76ec7daa |               0 |                    0 |               3 |                  2 |              2
+(2 rows)
+
+      seeded_template      | old_exercise_rest_values |                                                                                               new_exercise_rest_values                                                                                               | old_circuit_rest_values | new_circuit_rest_values
+---------------------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------+-------------------------
+ Prise de masse — débutant | []                       | [90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45, 90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45, 90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45, 90, 90, 60, 90, 120, 90, 90, 60, 60, 60, 60, 45, 45] | []                      | []
+(1 row)
+
+ exercises_rows | exercise_rest_sum | circuits_rows | circuit_rest_sum
+----------------+-------------------+---------------+------------------
+              0 |                 0 |             0 |                0
+(1 row)
+
+ROLLBACK
+
+History after: last 4 rows = Lot11_7_RestFieldsJsonKeys, Lot11_5_SessionTemplates, Lot11_3_CoachSessionPreferences, Lot11_2_ProgramTreeFields (all applied).

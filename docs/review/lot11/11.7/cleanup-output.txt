@@ -1,0 +1,59 @@
+$ psql < cleanup-commit.sql   (diff vs cleanup-dryrun.sql: line 64 only, ROLLBACK -> COMMIT)
+BEGIN
+CREATE TABLE
+CREATE VIEW
+INSERT 0 9
+DELETE 2
+DELETE 1
+DELETE 2
+DELETE 1
+DELETE 1
+INSERT 0 9
+              tbl               | before | after | deleted
+--------------------------------+--------+-------+---------
+ AUTH_OTPS                      |      1 |     0 |       1
+ AUTH_REFRESH_TOKENS            |      1 |     0 |       1
+ PROGRAM_BLOCKS                 |      9 |     0 |       9
+ PROGRAM_CIRCUITS               |     18 |     0 |      18
+ PROGRAM_EXERCISES              |     55 |     0 |      55
+ PROGRAMS                       |      2 |     0 |       2
+ PROGRAM_SESSIONS               |     13 |     0 |      13
+ PROGRAM_TEMPLATES (fixture a1) |      1 |     0 |       1
+ SESSION_TEMPLATES (2 ids)      |      2 |     0 |       2
+(9 rows)
+
+        tbl        | rows_left | platform_rows
+-------------------+-----------+---------------
+ PROGRAM_TEMPLATES |         2 |             2
+ SESSION_TEMPLATES |         0 |             0
+(2 rows)
+
+COMMIT
+
+$ psql < leftover-scan.sql   (every table with a *_CREATED_DATE column, rows on or after 2026-10-06 09:28:00.636468+00)
+BEGIN
+ table_name | column_name | rows_since_run_start
+------------+-------------+----------------------
+(0 rows)
+
+ tables_scanned
+----------------
+             31
+(1 row)
+
+ROLLBACK
+
+$ last 4 rows of "__EFMigrationsHistory"
+                  MigrationId
+------------------------------------------------
+ 20261006092320_Lot11_7_RestFieldsJsonKeys
+ 20261006065717_Lot11_5_SessionTemplates
+ 20261006001014_Lot11_3_CoachSessionPreferences
+ 20261004181109_Lot11_2_ProgramTreeFields
+(4 rows)
+
+$ counts
+ program_templates | session_templates | programs
+-------------------+-------------------+----------
+                 2 |                 0 |        0
+(1 row)

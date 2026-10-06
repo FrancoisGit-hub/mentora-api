@@ -1,0 +1,14 @@
+BEGIN
+       store       | rows_with_token_as_value
+-------------------+--------------------------
+ PROGRAM_TEMPLATES |                        0
+ SESSION_TEMPLATES |                        0
+(2 rows)
+
+       store       | row_count | old_restseconds | old_restafterseconds | new_restsecondsafterseries | new_restsecondsafterexercices
+-------------------+-----------+-----------------+----------------------+----------------------------+-------------------------------
+ PROGRAM_TEMPLATES |         2 |              88 |                    0 |                          0 |                             0
+ SESSION_TEMPLATES |         0 |               0 |                    0 |                          0 |                             0
+(2 rows)
+
+ROLLBACK
