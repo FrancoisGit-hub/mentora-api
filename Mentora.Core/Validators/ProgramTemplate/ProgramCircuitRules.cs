@@ -26,7 +26,8 @@ public static class ProgramCircuitRules
         if (circuits is not { Count: > 0 })
             return;
 
-        ValidatePositions(circuits, c => c.Position, path, fail);
+        if (!ValidatePositions(circuits, c => c.Position, path, fail))
+            return;
 
         foreach (var circuit in circuits)
         {
@@ -62,7 +63,8 @@ public static class ProgramCircuitRules
             return;
         }
 
-        ValidatePositions(exercises, e => e.Position, path, fail);
+        if (!ValidatePositions(exercises, e => e.Position, path, fail))
+            return;
 
         foreach (var exercise in exercises)
         {
@@ -94,14 +96,25 @@ public static class ProgramCircuitRules
         }
     }
 
-    /// <summary>Positions must be unique and contiguous starting from 1.</summary>
-    public static void ValidatePositions<T>(
+    /// <summary>
+    /// Positions must be unique and contiguous starting from 1. Returns false when the list holds a
+    /// null entry (a failure is added on <paramref name="path"/>): callers must not read the items.
+    /// </summary>
+    public static bool ValidatePositions<T>(
         List<T> items, Func<T, int> selector, string path, Action<string, string> fail)
     {
+        if (items.Any(i => i is null))
+        {
+            fail(path, "Entries must not be null.");
+            return false;
+        }
+
         var positions = items.Select(selector).OrderBy(p => p).ToList();
         var expected = Enumerable.Range(1, items.Count);
 
         if (!positions.SequenceEqual(expected))
             fail(path, $"Positions must be unique and contiguous starting from 1 (found: {string.Join(", ", positions)}).");
+
+        return true;
     }
 }

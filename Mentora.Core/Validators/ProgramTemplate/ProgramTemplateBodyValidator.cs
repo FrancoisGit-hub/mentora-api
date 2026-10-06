@@ -91,7 +91,9 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
             return;
         }
 
-        ValidatePositions(blocks, b => b.Position, path, context);
+        if (!ValidatePositions(blocks, b => b.Position, path, context))
+            return;
+
         foreach (var block in blocks)
         {
             var itemPath = $"{path}[{block.Position}]";
@@ -164,7 +166,8 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
         if (sessions is not { Count: > 0 })
             return;
 
-        ValidatePositions(sessions, s => s.Position, path, context);
+        if (!ValidatePositions(sessions, s => s.Position, path, context))
+            return;
 
         foreach (var session in sessions)
         {
@@ -210,7 +213,7 @@ public class ProgramTemplateBodyValidator : AbstractValidator<ProgramTemplateBod
 
     // ── Shared ─────────────────────────────────────────────────────────────────
 
-    private static void ValidatePositions<T>(
+    private static bool ValidatePositions<T>(
         List<T> items, Func<T, int> selector, string path, ValidationContext<ProgramTemplateBody> context) =>
         ProgramCircuitRules.ValidatePositions(items, selector, path, (key, message) => context.AddFailure(key, message));
 }

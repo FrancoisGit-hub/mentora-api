@@ -18,6 +18,6 @@ public class UpdateProgramBody
     public ProgramTemplateBody ToTemplateBody() => new()
     {
         BodyVersion = BodyVersion,
-        Blocks      = Blocks?.Select(b => b.ToTemplateBlock()).ToList() ?? [],
+        Blocks      = Blocks?.Select(b => b?.ToTemplateBlock()!).ToList() ?? [],
     };
 }

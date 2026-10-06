@@ -32,7 +32,7 @@ public class UpdateProgramBlock
         Position    = Position,
         WeekNumber  = WeekNumber,
         LoadPercent = LoadPercent,
-        Blocks      = Blocks?.Select(b => b.ToTemplateBlock()).ToList() ?? [],
-        Sessions    = Sessions?.Select(s => s.ToTemplateSession()).ToList() ?? [],
+        Blocks      = Blocks?.Select(b => b?.ToTemplateBlock()!).ToList() ?? [],
+        Sessions    = Sessions?.Select(s => s?.ToTemplateSession()!).ToList() ?? [],
     };
 }

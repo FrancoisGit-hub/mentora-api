@@ -57,6 +57,9 @@ public class UpdateProgramNodeIdsValidator : AbstractValidator<UpdateProgramBody
 
         foreach (var block in blocks)
         {
+            if (block is null)
+                continue;
+
             var blockPath = $"{path}[{block.Position}]";
             if (block.Id is { } blockId)
                 nodes.Add((blockId, "block", existing.BlockIds, $"{blockPath}.Id"));
@@ -65,19 +68,25 @@ public class UpdateProgramNodeIdsValidator : AbstractValidator<UpdateProgramBody
 
             foreach (var session in block.Sessions ?? [])
             {
+                if (session is null)
+                    continue;
+
                 var sessionPath = $"{blockPath}.Sessions[{session.Position}]";
                 if (session.Id is { } sessionId)
                     nodes.Add((sessionId, "session", existing.SessionIds, $"{sessionPath}.Id"));
 
                 foreach (var circuit in session.Circuits ?? [])
                 {
+                    if (circuit is null)
+                        continue;
+
                     var circuitPath = $"{sessionPath}.Circuits[{circuit.Position}]";
                     if (circuit.Id is { } circuitId)
                         nodes.Add((circuitId, "circuit", existing.CircuitIds, $"{circuitPath}.Id"));
 
                     foreach (var exercise in circuit.Exercises ?? [])
                     {
-                        if (exercise.Id is { } exerciseId)
+                        if (exercise?.Id is { } exerciseId)
                             nodes.Add((exerciseId, "exercise", existing.ExerciseIds,
                                 $"{circuitPath}.Exercises[{exercise.Position}].Id"));
                     }

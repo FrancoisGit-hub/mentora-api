@@ -32,6 +32,6 @@ public class UpdateProgramSession
         Nature    = Nature,
         DayOfWeek = DayOfWeek,
         Position  = Position,
-        Circuits  = Circuits?.Select(c => c.ToTemplateCircuit()).ToList() ?? [],
+        Circuits  = Circuits?.Select(c => c?.ToTemplateCircuit()!).ToList() ?? [],
     };
 }

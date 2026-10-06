@@ -33,6 +33,6 @@ public class UpdateProgramCircuit
         RestBetweenRoundsSeconds = RestBetweenRoundsSeconds,
         RestAfterSeconds         = RestAfterSeconds,
         Note                     = Note,
-        Exercises                = Exercises?.Select(e => e.ToTemplateExercise()).ToList() ?? [],
+        Exercises                = Exercises?.Select(e => e?.ToTemplateExercise()!).ToList() ?? [],
     };
 }
