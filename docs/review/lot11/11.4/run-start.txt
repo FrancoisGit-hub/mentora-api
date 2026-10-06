@@ -1,0 +1,1 @@
+SELECT now(); -> 2026-10-06 01:27:14.888849+00 (before any write)
