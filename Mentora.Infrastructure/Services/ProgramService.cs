@@ -395,7 +395,7 @@ public class ProgramService(
             circuit.ProgramCircuitMode                     = node.Mode;
             circuit.ProgramCircuitRounds                   = node.Rounds;
             circuit.ProgramCircuitRestBetweenRoundsSeconds = node.RestBetweenRoundsSeconds;
-            circuit.ProgramCircuitRestAfterSeconds         = node.RestAfterSeconds;
+            circuit.ProgramCircuitRestAfterSeconds         = node.RestSecondsAfterExercices;
             circuit.ProgramCircuitNote                     = node.Note;
         }
 
@@ -415,7 +415,7 @@ public class ProgramService(
             exercise.ProgramExercisePrescribedSets     = node.PrescribedSets;
             exercise.ProgramExercisePrescribedReps     = node.PrescribedReps;
             exercise.ProgramExercisePrescribedWeightKg = node.PrescribedWeightKg;
-            exercise.ProgramExerciseRestSeconds        = node.RestSeconds;
+            exercise.ProgramExerciseRestSeconds        = node.RestSecondsAfterSeries;
             exercise.ProgramExerciseWorkSeconds        = node.WorkSeconds;
             exercise.ProgramExerciseRestWorkSeconds    = node.RestWorkSeconds;
         }
@@ -852,7 +852,7 @@ public class ProgramService(
                         ProgramCircuitMode                     = tc.Mode,
                         ProgramCircuitRounds                   = tc.Rounds,
                         ProgramCircuitRestBetweenRoundsSeconds = tc.RestBetweenRoundsSeconds,
-                        ProgramCircuitRestAfterSeconds         = tc.RestAfterSeconds,
+                        ProgramCircuitRestAfterSeconds         = tc.RestSecondsAfterExercices,
                         ProgramCircuitNote                     = tc.Note,
                     });
 
@@ -870,7 +870,7 @@ public class ProgramService(
                             ProgramExercisePrescribedSets     = te.PrescribedSets,
                             ProgramExercisePrescribedReps     = te.PrescribedReps,
                             ProgramExercisePrescribedWeightKg = te.PrescribedWeightKg,
-                            ProgramExerciseRestSeconds        = te.RestSeconds,
+                            ProgramExerciseRestSeconds        = te.RestSecondsAfterSeries,
                             ProgramExerciseWorkSeconds        = te.WorkSeconds,
                             ProgramExerciseRestWorkSeconds    = te.RestWorkSeconds,
                         });

@@ -304,14 +304,14 @@ public static class ProgramTemplateSeeder
     }
 
     private static ProgramTemplateExercise Std(
-        Guid exerciseId, int position, int sets, int reps, string loadType, int restSeconds) => new()
+        Guid exerciseId, int position, int sets, int reps, string loadType, int restSecondsAfterSeries) => new()
     {
         ExerciseId     = exerciseId,
         Position       = position,
         LoadType       = loadType,
         PrescribedSets = sets,
         PrescribedReps = reps,
-        RestSeconds    = restSeconds,
+        RestSecondsAfterSeries    = restSecondsAfterSeries,
     };
 
     private static ProgramTemplateExercise Interval(

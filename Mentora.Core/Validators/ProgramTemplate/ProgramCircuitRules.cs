@@ -45,9 +45,9 @@ public static class ProgramCircuitRules
             if (isInterval && circuit.Rounds is null)
                 fail($"{itemPath}.Rounds", "Rounds is required when Mode is INTERVAL.");
 
-            if (circuit.RestAfterSeconds is < 0 or > MaxRestAfterSeconds)
-                fail($"{itemPath}.RestAfterSeconds",
-                    $"RestAfterSeconds must be between 0 and {MaxRestAfterSeconds}.");
+            if (circuit.RestSecondsAfterExercices is < 0 or > MaxRestAfterSeconds)
+                fail($"{itemPath}.RestSecondsAfterExercices",
+                    $"RestSecondsAfterExercices must be between 0 and {MaxRestAfterSeconds}.");
 
             ValidateExercises(circuit.Exercises, circuit.Mode, $"{itemPath}.Exercises", fail, onExercise);
         }

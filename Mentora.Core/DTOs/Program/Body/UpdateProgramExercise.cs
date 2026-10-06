@@ -23,7 +23,7 @@ public class UpdateProgramExercise
     public decimal? PrescribedWeightKg { get; set; }
 
     /// <summary>Rest after each set of this exercise.</summary>
-    public int? RestSeconds { get; set; }
+    public int? RestSecondsAfterSeries { get; set; }
 
     /// <summary>INTERVAL circuits only.</summary>
     public int? WorkSeconds { get; set; }
@@ -39,7 +39,7 @@ public class UpdateProgramExercise
         PrescribedSets     = PrescribedSets,
         PrescribedReps     = PrescribedReps,
         PrescribedWeightKg = PrescribedWeightKg,
-        RestSeconds        = RestSeconds,
+        RestSecondsAfterSeries        = RestSecondsAfterSeries,
         WorkSeconds        = WorkSeconds,
         RestWorkSeconds    = RestWorkSeconds,
         CustomNote         = CustomNote,

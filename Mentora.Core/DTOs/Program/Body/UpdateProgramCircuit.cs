@@ -19,7 +19,7 @@ public class UpdateProgramCircuit
     public int? RestBetweenRoundsSeconds { get; set; }
 
     /// <summary>Rest after the whole circuit, before the next circuit. 0 to 600, STANDARD and INTERVAL.</summary>
-    public int? RestAfterSeconds { get; set; }
+    public int? RestSecondsAfterExercices { get; set; }
     public string? Note { get; set; }
 
     public List<UpdateProgramExercise> Exercises { get; set; } = [];
@@ -31,7 +31,7 @@ public class UpdateProgramCircuit
         Mode                     = Mode,
         Rounds                   = Rounds,
         RestBetweenRoundsSeconds = RestBetweenRoundsSeconds,
-        RestAfterSeconds         = RestAfterSeconds,
+        RestSecondsAfterExercices         = RestSecondsAfterExercices,
         Note                     = Note,
         Exercises                = Exercises?.Select(e => e?.ToTemplateExercise()!).ToList() ?? [],
     };

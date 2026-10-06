@@ -7,7 +7,7 @@ public record ProgramCircuitResponse(
     string Mode,
     int? Rounds,
     int? RestBetweenRoundsSeconds,
-    int? RestAfterSeconds,
+    int? RestSecondsAfterExercices,
     string? Note,
     List<ProgramExerciseResponse> Exercises
 );

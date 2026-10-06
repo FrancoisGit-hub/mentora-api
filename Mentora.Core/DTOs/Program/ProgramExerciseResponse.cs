@@ -20,7 +20,7 @@ public record ProgramExerciseResponse(
     int? PrescribedSets,
     int? PrescribedReps,
     decimal? PrescribedWeightKg,
-    int? RestSeconds,
+    int? RestSecondsAfterSeries,
     int? WorkSeconds,
     int? RestWorkSeconds,
     int? ActualSets,

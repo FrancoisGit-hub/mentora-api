@@ -17,7 +17,7 @@ public class ProgramTemplateExercise
     /// Rest after each set of this exercise (in an alternating circuit, rest after this
     /// exercise's set before the next one).
     /// </summary>
-    public int? RestSeconds { get; set; }
+    public int? RestSecondsAfterSeries { get; set; }
 
     /// <summary>INTERVAL circuits only.</summary>
     public int? WorkSeconds { get; set; }
