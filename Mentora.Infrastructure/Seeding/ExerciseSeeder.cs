@@ -7,6 +7,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Mentora.Infrastructure.Seeding;
 
+/// <summary>
+/// The 45 historical Mentora exercises. Lot 12.2a: create-only seeder keyed by source code.
+/// Entry N of <see cref="DefaultExercises"/> owns the stable source code LGnn (LG01 to LG45).
+/// A default is created only when no exercise has its LG code and, for a default superseded by a
+/// catalog CSV exercise (<see cref="SupersededBy"/>), no exercise has that EX code either.
+/// An existing exercise is never written, so an admin rename, edit or deactivation survives.
+/// </summary>
 public static class ExerciseSeeder
 {
     private sealed record SeedExercise(
@@ -17,6 +24,8 @@ public static class ExerciseSeeder
         Equipment Equipment,
         bool IsPolyarticular);
 
+    // NEVER reorder nor remove an entry: the position is the LG source code (first entry = LG01).
+    // Add new entries at the end only.
     private static readonly SeedExercise[] DefaultExercises =
     [
         // Pectoraux
@@ -226,45 +235,95 @@ public static class ExerciseSeeder
             MuscleGroup.Cardio, Equipment.Machine, false),
     ];
 
+    /// <summary>
+    /// Defaults adopted at lot 9 by the catalog CSV exercise of the same normalized name (preflight
+    /// 12.2a, map 6b). Such a default is never recreated while that EX code exists.
+    /// </summary>
+    private static readonly Dictionary<string, string> SupersededBy = new(StringComparer.Ordinal)
+    {
+        ["LG01"] = "EX001", ["LG02"] = "EX016", ["LG04"] = "EX029", ["LG05"] = "EX018",
+        ["LG06"] = "EX003", ["LG08"] = "EX004", ["LG09"] = "EX052", ["LG12"] = "EX010",
+        ["LG20"] = "EX124", ["LG26"] = "EX198", ["LG30"] = "EX140", ["LG31"] = "EX142",
+        ["LG32"] = "EX155", ["LG34"] = "EX154", ["LG35"] = "EX007", ["LG39"] = "EX164",
+        ["LG43"] = "EX235", ["LG45"] = "EX013",
+    };
+
+    private static string LegacyCode(int index) => $"LG{index + 1:D2}";
+
+    /// <summary>Exact default name → LG code, for the Lot12_2a_LegacyExerciseCodes patch.</summary>
+    internal static IReadOnlyDictionary<string, string> LegacyCodesByName() =>
+        DefaultExercises.Select((x, i) => (x.Name, Code: LegacyCode(i)))
+            .ToDictionary(x => x.Name, x => x.Code, StringComparer.Ordinal);
+
     public static async Task SeedAsync(IServiceProvider services)
     {
         var db     = services.GetRequiredService<MentoraDbContext>();
         var logger = services.GetRequiredService<ILogger<MentoraDbContext>>();
 
-        var existingNames = await db.Exercises
-            .Where(e => e.ExerciseCoachId == null)
-            .Select(e => e.ExerciseName)
-            .ToListAsync();
+        var sourceCodes = (await db.Exercises
+                .Where(e => e.ExerciseSourceCode != null)
+                .Select(e => e.ExerciseSourceCode!)
+                .ToListAsync())
+            .ToHashSet(StringComparer.Ordinal);
+        var mentoraNames = (await db.Exercises
+                .Where(e => e.ExerciseCoachId == null)
+                .Select(e => e.ExerciseName)
+                .ToListAsync())
+            .Select(SeedingText.FoldedKey)
+            .ToHashSet(StringComparer.Ordinal);
 
-        var existingSet = existingNames.ToHashSet();
-
-        var missing = DefaultExercises
-            .Where(x => !existingSet.Contains(x.Name))
-            .ToList();
-
-        if (missing.Count == 0)
-            return;
+        var groupsByName = new Dictionary<string, MuscleGroupItem>(StringComparer.OrdinalIgnoreCase);
+        foreach (var g in await db.MuscleGroups.ToListAsync())
+            groupsByName.TryAdd(g.MuscleGroupName.Trim(), g);
+        var noEquipment = (await db.EquipmentItems.ToListAsync()).FirstOrDefault(e =>
+            string.Equals(e.EquipmentName.Trim(), EquipmentItem.NoEquipmentName, StringComparison.OrdinalIgnoreCase));
 
         var now = DateTime.UtcNow;
+        int created = 0, existing = 0, superseded = 0, skipped = 0;
 
-        foreach (var item in missing)
+        for (var i = 0; i < DefaultExercises.Length; i++)
         {
+            var item = DefaultExercises[i];
+            var code = LegacyCode(i);
+
+            if (sourceCodes.Contains(code)) { existing++; continue; }
+            if (SupersededBy.TryGetValue(code, out var exCode) && sourceCodes.Contains(exCode)) { superseded++; continue; }
+
+            var folded = SeedingText.FoldedKey(item.Name);
+            if (mentoraNames.Contains(folded))
+            {
+                skipped++;
+                logger.LogWarning("ExerciseSeeder: {Code} '{Name}' skipped, name already used by a Mentora exercise.", code, item.Name);
+                continue;
+            }
+
+            var groupName = LegacyMuscleGroupMapping.GroupName(item.MuscleGroup);
             db.Exercises.Add(new Exercise
             {
-                ExerciseCoachId         = null,
-                ExerciseName            = item.Name,
-                ExerciseDescription     = item.Description,
-                ExerciseInstructions    = item.Instructions,
-                ExerciseMuscleGroup     = item.MuscleGroup,
-                ExerciseEquipment       = item.Equipment,
-                ExerciseIsPolyarticular = item.IsPolyarticular,
-                ExerciseIsActive        = true,
-                ExerciseCreatedDate     = now,
-                ExerciseUpdatedDate     = now,
+                ExerciseCoachId              = null,
+                ExerciseSourceCode           = code,
+                ExerciseName                 = item.Name,
+                ExerciseDescription          = item.Description,
+                ExerciseInstructions         = item.Instructions,
+                ExerciseMuscleGroup          = item.MuscleGroup,
+                ExerciseEquipment            = item.Equipment,
+                ExerciseIsPolyarticular      = item.IsPolyarticular,
+                ExercisePrimaryMuscleGroupId = groupName != null && groupsByName.TryGetValue(groupName, out var group) ? group.MuscleGroupId : null,
+                ExercisePrimaryEquipmentId   = item.Equipment == Equipment.Bodyweight ? noEquipment?.EquipmentId : null,
+                ExerciseIsActive             = true,
+                ExerciseCreatedDate          = now,
+                ExerciseUpdatedDate          = now,
             });
+            sourceCodes.Add(code);
+            mentoraNames.Add(folded);
+            created++;
         }
 
-        await db.SaveChangesAsync();
-        logger.LogInformation("ExerciseSeeder: seeded {Count} Mentora catalogue exercise(s).", missing.Count);
+        if (created > 0)
+            await db.SaveChangesAsync();
+
+        logger.LogInformation(
+            "ExerciseSeeder: created {Created}, existing {Existing}, superseded {Superseded}, skipped {Skipped}.",
+            created, existing, superseded, skipped);
     }
 }

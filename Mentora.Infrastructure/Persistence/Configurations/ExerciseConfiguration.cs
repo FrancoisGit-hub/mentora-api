@@ -111,6 +111,31 @@ public class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
         builder.Property(e => e.ExerciseCoachTip).HasColumnName("EXERCISE_COACH_TIP").HasColumnType("text");
         builder.Property(e => e.ExerciseSearchTags).HasColumnName("EXERCISE_SEARCH_TAGS").HasColumnType("text");
 
+        // Lot 12.2a — closed reference lists, Restrict like the other reference foreign keys.
+        builder.Property(e => e.ExerciseCategoryId).HasColumnName("EXERCISE_CATEGORY_ID");
+        builder.Property(e => e.ExerciseTypeId).HasColumnName("EXERCISE_TYPE_ID");
+        builder.Property(e => e.ExerciseLateralityId).HasColumnName("EXERCISE_LATERALITY_ID");
+        builder.Property(e => e.ExerciseMovementPatternId).HasColumnName("EXERCISE_MOVEMENT_PATTERN_ID");
+        builder.Property(e => e.ExerciseStartingPositionId).HasColumnName("EXERCISE_STARTING_POSITION_ID");
+        builder.Property(e => e.ExerciseGripTypeId).HasColumnName("EXERCISE_GRIP_TYPE_ID");
+
+        builder.HasIndex(e => e.ExerciseCategoryId).HasDatabaseName("IX_EXERCISES_CATEGORY");
+        builder.HasIndex(e => e.ExerciseTypeId).HasDatabaseName("IX_EXERCISES_TYPE");
+        builder.HasIndex(e => e.ExerciseLateralityId).HasDatabaseName("IX_EXERCISES_LATERALITY");
+        builder.HasIndex(e => e.ExerciseMovementPatternId).HasDatabaseName("IX_EXERCISES_MOVEMENT_PATTERN");
+        builder.HasIndex(e => e.ExerciseStartingPositionId).HasDatabaseName("IX_EXERCISES_STARTING_POSITION");
+        builder.HasIndex(e => e.ExerciseGripTypeId).HasDatabaseName("IX_EXERCISES_GRIP_TYPE");
+
+        builder.HasOne(e => e.CategoryItem).WithMany().HasForeignKey(e => e.ExerciseCategoryId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.TypeItem).WithMany().HasForeignKey(e => e.ExerciseTypeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.LateralityItem).WithMany().HasForeignKey(e => e.ExerciseLateralityId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.MovementPatternItem).WithMany().HasForeignKey(e => e.ExerciseMovementPatternId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.StartingPositionItem).WithMany().HasForeignKey(e => e.ExerciseStartingPositionId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.GripTypeItem).WithMany().HasForeignKey(e => e.ExerciseGripTypeId).OnDelete(DeleteBehavior.Restrict);
+
+        // UX_EXERCISES_MENTORA_NAME_CI (unique lower(btrim(name)) where COACH_ID is NULL) is raw SQL
+        // in the Lot12_2a migration: an expression index cannot be declared with HasIndex.
+
         builder.HasIndex(e => e.ExercisePrimaryMuscleGroupId).HasDatabaseName("IX_EXERCISES_PRIMARY_MUSCLE_GROUP");
         builder.HasIndex(e => e.ExercisePrimaryEquipmentId).HasDatabaseName("IX_EXERCISES_PRIMARY_EQUIPMENT");
         builder.HasIndex(e => e.ExerciseSecondaryEquipmentId).HasDatabaseName("IX_EXERCISES_SECONDARY_EQUIPMENT");

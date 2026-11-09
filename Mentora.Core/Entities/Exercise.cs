@@ -35,9 +35,26 @@ public class Exercise
     public string? ExerciseStartingPosition { get; set; }
     public string? ExerciseGripType { get; set; }
 
+    // Lot 12.2a — closed reference lists. When a foreign key is set, the matching text column
+    // above holds that row's label (display mirror still read by the member and coach endpoints).
+    public Guid? ExerciseCategoryId { get; set; }
+    public ExerciseCategoryItem? CategoryItem { get; set; }
+    public Guid? ExerciseTypeId { get; set; }
+    public ExerciseTypeItem? TypeItem { get; set; }
+    public Guid? ExerciseLateralityId { get; set; }
+    public ExerciseLateralityItem? LateralityItem { get; set; }
+    public Guid? ExerciseMovementPatternId { get; set; }
+    public MovementPatternItem? MovementPatternItem { get; set; }
+    public Guid? ExerciseStartingPositionId { get; set; }
+    public StartingPositionItem? StartingPositionItem { get; set; }
+    public Guid? ExerciseGripTypeId { get; set; }
+    public GripTypeItem? GripTypeItem { get; set; }
+
     public Guid? ExercisePrimaryMuscleGroupId { get; set; }
     public MuscleGroupItem? PrimaryMuscleGroup { get; set; }
+    /// <summary>Display mirror of <see cref="SecondaryMuscleGroups"/>: group names ordered by MUSCLE_GROUP_SORT_ORDER, NULL when none.</summary>
     public List<string>? ExerciseSecondaryMuscles { get; set; }
+    public List<ExerciseSecondaryMuscleGroup> SecondaryMuscleGroups { get; set; } = [];
 
     public Guid? ExercisePrimaryEquipmentId { get; set; }
     public EquipmentItem? PrimaryEquipment { get; set; }

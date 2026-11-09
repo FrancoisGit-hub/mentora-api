@@ -473,9 +473,13 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     await CoachParameterSeeder.SeedAsync(scope.ServiceProvider);
     await OfferProgramSeeder.SeedAsync(scope.ServiceProvider);
-    await ExerciseSeeder.SeedAsync(scope.ServiceProvider);
+    // Lot 12.2a order: reference lists, legacy codes, create-only catalog seeders, one-time normalization.
     await MuscleGroupSeeder.SeedAsync(scope.ServiceProvider);
+    await ExerciseReferenceSeeder.SeedAsync(scope.ServiceProvider);
+    await LegacyExerciseCodePatch.RunAsync(scope.ServiceProvider);
     await CatalogSeeder.SeedAsync(scope.ServiceProvider);
+    await ExerciseSeeder.SeedAsync(scope.ServiceProvider);
+    await ReferenceNormalizationPatch.RunAsync(scope.ServiceProvider);
     await ProgramTemplateSeeder.SeedAsync(scope.ServiceProvider);
     await QuizQuestionSeeder.SeedAsync(scope.ServiceProvider);
     await AdminUserSeeder.SeedAsync(scope.ServiceProvider); // Lot 12.1

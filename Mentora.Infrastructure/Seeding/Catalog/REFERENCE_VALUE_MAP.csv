@@ -1,0 +1,211 @@
+list,raw_value,code
+category,Musculation,MUSCULATION
+category,Gainage,GAINAGE
+category,Cardio,CARDIO
+category,Conditionnement,CONDITIONNEMENT
+type,Polyarticulaire,POLYARTICULAIRE
+type,Monoarticulaire,MONOARTICULAIRE
+type,Cardio,CARDIO
+type,Isolation,ISOLATION
+type,Isométrique,ISOMETRIQUE
+type,Dynamique,DYNAMIQUE
+type,Pliométrique,PLIOMETRIQUE
+type,Conditionnement,CONDITIONNEMENT
+type,Isométrique / dynamique,
+type,Bilatéral,
+laterality,Bilatéral,BILATERAL
+laterality,Unilatéral,UNILATERAL
+laterality,Alterné,ALTERNE
+laterality,Diagonal,DIAGONAL
+laterality,Allongé au sol,
+movement_pattern,Poussée horizontale,POUSSEE_HORIZONTALE
+movement_pattern,Tirage horizontal,TIRAGE_HORIZONTAL
+movement_pattern,Flexion de coude,FLEXION_COUDE
+movement_pattern,Extension de hanche,EXTENSION_HANCHE
+movement_pattern,Poussée verticale,POUSSEE_VERTICALE
+movement_pattern,Extension de coude,EXTENSION_COUDE
+movement_pattern,Tirage vertical,TIRAGE_VERTICAL
+movement_pattern,Anti-extension,ANTI_EXTENSION
+movement_pattern,Squat,SQUAT
+movement_pattern,Hinge,CHARNIERE_HANCHE
+movement_pattern,Flexion de genou,FLEXION_GENOU
+movement_pattern,Adduction horizontale,ADDUCTION
+movement_pattern,Abduction hanche,ABDUCTION
+movement_pattern,Flexion du tronc,FLEXION_TRONC
+movement_pattern,Abduction épaule,ABDUCTION
+movement_pattern,Anti-rotation,ANTI_ROTATION
+movement_pattern,Abduction horizontale,ABDUCTION
+movement_pattern,Flexion épaule,
+movement_pattern,Porté / locomotion,PORTE
+movement_pattern,Flexion plantaire,FLEXION_PLANTAIRE
+movement_pattern,Locomotion,LOCOMOTION
+movement_pattern,Poussée horizontale inclinée,POUSSEE_HORIZONTALE
+movement_pattern,Anti-inclinaison,ANTI_INCLINAISON
+movement_pattern,Poussée membres inférieurs,SQUAT
+movement_pattern,Extension de genou,EXTENSION_GENOU
+movement_pattern,Adduction horizontale inclinée,ADDUCTION
+movement_pattern,Flexion de hanche / bassin,
+movement_pattern,Saut cyclique,SAUT
+movement_pattern,Adduction hanche,ADDUCTION
+movement_pattern,Pédalage,LOCOMOTION
+movement_pattern,Poussée horizontale déclinée,POUSSEE_HORIZONTALE
+movement_pattern,Sprint,LOCOMOTION
+movement_pattern,Abduction / locomotion,ABDUCTION
+movement_pattern,Flexion du poignet,
+movement_pattern,Extension d'épaule,
+movement_pattern,Fente,FENTE
+movement_pattern,Élévation scapulaire,
+movement_pattern,Poussée diagonale,
+movement_pattern,Rotation externe épaule,ROTATION_EPAULE
+movement_pattern,Rotation interne épaule,ROTATION_EPAULE
+movement_pattern,Rotation contrôlée,
+movement_pattern,Locomotion quadrupède,LOCOMOTION
+movement_pattern,Poussée locomotrice,LOCOMOTION
+movement_pattern,Isométrique,
+movement_pattern,Gainage dynamique,
+movement_pattern,Anti-extension / anti-rotation,ANTI_EXTENSION
+movement_pattern,Rotation du tronc,
+movement_pattern,Anti-inclinaison + abduction,ANTI_INCLINAISON
+movement_pattern,Montée / descente cyclique,LOCOMOTION
+movement_pattern,Locomotion verticale,LOCOMOTION
+movement_pattern,Anti-extension + locomotion,ANTI_EXTENSION
+movement_pattern,Ondulation simultanée,
+movement_pattern,Ondulation alternée,
+movement_pattern,Montée cyclique,LOCOMOTION
+movement_pattern,Marche arrière résistée,LOCOMOTION
+movement_pattern,Tirage locomoteur,LOCOMOTION
+movement_pattern,Course avec changements de direction,LOCOMOTION
+movement_pattern,Mouvement cyclique,
+movement_pattern,Porté / anti-extension,PORTE
+movement_pattern,Inclinaison latérale,
+movement_pattern,Flexion + rotation,FLEXION_TRONC
+movement_pattern,Tirage vertical cyclique,TIRAGE_VERTICAL
+movement_pattern,Pédalage + poussée / tirage,LOCOMOTION
+movement_pattern,Porté / stabilité,PORTE
+movement_pattern,Pronation / supination,
+movement_pattern,Extension du poignet,
+movement_pattern,Rotation externe + poussée,ROTATION_EPAULE
+movement_pattern,Fente / locomotion,FENTE
+movement_pattern,Fente / squat unilatéral,FENTE
+movement_pattern,Suspension,
+movement_pattern,Élévation plan scapulaire,ABDUCTION
+movement_pattern,Tirage bras tendus,TIRAGE_VERTICAL
+movement_pattern,Tirage cyclique,TIRAGE_HORIZONTAL
+movement_pattern,Squat + poussée,SQUAT
+movement_pattern,Élévation diagonale,
+movement_pattern,Extension du tronc,
+movement_pattern,Extension de hanche et tronc,EXTENSION_HANCHE
+movement_pattern,Rotation externe / abduction hanche,ABDUCTION
+movement_pattern,Saut horizontal,SAUT
+movement_pattern,Saut vertical,SAUT
+movement_pattern,Flexion simultanée tronc et hanches,FLEXION_TRONC
+movement_pattern,Flexion de hanche,
+movement_pattern,Enroulement du bassin,FLEXION_TRONC
+movement_pattern,Squat + saut,SAUT
+movement_pattern,Descente contrôlée,
+movement_pattern,Montée / locomotion,LOCOMOTION
+movement_pattern,Fente latérale,FENTE
+movement_pattern,Dorsiflexion cheville,
+movement_pattern,Flexion de genou excentrique,FLEXION_GENOU
+movement_pattern,Extension de genou dominante,EXTENSION_GENOU
+starting_position,Debout,DEBOUT
+starting_position,Assis,ASSIS
+starting_position,Allongé au sol,ALLONGE_DOS
+starting_position,Allongé sur banc,ALLONGE_BANC
+starting_position,Position de planche,PLANCHE
+starting_position,Suspendu,SUSPENDU
+starting_position,Buste penché,BUSTE_PENCHE
+starting_position,Appui avant-bras,APPUI_AVANT_BRAS
+starting_position,À quatre pattes,QUATRE_PATTES
+starting_position,Allongé sur banc incliné,BANC_INCLINE
+starting_position,Allongé ventre sur banc,ALLONGE_VENTRE
+starting_position,Assis ou incliné,ASSIS
+starting_position,Dos sur banc,APPUI_BANC
+starting_position,À genoux,A_GENOUX
+starting_position,Allongé sur le côté,ALLONGE_COTE
+starting_position,Incliné,
+starting_position,Buste incliné,BUSTE_PENCHE
+starting_position,Allongé sur banc décliné,BANC_DECLINE
+starting_position,Demi-squat,DEBOUT
+starting_position,Assis ou allongé,ASSIS
+starting_position,Assis / dos appuyé,ASSIS
+starting_position,Assis ou danseuse,ASSIS
+starting_position,Appui bras tendus,PLANCHE
+starting_position,Appui mains et pieds,PLANCHE
+starting_position,À quatre appuis,QUATRE_PATTES
+starting_position,Appui mains,
+starting_position,Banc à 45 degrés,
+starting_position,Allongé ventre sur support,ALLONGE_VENTRE
+starting_position,Appui avant-bras et genou,APPUI_AVANT_BRAS
+starting_position,Poids du corps,
+starting_position,Allongé ventre,ALLONGE_VENTRE
+starting_position,Appui sur banc,APPUI_BANC
+starting_position,Pieds surélevés,PLANCHE
+starting_position,Incliné sous anneaux,
+starting_position,Suspendu sous barre,SUSPENDU
+starting_position,Au sol,
+starting_position,Couché sur banc,ALLONGE_BANC
+starting_position,Appui mains sur support,PLANCHE
+starting_position,Appui mains et genoux,QUATRE_PATTES
+starting_position,Machine,
+starting_position,Assis ou debout,
+starting_position,Debout sur support,DEBOUT
+starting_position,Pied arrière surélevé,DEBOUT
+starting_position,Allongé ventre au sol,ALLONGE_VENTRE
+starting_position,Banc à lombaires,
+starting_position,Machine assistée,
+starting_position,Assis sur banc incliné,BANC_INCLINE
+grip_type,Neutre,NEUTRE
+grip_type,Pronation,PRONATION
+grip_type,Neutre ou pronation,VARIABLE
+grip_type,Supination,SUPINATION
+grip_type,Pronée,PRONATION
+grip_type,Pronation ou neutre,VARIABLE
+grip_type,Variable,VARIABLE
+grip_type,Pronation serrée,PRONATION_SERREE
+grip_type,Débutant,
+grip_type,Pronation / rack avant,PRONATION
+grip_type,Supination ou prise semi-pronée,VARIABLE
+grip_type,Supinée,SUPINATION
+grip_type,Pronée ou neutre,VARIABLE
+grip_type,Pronée / mixte,MIXTE
+grip_type,Pronation large,PRONATION_LARGE
+secondary_muscle,Fessiers,Fessiers
+secondary_muscle,trapèzes,Dos
+secondary_muscle,ischio-jambiers,Ischio-jambiers
+secondary_muscle,deltoïde antérieur,Épaules
+secondary_muscle,Abdominaux,Abdominaux
+secondary_muscle,Biceps,Bras
+secondary_muscle,centre du corps,Centre du corps
+secondary_muscle,Triceps brachial,Bras
+secondary_muscle,épaules,Épaules
+secondary_muscle,avant-bras,Avant-bras
+secondary_muscle,Triceps,Bras
+secondary_muscle,Mollets,Mollets
+secondary_muscle,Quadriceps,Quadriceps
+secondary_muscle,deltoïde postérieur,Épaules
+secondary_muscle,pectoraux,Pectoraux
+secondary_muscle,Moyen fessier,Fessiers
+secondary_muscle,grand rond,Dos
+secondary_muscle,Fléchisseurs de hanche,Hanche
+secondary_muscle,érecteurs du rachis,Dos
+secondary_muscle,petit fessier,Fessiers
+secondary_muscle,rhomboïdes,Dos
+secondary_muscle,jambes,
+secondary_muscle,Obliques,Abdominaux
+secondary_muscle,adducteurs,Adducteurs
+secondary_muscle,bras,Bras
+secondary_muscle,Transverse,Centre du corps
+secondary_muscle,carré des lombes,Centre du corps
+secondary_muscle,grand dorsal,Dos
+secondary_muscle,brachio-radial,Avant-bras
+secondary_muscle,coiffe des rotateurs,Épaules
+secondary_muscle,Dorsaux,Dos
+secondary_muscle,Brachial,Bras
+secondary_muscle,Abdominaux profonds,Centre du corps
+secondary_muscle,Dos,Dos
+secondary_muscle,hanches,Hanche
+secondary_muscle,extenseurs avant-bras,Avant-bras
+secondary_muscle,Supra-épineux,Épaules
+secondary_muscle,Trapèzes inférieurs,Dos
+secondary_muscle,Abducteurs hanche,Hanche

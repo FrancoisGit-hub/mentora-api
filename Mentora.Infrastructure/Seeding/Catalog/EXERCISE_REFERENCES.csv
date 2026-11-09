@@ -1,0 +1,63 @@
+list,code,label,sort_order
+category,MUSCULATION,Musculation,1
+category,GAINAGE,Gainage,2
+category,CARDIO,Cardio,3
+category,CONDITIONNEMENT,Conditionnement,4
+type,POLYARTICULAIRE,Polyarticulaire,1
+type,MONOARTICULAIRE,Monoarticulaire,2
+type,ISOLATION,Isolation,3
+type,ISOMETRIQUE,Isométrique,4
+type,DYNAMIQUE,Dynamique,5
+type,PLIOMETRIQUE,Pliométrique,6
+type,CARDIO,Cardio,7
+type,CONDITIONNEMENT,Conditionnement,8
+laterality,BILATERAL,Bilatéral,1
+laterality,UNILATERAL,Unilatéral,2
+laterality,ALTERNE,Alterné,3
+laterality,DIAGONAL,Diagonal,4
+movement_pattern,POUSSEE_HORIZONTALE,Poussée horizontale,1
+movement_pattern,POUSSEE_VERTICALE,Poussée verticale,2
+movement_pattern,TIRAGE_HORIZONTAL,Tirage horizontal,3
+movement_pattern,TIRAGE_VERTICAL,Tirage vertical,4
+movement_pattern,SQUAT,Squat,5
+movement_pattern,CHARNIERE_HANCHE,Charnière de hanche,6
+movement_pattern,FENTE,Fente,7
+movement_pattern,EXTENSION_HANCHE,Extension de hanche,8
+movement_pattern,FLEXION_GENOU,Flexion du genou,9
+movement_pattern,EXTENSION_GENOU,Extension du genou,10
+movement_pattern,FLEXION_COUDE,Flexion du coude,11
+movement_pattern,EXTENSION_COUDE,Extension du coude,12
+movement_pattern,ABDUCTION,Abduction,13
+movement_pattern,ADDUCTION,Adduction,14
+movement_pattern,ROTATION_EPAULE,Rotation d’épaule,15
+movement_pattern,FLEXION_TRONC,Flexion du tronc,16
+movement_pattern,ANTI_EXTENSION,Anti-extension,17
+movement_pattern,ANTI_ROTATION,Anti-rotation,18
+movement_pattern,ANTI_INCLINAISON,Anti-inclinaison,19
+movement_pattern,FLEXION_PLANTAIRE,Flexion plantaire,20
+movement_pattern,LOCOMOTION,Locomotion,21
+movement_pattern,PORTE,Porté,22
+movement_pattern,SAUT,Saut,23
+starting_position,DEBOUT,Debout,1
+starting_position,ASSIS,Assis,2
+starting_position,ALLONGE_DOS,Allongé sur le dos,3
+starting_position,ALLONGE_VENTRE,Allongé sur le ventre,4
+starting_position,ALLONGE_COTE,Allongé sur le côté,5
+starting_position,ALLONGE_BANC,Allongé sur banc,6
+starting_position,BANC_INCLINE,Banc incliné,7
+starting_position,BANC_DECLINE,Banc décliné,8
+starting_position,BUSTE_PENCHE,Buste penché,9
+starting_position,PLANCHE,Position de planche,10
+starting_position,APPUI_AVANT_BRAS,Appui sur les avant-bras,11
+starting_position,APPUI_BANC,Appui sur banc,12
+starting_position,QUATRE_PATTES,À quatre pattes,13
+starting_position,A_GENOUX,À genoux,14
+starting_position,SUSPENDU,Suspendu,15
+grip_type,SANS_OBJET,Sans objet,1
+grip_type,NEUTRE,Neutre,2
+grip_type,PRONATION,Pronation,3
+grip_type,SUPINATION,Supination,4
+grip_type,PRONATION_LARGE,Pronation large,5
+grip_type,PRONATION_SERREE,Pronation serrée,6
+grip_type,MIXTE,Mixte,7
+grip_type,VARIABLE,Variable,8

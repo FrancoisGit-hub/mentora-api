@@ -24,6 +24,9 @@
     <EmbeddedResource Include="Seeding\Catalog\MATERIELS.csv" LogicalName="Mentora.Catalog.MATERIELS.csv" />
     <EmbeddedResource Include="Seeding\Catalog\MUSCLES.csv" LogicalName="Mentora.Catalog.MUSCLES.csv" />
     <EmbeddedResource Include="Seeding\Catalog\EXERCICES_MUSCLES.csv" LogicalName="Mentora.Catalog.EXERCICES_MUSCLES.csv" />
+    <!-- Lot 12.2a: closed reference lists and the one-time free-text normalization map. -->
+    <EmbeddedResource Include="Seeding\Catalog\EXERCISE_REFERENCES.csv" LogicalName="Mentora.Catalog.EXERCISE_REFERENCES.csv" />
+    <EmbeddedResource Include="Seeding\Catalog\REFERENCE_VALUE_MAP.csv" LogicalName="Mentora.Catalog.REFERENCE_VALUE_MAP.csv" />
   </ItemGroup>
 
   <!-- Quiz question sheet export read by QuizQuestionSeeder. -->

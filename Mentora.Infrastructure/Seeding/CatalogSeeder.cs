@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Mentora.Core.Entities;
@@ -16,10 +15,12 @@ namespace Mentora.Infrastructure.Seeding;
 /// Imports the exercise catalog from the four CSV exports of the programming sheet
 /// (embedded resources, see Mentora.Infrastructure.csproj). Runs right after MuscleGroupSeeder.
 ///
-/// Idempotent row by row: equipment by source code, objectives by name, exercises by source
-/// code. A non-NULL value is never overwritten; rows already imported only get their NULL
-/// columns filled (and missing objective links added). A historical Mentora exercise with the
-/// same normalized name is adopted: it receives the source code and only its NULL columns are filled.
+/// Create-only, row by row: equipment by source code, objectives by name, exercises by source
+/// code. Lot 12.2a: an existing exercise is never written (no NULL fill, no adoption by name, no
+/// objective link added later), so an admin edit is never overwritten nor recreated. An active CSV
+/// row is created, with its objective links, only when no exercise has its EX code; if its name is
+/// already used by a Mentora exercise (accent- and case-insensitive) it is skipped with a warning.
+/// The database is the source of truth of the catalog; the CSV only seeds missing rows.
 ///
 /// Product rule: an exercise with no equipment is "Sans matériel" (see EquipmentItem.NoEquipmentName).
 /// The row is get-or-created before the MATERIELS step; equipment named by exercises but absent
@@ -433,19 +434,18 @@ public static class CatalogSeeder
         EquipmentItem noEquipment,
         DateTime now)
     {
-        var mentora = await db.Exercises
-            .Where(e => e.ExerciseCoachId == null)
-            .Include(e => e.ExerciseObjectives)
-            .ToListAsync();
-
-        var bySource = mentora.Where(e => e.ExerciseSourceCode != null)
-            .ToDictionary(e => e.ExerciseSourceCode!, StringComparer.Ordinal);
-        var adoptable = mentora.Where(e => e.ExerciseSourceCode == null)
-            .GroupBy(e => NormalizeName(e.ExerciseName))
-            .ToDictionary(g => g.Key, g => g.ToList());
-        var importedNames = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var e in mentora.Where(e => e.ExerciseSourceCode != null))
-            importedNames.TryAdd(NormalizeName(e.ExerciseName), e.ExerciseSourceCode!);
+        // Read-only snapshot: existing exercises are never tracked nor written by this seeder.
+        var sourceCodes = (await db.Exercises
+                .Where(e => e.ExerciseSourceCode != null)
+                .Select(e => e.ExerciseSourceCode!)
+                .ToListAsync())
+            .ToHashSet(StringComparer.Ordinal);
+        var mentoraNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var e in await db.Exercises
+                     .Where(e => e.ExerciseCoachId == null)
+                     .Select(e => new { e.ExerciseName, e.ExerciseSourceCode })
+                     .ToListAsync())
+            mentoraNames.TryAdd(SeedingText.FoldedKey(e.ExerciseName), e.ExerciseSourceCode ?? e.ExerciseName);
 
         var equipmentExact = new Dictionary<string, EquipmentItem>(StringComparer.Ordinal);
         foreach (var e in equipment)
@@ -455,7 +455,7 @@ public static class CatalogSeeder
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.Ordinal);
 
         var duplicateNames = eligible
-            .GroupBy(r => NormalizeName(Clean(r["nom_exercice_fr"]) ?? ""))
+            .GroupBy(r => SeedingText.NormalizeName(Clean(r["nom_exercice_fr"]) ?? ""))
             .Where(g => g.Key != "" && g.Count() > 1)
             .ToDictionary(g => g.Key, g => g.Select(r => Clean(r["exercise_id"])!).ToList());
 
@@ -465,7 +465,7 @@ public static class CatalogSeeder
         var pluralMatches = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
         var ambiguousEquipment = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
         var unknownLevels = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
-        int created = 0, adopted = 0, alreadyImported = 0, skipped = 0, linksAdded = 0, filled = 0, historicalLinked = 0;
+        int created = 0, alreadyPresent = 0, skipped = 0, linksAdded = 0;
 
         foreach (var row in activeExercises.Where(r => Clean(r["exercise_id"]) is null))
         {
@@ -485,21 +485,8 @@ public static class CatalogSeeder
             var id   = Clean(row["exercise_id"])!;
             var name = Clean(row["nom_exercice_fr"]);
 
-            if (bySource.TryGetValue(id, out var imported))
-            {
-                // Fill-only-NULL: same treatment as an adopted exercise, nothing is ever overwritten.
-                alreadyImported++;
-                var importedChanged = FillNulls(imported, row, groups[id], ResolvePrimary(Clean(row["materiel_principal"]), id),
-                    ResolveSecondary(Clean(row["materiel_secondaire"]), id), MapLevel(Clean(row["niveau_minimum"]), id));
-                var importedLinks = AddObjectiveLinks(imported, row);
-                linksAdded += importedLinks;
-                if (importedChanged || importedLinks > 0)
-                {
-                    imported.ExerciseUpdatedDate = now;
-                    filled++;
-                }
-                continue;
-            }
+            // Create-only: an exercise holding this source code (Mentora or not, active or not) is never touched.
+            if (sourceCodes.Contains(id)) { alreadyPresent++; continue; }
 
             if (name is null)
             {
@@ -507,7 +494,7 @@ public static class CatalogSeeder
                 warnings.Add($"exercise {id}: empty nom_exercice_fr, skipped");
                 continue;
             }
-            var normalized = NormalizeName(name);
+            var normalized = SeedingText.NormalizeName(name);
             if (duplicateNames.ContainsKey(normalized)) { skipped++; continue; }
 
             var tooLong = new List<string>();
@@ -527,21 +514,11 @@ public static class CatalogSeeder
                 continue;
             }
 
-            Exercise? target = null;
-            if (adoptable.TryGetValue(normalized, out var candidates))
-            {
-                if (candidates.Count > 1)
-                {
-                    skipped++;
-                    warnings.Add($"exercise {id} '{name}': {candidates.Count} Mentora exercises share this normalized name, skipped");
-                    continue;
-                }
-                target = candidates[0];
-            }
-            else if (importedNames.TryGetValue(normalized, out var otherCode))
+            var folded = SeedingText.FoldedKey(name);
+            if (mentoraNames.TryGetValue(folded, out var owner))
             {
                 skipped++;
-                warnings.Add($"exercise {id} '{name}': name already used by imported exercise {otherCode}, skipped");
+                warnings.Add($"exercise {id} '{name}': name already used by Mentora exercise {owner}, skipped");
                 continue;
             }
 
@@ -553,86 +530,45 @@ public static class CatalogSeeder
             var category   = Clean(row["categorie"]);
             var type       = Clean(row["type_exercice"]);
 
-            if (target != null)
+            // Free-text reference values are stored raw; the Lot12_2a_ReferenceNormalization patch
+            // (run after the seeders) links them to the reference tables on the first startup.
+            var target = new Exercise
             {
-                // Adoption: source code + NULL columns only. Legacy columns and IS_ACTIVE are never touched.
-                target.ExerciseSourceCode = id;
-                FillNulls(target, row, resolution, primary, secondary, level);
-                target.ExerciseUpdatedDate = now;
-                adoptable.Remove(normalized);
-                adopted++;
-            }
-            else
-            {
-                target = new Exercise
-                {
-                    ExerciseCoachId              = null,
-                    ExerciseSourceCode           = id,
-                    ExerciseName                 = name,
-                    ExerciseNameEn               = Clean(row["nom_exercice_en"]),
-                    ExerciseCategory             = category,
-                    ExercisePrimaryMuscleGroupId = resolution.Group?.MuscleGroupId,
-                    ExerciseSecondaryMuscles     = SplitList(row["muscles_secondaires"]),
-                    ExerciseMovementPattern      = Clean(row["pattern_mouvement"]),
-                    ExerciseType                 = type,
-                    ExerciseLaterality           = Clean(row["lateralite"]),
-                    ExerciseStartingPosition     = Clean(row["position_depart"]),
-                    ExerciseGripType             = Clean(row["type_prise"]),
-                    ExercisePrimaryEquipmentId   = primary?.EquipmentId,
-                    ExerciseSecondaryEquipmentId = secondary?.EquipmentId,
-                    ExerciseMinLevel             = level,
-                    ExerciseDescription          = Clean(row["consigne_courte"]),
-                    ExerciseInstructions         = Clean(row["execution_detaillee"]),
-                    ExerciseBreathing            = Clean(row["respiration"]),
-                    ExerciseCommonMistakes       = SplitList(row["erreurs_frequentes"]),
-                    ExercisePrecautions          = Clean(row["precautions"]),
-                    ExerciseSearchTags           = Clean(row["tags_recherche"]),
-                    ExerciseCoachTip             = null,
-                    ExerciseMuscleGroup          = LegacyMuscleGroup(category, resolution),
-                    ExerciseEquipment            = LegacyEquipment(primary, primaryRaw),
-                    ExerciseIsPolyarticular      = string.Equals(type, "Polyarticulaire", StringComparison.OrdinalIgnoreCase),
-                    ExerciseIsActive             = true,
-                    ExerciseCreatedDate          = now,
-                    ExerciseUpdatedDate          = now,
-                };
-                db.Exercises.Add(target);
-                created++;
-            }
-
-            bySource[id] = target;
-            importedNames[normalized] = id;
-
+                ExerciseCoachId              = null,
+                ExerciseSourceCode           = id,
+                ExerciseName                 = name,
+                ExerciseNameEn               = Clean(row["nom_exercice_en"]),
+                ExerciseCategory             = category,
+                ExercisePrimaryMuscleGroupId = resolution.Group?.MuscleGroupId,
+                ExerciseSecondaryMuscles     = SplitList(row["muscles_secondaires"]),
+                ExerciseMovementPattern      = Clean(row["pattern_mouvement"]),
+                ExerciseType                 = type,
+                ExerciseLaterality           = Clean(row["lateralite"]),
+                ExerciseStartingPosition     = Clean(row["position_depart"]),
+                ExerciseGripType             = Clean(row["type_prise"]),
+                ExercisePrimaryEquipmentId   = primary?.EquipmentId,
+                ExerciseSecondaryEquipmentId = secondary?.EquipmentId,
+                ExerciseMinLevel             = level,
+                ExerciseDescription          = Clean(row["consigne_courte"]),
+                ExerciseInstructions         = Clean(row["execution_detaillee"]),
+                ExerciseBreathing            = Clean(row["respiration"]),
+                ExerciseCommonMistakes       = SplitList(row["erreurs_frequentes"]),
+                ExercisePrecautions          = Clean(row["precautions"]),
+                ExerciseSearchTags           = Clean(row["tags_recherche"]),
+                ExerciseCoachTip             = null,
+                ExerciseMuscleGroup          = LegacyMuscleGroup(category, resolution),
+                ExerciseEquipment            = LegacyEquipment(primary, primaryRaw),
+                ExerciseIsPolyarticular      = string.Equals(type, "Polyarticulaire", StringComparison.OrdinalIgnoreCase),
+                ExerciseIsActive             = true,
+                ExerciseCreatedDate          = now,
+                ExerciseUpdatedDate          = now,
+            };
+            db.Exercises.Add(target);
+            created++;
             linksAdded += AddObjectiveLinks(target, row);
-        }
 
-        // Historical Mentora exercises outside the sheet: a legacy BODYWEIGHT exercise without
-        // primary equipment needs no equipment. Coach-owned rows are not in `mentora`.
-        foreach (var historical in mentora.Where(e => e.ExerciseSourceCode == null
-                                                      && e.ExercisePrimaryEquipmentId == null
-                                                      && e.ExerciseEquipment == Equipment.Bodyweight))
-        {
-            historical.ExercisePrimaryEquipmentId = noEquipment.EquipmentId;
-            historical.ExerciseUpdatedDate        = now;
-            historicalLinked++;
-        }
-
-        // Rule 7.6: a historical Mentora exercise with no primary group gets it from its legacy
-        // muscle group code. FULL_BODY and CARDIO have no matching group and stay NULL.
-        var groupsByName = new Dictionary<string, MuscleGroupItem>(StringComparer.OrdinalIgnoreCase);
-        foreach (var g in await db.MuscleGroups.ToListAsync())
-            groupsByName.TryAdd(g.MuscleGroupName.Trim(), g);
-
-        var historicalGroups = 0;
-        foreach (var historical in mentora.Where(e => e.ExerciseSourceCode == null
-                                                      && e.ExercisePrimaryMuscleGroupId == null))
-        {
-            var groupName = HistoricalGroupName(historical.ExerciseMuscleGroup);
-            if (groupName is null || !groupsByName.TryGetValue(groupName, out var legacyGroup))
-                continue;
-
-            historical.ExercisePrimaryMuscleGroupId = legacyGroup.MuscleGroupId;
-            historical.ExerciseUpdatedDate          = now;
-            historicalGroups++;
+            sourceCodes.Add(id);
+            mentoraNames[folded] = id;
         }
 
         foreach (var (value, ids) in unmatchedEquipment)
@@ -645,14 +581,12 @@ public static class CatalogSeeder
             .Select(p => $"plural-only equipment match {p.Key} x{p.Value.Count}: {string.Join(", ", p.Value)}")
             .ToList();
 
-        if (created > 0 || adopted > 0 || filled > 0 || historicalLinked > 0 || historicalGroups > 0)
+        if (created > 0)
             await db.SaveChangesAsync();
 
-        logger.LogInformation("CatalogSeeder historical groups filled: {Count}.", historicalGroups);
-
         logger.LogInformation(
-            "CatalogSeeder exercises: created {Created}, adopted {Adopted}, already imported {AlreadyImported}, filled {Filled}, historical no-equipment {Historical}, skipped {Skipped}, objective links added {Links}, plural-only equipment matches {Plural}, warnings {Warnings}.",
-            created, adopted, alreadyImported, filled, historicalLinked, skipped, linksAdded, pluralLines.Count, warnings.Count);
+            "CatalogSeeder exercises: created {Created}, already present {AlreadyPresent}, skipped {Skipped}, objective links created {Links}, plural-only equipment matches {Plural}, warnings {Warnings}.",
+            created, alreadyPresent, skipped, linksAdded, pluralLines.Count, warnings.Count);
         LogWarnings(logger, warnings);
         LogWarnings(logger, pluralLines);
 
@@ -664,6 +598,7 @@ public static class CatalogSeeder
         EquipmentItem? ResolveSecondary(string? raw, string exerciseId) =>
             IsNoEquipment(raw) ? null : MatchEquipment(raw, exerciseId, "secondary");
 
+        // Objective links of a newly created exercise only (never added to an existing one).
         int AddObjectiveLinks(Exercise target, Dictionary<string, string> row)
         {
             var added = 0;
@@ -677,42 +612,6 @@ public static class CatalogSeeder
                 added++;
             }
             return added;
-        }
-
-        // Fills NULL columns only, returns whether at least one value was written.
-        // Legacy columns, IS_ACTIVE and every non-NULL value are never touched.
-        bool FillNulls(Exercise target, Dictionary<string, string> row, GroupResolution resolution,
-            EquipmentItem? primary, EquipmentItem? secondary, ExerciseLevel? level)
-        {
-            var changed = false;
-            void Fill<T>(T? current, T? candidate, Action<T> assign) where T : class
-            {
-                if (current is null && candidate is not null) { assign(candidate); changed = true; }
-            }
-            void FillValue<T>(T? current, T? candidate, Action<T> assign) where T : struct
-            {
-                if (current is null && candidate is not null) { assign(candidate.Value); changed = true; }
-            }
-
-            Fill(target.ExerciseNameEn, Clean(row["nom_exercice_en"]), v => target.ExerciseNameEn = v);
-            Fill(target.ExerciseCategory, Clean(row["categorie"]), v => target.ExerciseCategory = v);
-            FillValue(target.ExercisePrimaryMuscleGroupId, resolution.Group?.MuscleGroupId, v => target.ExercisePrimaryMuscleGroupId = v);
-            Fill(target.ExerciseSecondaryMuscles, SplitList(row["muscles_secondaires"]), v => target.ExerciseSecondaryMuscles = v);
-            Fill(target.ExerciseMovementPattern, Clean(row["pattern_mouvement"]), v => target.ExerciseMovementPattern = v);
-            Fill(target.ExerciseType, Clean(row["type_exercice"]), v => target.ExerciseType = v);
-            Fill(target.ExerciseLaterality, Clean(row["lateralite"]), v => target.ExerciseLaterality = v);
-            Fill(target.ExerciseStartingPosition, Clean(row["position_depart"]), v => target.ExerciseStartingPosition = v);
-            Fill(target.ExerciseGripType, Clean(row["type_prise"]), v => target.ExerciseGripType = v);
-            FillValue(target.ExercisePrimaryEquipmentId, primary?.EquipmentId, v => target.ExercisePrimaryEquipmentId = v);
-            FillValue(target.ExerciseSecondaryEquipmentId, secondary?.EquipmentId, v => target.ExerciseSecondaryEquipmentId = v);
-            FillValue(target.ExerciseMinLevel, level, v => target.ExerciseMinLevel = v);
-            Fill(target.ExerciseDescription, Clean(row["consigne_courte"]), v => target.ExerciseDescription = v);
-            Fill(target.ExerciseInstructions, Clean(row["execution_detaillee"]), v => target.ExerciseInstructions = v);
-            Fill(target.ExerciseBreathing, Clean(row["respiration"]), v => target.ExerciseBreathing = v);
-            Fill(target.ExerciseCommonMistakes, SplitList(row["erreurs_frequentes"]), v => target.ExerciseCommonMistakes = v);
-            Fill(target.ExercisePrecautions, Clean(row["precautions"]), v => target.ExercisePrecautions = v);
-            Fill(target.ExerciseSearchTags, Clean(row["tags_recherche"]), v => target.ExerciseSearchTags = v);
-            return changed;
         }
 
         EquipmentItem? MatchEquipment(string? raw, string exerciseId, string slot)
@@ -762,23 +661,6 @@ public static class CatalogSeeder
         }
         return MuscleGroup.FullBody;
     }
-
-    // Legacy code -> MUSCLE_GROUPS name (rule 7.6). FULL_BODY and CARDIO map to nothing.
-    private static string? HistoricalGroupName(MuscleGroup legacy) => legacy switch
-    {
-        MuscleGroup.Chest      => "Pectoraux",
-        MuscleGroup.Back       => "Dos",
-        MuscleGroup.Shoulders  => "Épaules",
-        MuscleGroup.Biceps     => "Bras",
-        MuscleGroup.Triceps    => "Bras",
-        MuscleGroup.Forearms   => "Avant-bras",
-        MuscleGroup.Abs        => "Abdominaux",
-        MuscleGroup.Quadriceps => "Quadriceps",
-        MuscleGroup.Hamstrings => "Ischio-jambiers",
-        MuscleGroup.Glutes     => "Fessiers",
-        MuscleGroup.Calves     => "Mollets",
-        _                      => null,
-    };
 
     private static Equipment LegacyEquipment(EquipmentItem? primary, string? primaryRaw)
     {
@@ -835,7 +717,8 @@ public static class CatalogSeeder
 
     // ── CSV and text helpers ────────────────────────────────────────────────────
 
-    private static List<Dictionary<string, string>> ReadCsv(string fileName, string[] requiredHeaders)
+    /// <summary>Strict reader of an embedded catalog CSV (also used by the Lot 12.2a reference seeder and patch).</summary>
+    internal static List<Dictionary<string, string>> ReadCsv(string fileName, string[] requiredHeaders)
     {
         var resourceName = ResourcePrefix + fileName;
         using var stream = typeof(CatalogSeeder).Assembly.GetManifestResourceStream(resourceName)
@@ -870,7 +753,7 @@ public static class CatalogSeeder
         string.Equals(value.Trim(), "Oui", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Trimmed, NFC-normalized value; NULL for empty and "-".</summary>
-    private static string? Clean(string? value)
+    internal static string? Clean(string? value)
     {
         if (value is null) return null;
         var trimmed = value.Normalize(NormalizationForm.FormC).Trim();
@@ -888,12 +771,9 @@ public static class CatalogSeeder
         return items.Count == 0 ? null : items;
     }
 
-    private static string NormalizeName(string value) =>
-        Regex.Replace(value.Normalize(NormalizationForm.FormC).Trim().ToLowerInvariant(), @"\s+", " ");
-
     /// <summary>Lowercased, trimmed, one trailing "s" removed from each word ("Haltères" == "Haltère").</summary>
     private static string PluralKey(string value) =>
-        string.Join(' ', NormalizeName(value).Split(' ').Select(w => w.Length > 1 && w.EndsWith('s') ? w[..^1] : w));
+        string.Join(' ', SeedingText.NormalizeName(value).Split(' ').Select(w => w.Length > 1 && w.EndsWith('s') ? w[..^1] : w));
 
     private static void CheckLength(List<string> tooLong, string column, string? value, int max)
     {

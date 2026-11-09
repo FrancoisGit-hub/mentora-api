@@ -48,9 +48,19 @@ public static class ProgramTemplateSeeder
         if (missing.Count == 0)
             return;
 
-        var exerciseIdByName = await db.Exercises
-            .Where(e => e.ExerciseCoachId == null)
-            .ToDictionaryAsync(e => e.ExerciseName, e => e.ExerciseId);
+        // Lot 12.2a: names are resolved by normalized key (lower, trim, whitespace collapse) so that a
+        // case or spacing difference does not hide an exercise; a duplicate key keeps the first row.
+        var exerciseIdByName = new Dictionary<string, Guid>(NormalizedNameComparer.Instance);
+        foreach (var e in await db.Exercises
+                     .Where(e => e.ExerciseCoachId == null)
+                     .OrderBy(e => e.ExerciseCreatedDate).ThenBy(e => e.ExerciseId)
+                     .Select(e => new { e.ExerciseName, e.ExerciseId })
+                     .ToListAsync())
+        {
+            if (!exerciseIdByName.TryAdd(e.ExerciseName, e.ExerciseId))
+                logger.LogWarning(
+                    "ProgramTemplateSeeder: duplicate normalized exercise name '{Name}', first row kept.", e.ExerciseName);
+        }
 
         var now = DateTime.UtcNow;
         var added = 0;
