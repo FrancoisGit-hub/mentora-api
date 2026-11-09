@@ -1,0 +1,87 @@
+# Lot 12.5b. Static hosting of the Blazor WebAssembly admin on admin.mentorapp.fr.
+# ".example" on purpose: the running nginx never loads this file by accident before the
+# certificate exists. Once the certificate is issued (12.5a runbook, step 6, both names),
+# copy it as mentora-admin.conf (see docs/review/lot12/12.5a/prod-runbook.md, section
+# "Admin (12.5b)"), then nginx -t and reload.
+#
+# The certificate is the one issued with --cert-name api.mentorapp.fr for both names, so
+# its files live under /etc/letsencrypt/live/api.mentorapp.fr/.
+#
+# Security headers are declared ONCE at server level (no add_header inside a location,
+# because a location that declares its own add_header drops the ones of the server level).
+# Keep it that way: do not add add_header inside a location below.
+#
+# CSP and the inline script of index.html:
+# the CSP allows exactly one inline script (the theme bootstrap of wwwroot/index.html)
+# through its sha256. Whenever that inline script changes, recompute the hash on the PC
+# from the PUBLISHED index.html and replace the sha256 value in the CSP below:
+#
+#   $h=[IO.File]::ReadAllText("$PWD/docs/review/lot12/12.5b/publish/wwwroot/index.html"); $m=[regex]::Matches($h,'<script>(.*?)</script>','Singleline'); foreach($x in $m){ 'sha256-'+[Convert]::ToBase64String([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($x.Groups[1].Value))) }
+#
+# One line of output per inline script (today: exactly one). If a second inline script
+# appears, add its hash too. No inline style attribute is used by the admin, so style-src
+# has no 'unsafe-inline'. MUX (12.3): its upload host will be added to connect-src then.
+
+# ---------------------------------------------------------------------------
+# HTTP server: ACME challenge (renewals) and redirect to HTTPS.
+# ---------------------------------------------------------------------------
+server {
+    listen 80;
+    server_name admin.mentorapp.fr;
+
+    # Let's Encrypt ACME challenge, served over HTTP for renewals.
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type "text/plain";
+    }
+
+    # Everything else: 301 redirect to HTTPS.
+    location / {
+        return 301 https://admin.mentorapp.fr$request_uri;
+    }
+}
+
+# ---------------------------------------------------------------------------
+# HTTPS server: static files of the admin.
+# ---------------------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name admin.mentorapp.fr;
+
+    # Let's Encrypt certificate paths (mounted from host via docker-compose).
+    ssl_certificate     /etc/letsencrypt/live/api.mentorapp.fr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.mentorapp.fr/privkey.pem;
+
+    # Modern TLS profile (Mozilla intermediate, 2024+).
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
+    root /var/www/mentora-admin;
+    index index.html;
+
+    # The publish ships precompressed .gz files: serve them as is.
+    gzip_static on;
+    # Fallback for files without a precompressed copy.
+    gzip on;
+    gzip_types text/css application/javascript application/json application/wasm;
+
+    # Files revalidate with their ETag on every request (4 users, simplicity wins).
+    add_header Cache-Control "no-cache" always;
+
+    # Security headers, on every response.
+    add_header Strict-Transport-Security "max-age=15768000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-oW+3IccTLsL4xJ3s2rKPxyyczlz2dfeyKhTyG6r3Zkc='; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.mentorapp.fr; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+
+    # Single page application: unknown paths fall back to index.html.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
