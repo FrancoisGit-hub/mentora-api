@@ -1,0 +1,14 @@
+@page "/"
+@inject AdminSession Session
+@inject NavigationManager Nav
+
+<PageTitle>Mentora Admin</PageTitle>
+<div class="boot" role="status">Chargement…</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Session.InitializeAsync();
+        Nav.NavigateTo(Session.IsAuthenticated ? "exercices" : "connexion", replace: true);
+    }
+}

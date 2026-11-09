@@ -485,6 +485,8 @@ $RECYCLE.BIN/
 
 # Mentora — secrets & config locale
 **/appsettings.Development.json
+# Admin front: public, no secret (ApiBaseUrl and EnvironmentLabel only)
+!Mentora.Admin/wwwroot/appsettings.Development.json
 **/appsettings.Local.json
 
 # Docker local overrides

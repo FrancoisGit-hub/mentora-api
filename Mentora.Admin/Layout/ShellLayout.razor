@@ -1,0 +1,139 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject AdminSession Session
+@inject NavigationManager Nav
+@inject AppConfig Config
+
+@if (!_ready || !Session.IsAuthenticated)
+{
+    <div class="boot" role="status">Chargement…</div>
+}
+else
+{
+    <div class="app">
+        <aside class="side">
+            <div class="brand">
+                <img src="img/logo-mentora.png" alt="Mentora" class="brand-logo" />
+                <div class="brand-text">
+                    <strong>Mentora</strong>
+                    <span>Admin interne</span>
+                </div>
+            </div>
+
+            <nav aria-label="Menu principal" class="sidenav">
+                @foreach (var item in MenuItems)
+                {
+                    if (item.Active)
+                    {
+                        <button type="button" class="nav nav-active" aria-current="page" @onclick="GoToExercises">
+                            <span class="nav-label">@item.Label</span>
+                            <span class="count">@item.Step</span>
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="nav" disabled title="Bientôt disponible">
+                            <span class="nav-label">@item.Label</span>
+                            <span class="count">@item.Step</span>
+                        </button>
+                    }
+                }
+            </nav>
+
+            <div class="sidefoot">
+                <p>Chaque modification est enregistrée dans le journal des actions.</p>
+                <div class="sidetheme">
+                    <ThemeButton Class="themepill" />
+                </div>
+            </div>
+        </aside>
+
+        <div class="main">
+            <header class="topbar">
+                <div>
+                    <h1>@Title</h1>
+                    <p class="muted topbar-sub">@Subtitle</p>
+                </div>
+                <div class="topbar-right">
+                    @if (!string.IsNullOrEmpty(Config.EnvironmentLabel))
+                    {
+                        <span class="badge">@Config.EnvironmentLabel</span>
+                    }
+                    <span class="muted topbar-email">@Session.Email</span>
+                    <button type="button" class="btn btn-sm" disabled="@_loggingOut" @onclick="LogoutAsync">Se déconnecter</button>
+                </div>
+            </header>
+            <main class="content">
+                @Body
+            </main>
+        </div>
+    </div>
+}
+
+@code {
+    private sealed record MenuItem(string Label, string Step, bool Active = false);
+
+    private static readonly MenuItem[] MenuItems =
+    [
+        new("Exercices et vidéos", "Étape 1", true),
+        new("Séances types", "Étape 2"),
+        new("Questions du quiz", "Étape 3"),
+        new("Utilisateurs", "Étape 4"),
+        new("Fiches coach", "Étape 5"),
+        new("Tableau de bord", "Étape 6"),
+        new("Journal des actions", "À venir"),
+        new("Abonnements", "À venir"),
+        new("Journal des mails", "À venir")
+    ];
+
+    private bool _ready;
+    private bool _loggingOut;
+
+    private string Title => IsExercises ? "Exercices et vidéos" : "Mentora Admin";
+
+    private string Subtitle => IsExercises
+        ? "Catalogue Mentora : fiches d'exercices et vidéos de démonstration"
+        : "Espace d'administration";
+
+    private bool IsExercises =>
+        new Uri(Nav.Uri).AbsolutePath.TrimEnd('/').Equals("/exercices", StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Session.Changed += OnSessionChanged;
+        Nav.LocationChanged += OnLocationChanged;
+        await Session.InitializeAsync();
+        _ready = true;
+        Guard();
+    }
+
+    private void Guard()
+    {
+        if (_ready && !Session.IsAuthenticated)
+            Nav.NavigateTo("connexion", replace: true);
+    }
+
+    private void OnSessionChanged() => _ = InvokeAsync(() =>
+    {
+        Guard();
+        StateHasChanged();
+    });
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
+        _ = InvokeAsync(StateHasChanged);
+
+    private void GoToExercises() => Nav.NavigateTo("exercices");
+
+    private async Task LogoutAsync()
+    {
+        _loggingOut = true;
+        await Session.LogoutAsync();
+        Nav.NavigateTo("connexion", replace: true);
+    }
+
+    public void Dispose()
+    {
+        Session.Changed -= OnSessionChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

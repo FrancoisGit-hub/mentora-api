@@ -1,0 +1,158 @@
+@page "/connexion"
+@layout LoginLayout
+@inject AdminSession Session
+@inject NavigationManager Nav
+
+<PageTitle>Connexion · Mentora Admin</PageTitle>
+
+<div class="card login-card">
+    <div class="login-logo">
+        <img src="img/logo-mentora.png" alt="Mentora" />
+    </div>
+    <h1 class="login-title">Mentora Admin</h1>
+    <p class="muted login-sub">Réservé à l'équipe, aucune inscription possible</p>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="alert" role="alert">@_error</div>
+    }
+
+    @if (_step == 1)
+    {
+        <form @onsubmit="SubmitEmailAsync" @onsubmit:preventDefault>
+            <div class="field">
+                <label class="label" for="login-email">Adresse e-mail</label>
+                <input id="login-email" class="input" type="email" autocomplete="username" inputmode="email"
+                       @bind="_email" @bind:event="oninput" disabled="@_busy" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">Recevoir un code</button>
+        </form>
+    }
+    else
+    {
+        <p class="info" role="status">Si cette adresse est un compte admin, un code vient d'être envoyé. Il expire dans 10 minutes.</p>
+        <form @onsubmit="SubmitCodeAsync" @onsubmit:preventDefault>
+            <div class="field">
+                <label class="label" for="login-code">Code à 6 chiffres</label>
+                <input id="login-code" class="input mono" type="text" inputmode="numeric" autocomplete="one-time-code"
+                       maxlength="6" pattern="[0-9]{6}" @ref="_codeInput"
+                       @bind="_code" @bind:event="oninput" disabled="@_busy" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">Se connecter</button>
+            <div class="login-links">
+                <button type="button" class="linkbtn" disabled="@_busy" @onclick="ChangeAddress">Changer d'adresse</button>
+            </div>
+        </form>
+    }
+</div>
+
+@code {
+    private int _step = 1;
+    private string _email = "";
+    private string _code = "";
+    private string? _error;
+    private bool _busy;
+    private bool _focusCode;
+    private ElementReference _codeInput;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Session.InitializeAsync();
+        if (Session.IsAuthenticated)
+        {
+            Nav.NavigateTo("exercices", replace: true);
+            return;
+        }
+        _error = Session.Notice;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusCode)
+        {
+            _focusCode = false;
+            await _codeInput.FocusAsync();
+        }
+    }
+
+    private async Task SubmitEmailAsync()
+    {
+        if (_busy) return;
+        var email = _email.Trim();
+        if (email.Length == 0)
+        {
+            _error = "Saisissez votre adresse e-mail.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Session.RequestCodeAsync(email);
+            if (result.IsSuccess)
+            {
+                _email = email;
+                _code = "";
+                _step = 2;
+                _focusCode = true;
+            }
+            else
+            {
+                _error = MessageFor(result.Status, verify: false);
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SubmitCodeAsync()
+    {
+        if (_busy) return;
+        var code = _code.Trim();
+        if (code.Length != 6 || !code.All(char.IsAsciiDigit))
+        {
+            _error = "Saisissez les 6 chiffres du code.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Session.VerifyCodeAsync(_email, code);
+            if (result.IsSuccess)
+            {
+                Nav.NavigateTo("exercices", replace: true);
+                return;
+            }
+            _error = MessageFor(result.Status, verify: true);
+            _code = "";
+            _focusCode = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ChangeAddress()
+    {
+        _step = 1;
+        _code = "";
+        _error = null;
+    }
+
+    private static string MessageFor(int status, bool verify)
+    {
+        if (status == 429)
+            return "Trop de tentatives, réessayez dans quelques minutes.";
+        if (verify && status is 400 or 422)
+            return "Code incorrect ou expiré.";
+        if (!verify && status == 422)
+            return "Saisissez une adresse e-mail valide.";
+        return "Le serveur ne répond pas, réessayez.";
+    }
+}

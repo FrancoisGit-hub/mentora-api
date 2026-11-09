@@ -1,0 +1,18 @@
+@implements IDisposable
+@inject ThemeService Theme
+
+<button type="button" class="@Class" aria-label="@Theme.AriaLabel" @onclick="Theme.CycleAsync">@Theme.Label</button>
+
+@code {
+    [Parameter] public string Class { get; set; } = "themepill";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Theme.Changed += OnChanged;
+        await Theme.EnsureLoadedAsync();
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Theme.Changed -= OnChanged;
+}

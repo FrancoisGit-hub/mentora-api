@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mentora Admin</title>
+    <base href="/" />
+    <link rel="icon" type="image/png" href="img/icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css" />
+    <script>
+        // Applique le thème avant le démarrage de Blazor (pas de flash).
+        (function () {
+            var mode = "auto";
+            try {
+                var stored = localStorage.getItem("mentora-admin-theme");
+                if (stored === "light" || stored === "dark" || stored === "auto") mode = stored;
+            } catch (e) { }
+            var dark = mode === "dark";
+            if (mode === "auto") {
+                try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) { }
+            }
+            document.documentElement.classList.add(dark ? "theme-dark" : "theme-light");
+        })();
+    </script>
+    <script src="js/admin.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div class="boot">Chargement…</div>
+    </div>
+
+    <div id="blazor-error-ui">
+        Une erreur est survenue.
+        <a href="" class="reload">Recharger</a>
+        <a class="dismiss" role="button" aria-label="Fermer">×</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+
+</html>

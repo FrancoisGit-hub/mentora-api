@@ -1,0 +1,24 @@
+﻿@inject AppConfig Config
+
+@if (!Config.IsValid)
+{
+    <ConfigError />
+}
+else
+{
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(EmptyLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(ShellLayout)">
+                <PageTitle>Page introuvable · Mentora Admin</PageTitle>
+                <div class="card pad">
+                    <p>Cette page n'existe pas.</p>
+                    <a href="exercices">Retour à Exercices et vidéos</a>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+}
