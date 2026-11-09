@@ -5,6 +5,7 @@ using FluentValidation;
 using Mentora.API.Authorization;
 using Mentora.API.Hubs;
 using Mentora.API.Middleware;
+using Mentora.API.Startup;
 using Mentora.API.Swagger;
 using Mentora.Core.Validators.Catalog;
 using Mentora.Infrastructure.Services.Stripe;
@@ -28,6 +29,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Lot 12.5a: outside Development, refuse the public appsettings.json defaults (app JWT secret,
+// connection string) before anything is built, migrated or seeded. Messages carry no value.
+StartupGuards.VerifyOutsideDevelopment(builder.Environment);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -412,24 +417,36 @@ builder.Services.AddControllers(options =>
             new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
     });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("MentoraCorsPolicy", policy =>
+// Lot 12.5a: origins come from Cors__AllowedOrigins; Development adds the local origins.
+string[] developmentOrigins =
+[
+    "http://localhost:4200",
+    "http://localhost:8100",
+    "http://localhost",
+    "https://localhost",
+    "https://localhost:4200",
+    "https://localhost:8100",
+    "capacitor://localhost"
+];
+builder.Services.AddOptions<Mentora.Core.Options.CorsOptions>()
+    .Bind(builder.Configuration.GetSection(Mentora.Core.Options.CorsOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<Mentora.Core.Options.CorsOptions>, CorsOptionsValidator>();
+builder.Services.AddCors();
+builder.Services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>()
+    .Configure<IOptions<Mentora.Core.Options.CorsOptions>>((options, configured) =>
     {
-        policy.WithOrigins(
-            "http://localhost:4200",
-            "http://localhost:8100",
-            "http://localhost",
-            "https://localhost",
-            "https://localhost:4200",
-            "https://localhost:8100",
-            "capacitor://localhost"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        var origins = configured.Value.OriginList.ToList();
+        if (builder.Environment.IsDevelopment())
+            origins.AddRange(developmentOrigins);
+        options.AddPolicy("MentoraCorsPolicy", policy =>
+        {
+            policy.WithOrigins(origins.Distinct(StringComparer.OrdinalIgnoreCase).ToArray())
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
     });
-});
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -452,6 +469,17 @@ var app = builder.Build();
         "[EMAIL] routing mode={Mode} provider={Provider} testRecipients={TestCount} productionBcc={BccCount}",
         routingOpts.ModeLabel, emailOpts.EffectiveProvider,
         routingOpts.TestRecipientList.Count, routingOpts.ProductionBccList.Count);
+}
+
+// Lot 12.5a: .Value runs CorsOptionsValidator now (before migrations). The line prints counts and
+// the configured public origins only (never the localhost ones).
+{
+    var corsOpts = app.Services.GetRequiredService<IOptions<Mentora.Core.Options.CorsOptions>>().Value;
+    var configuredOrigins = corsOpts.OriginList;
+    app.Logger.LogInformation("[CORS] origins={Count} localhost={Localhost}",
+        configuredOrigins.Count, app.Environment.IsDevelopment());
+    foreach (var origin in configuredOrigins.Where(o => !Mentora.Core.Options.CorsOptions.IsLocalhostOrigin(o)))
+        app.Logger.LogInformation("[CORS] origin {Origin}", origin);
 }
 
 // Lot 12.1 — same for the admin authentication: .Value runs AdminAuthOptionsValidator, then the

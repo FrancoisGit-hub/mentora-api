@@ -11,12 +11,16 @@
 # appsettings.json and appsettings.Production.json are NOT excluded.
 **/appsettings.Development.json
 
-# Build artifacts from the host (Mentora.API/Mentora.Core/Mentora.Infrastructure
-# each have bin/ and obj/, ~49MB total today). `dotnet build`/`dotnet publish`
-# regenerate these inside the container; copying host artifacts in bloats the
-# context and can leak host-OS/arch-specific output.
-bin
-obj
+# Build artifacts from the host (every project has bin/ and obj/).
+# `dotnet build`/`dotnet publish` regenerate these inside the container; copying
+# host artifacts in bloats the context and can leak host-OS/arch-specific output.
+# Lot 12.5a: the rules now apply at any depth (the bare names only matched the root).
+**/bin
+**/obj
+**/publish
+
+# Lot 12.5a: the admin front is never needed by the API image.
+Mentora.Admin
 
 # Git metadata (~5.2MB) - version history, not needed to build or run the app.
 .git
@@ -27,6 +31,8 @@ obj
 
 # Project documentation (~1.2MB) - not needed to build or run the app.
 docs
+# Lot 12.5a: review evidence explicitly (already covered by docs).
+docs/review
 
 # Stray local artifacts, e.g. `docker save` tarballs left in the repo root
 # (found one at repo root today, ~95MB) - never needed as build input and

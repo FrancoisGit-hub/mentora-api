@@ -1,0 +1,81 @@
+# Lot 12.5a. Beta PROD server blocks for api.mentorapp.fr.
+# ".example" on purpose: the running nginx never loads this file by accident before the
+# certificate exists. Once the certificate is issued, copy it as mentora-prod.conf
+# (see docs/review/lot12/12.5a/prod-runbook.md), then nginx -t and reload.
+# The "map $connection_upgrade" is already declared in mentora.conf (same http context),
+# do not declare it again here.
+
+# ---------------------------------------------------------------------------
+# HTTP server: ACME challenge (renewals) and redirect to HTTPS.
+# ---------------------------------------------------------------------------
+server {
+    listen 80;
+    server_name api.mentorapp.fr;
+
+    # Let's Encrypt ACME challenge, served over HTTP for renewals.
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type "text/plain";
+    }
+
+    # Everything else: 301 redirect to HTTPS.
+    location / {
+        return 301 https://api.mentorapp.fr$request_uri;
+    }
+}
+
+# ---------------------------------------------------------------------------
+# HTTPS server: actual application traffic, to the api-prod container.
+# ---------------------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name api.mentorapp.fr;
+
+    # Increase max body size for future file uploads (default 1MB is too low).
+    client_max_body_size 25M;
+
+    # Let's Encrypt certificate paths (mounted from host via docker-compose).
+    ssl_certificate     /etc/letsencrypt/live/api.mentorapp.fr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.mentorapp.fr/privkey.pem;
+
+    # Modern TLS profile (Mozilla intermediate, 2024+).
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
+    # HSTS: force HTTPS on this domain for 6 months.
+    add_header Strict-Transport-Security "max-age=15768000" always;
+
+    # SignalR Hub: explicit WebSocket support (wss:// over HTTPS).
+    location /hubs/ {
+        proxy_pass http://api-prod:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSockets stay open: disable buffering and bump timeouts.
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    # All other REST routes (catch-all).
+    location / {
+        proxy_pass http://api-prod:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
