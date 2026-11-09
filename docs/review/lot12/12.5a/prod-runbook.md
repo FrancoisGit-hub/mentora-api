@@ -242,3 +242,175 @@ SQL
 Attendu : `(0 rows)`. Sinon, ne pas déployer : traiter les doublons d'abord.
 
 **B. Variables d'administration pour api-demo.** Ajouter dans `.env` puis dans l'environnement du service `api` : `AdminAuth__JwtSecret` (aléatoire, `openssl rand -base64 48`, différent de `Jwt__Secret`) et `AdminAuth__Emails` (les 4 boîtes mentorapp.fr). Sans elles, l'API refuse de démarrer. Faire la sauvegarde `pg_dump` de l'étape 2 juste avant.
+
+---
+
+## Admin (12.5b)
+
+But : servir l'admin (Blazor WebAssembly, fichiers statiques) sur `https://admin.mentorapp.fr`, avec le conteneur nginx qui tourne déjà. À faire après le runbook ci-dessus (le certificat de l'étape 6 couvre déjà `admin.mentorapp.fr`, et api-prod répond).
+
+Légende : **[PS]** = terminal PowerShell de VS Code sur ton poste, à la racine du dépôt. **[SSH]** = session SSH sur le VPS.
+
+### A. Publier l'admin **[PS]**
+
+```powershell
+dotnet publish Mentora.Admin -c Release -o docs/review/lot12/12.5b/publish
+```
+
+Le dossier `publish/` est ignoré par git. Le résultat utile est le sous-dossier `wwwroot`.
+
+### B. Contrôler les fichiers de configuration publiés **[PS]**
+
+```powershell
+Get-ChildItem docs/review/lot12/12.5b/publish/wwwroot -Filter 'appsettings*.json' | ForEach-Object Name
+Get-Content docs/review/lot12/12.5b/publish/wwwroot/appsettings.Production.json
+```
+
+Attendu : exactement deux fichiers, `appsettings.json` et `appsettings.Production.json` (jamais `appsettings.Development.json`), et `ApiBaseUrl` vaut `https://api.mentorapp.fr`. Sinon, ne pas continuer.
+
+### C. Archiver le dossier à envoyer **[PS]**
+
+```powershell
+tar -czf docs/review/lot12/12.5b/publish/admin-www.tgz -C docs/review/lot12/12.5b/publish/wwwroot .
+```
+
+L'archive est créée dans `publish/`, le dossier ignoré par git, pour ne jamais être commitée par erreur.
+
+### D. Envoyer l'archive sur le VPS **[PS]**
+
+```powershell
+scp docs/review/lot12/12.5b/publish/admin-www.tgz mentora@87.106.108.91:~/mentora/admin-www.tgz
+```
+
+### E. Installer la nouvelle version, avec retour arrière possible **[SSH]**
+
+La version précédente est conservée dans `admin-www.prev`.
+
+```bash
+cd ~/mentora
+rm -rf admin-www.prev
+[ -d admin-www ] && mv admin-www admin-www.prev
+mkdir admin-www
+tar -xzf admin-www.tgz -C admin-www
+ls admin-www | head
+rm admin-www.tgz
+```
+
+Attendu : on voit `index.html`, `_framework`, `css`, `js`, `img`, `appsettings.json`, `appsettings.Production.json`.
+
+### F. Une seule fois : monter le dossier dans le service nginx **[SSH]**
+
+Sauvegarde d'abord :
+
+```bash
+cd ~/mentora
+cp docker-compose.yml docker-compose.yml.bak-$(date +%Y%m%d-%H%M%S)
+```
+
+Dans `docker-compose.yml` (`nano docker-compose.yml`), sous `volumes:` du service `nginx`, ajouter cette ligne (en lecture seule) à côté des autres volumes :
+
+```yaml
+      - ./admin-www:/var/www/mentora-admin:ro
+```
+
+Puis :
+
+```bash
+docker compose config --quiet && echo "compose valide"
+docker compose up -d nginx
+```
+
+### G. Version de nginx et type MIME du wasm **[SSH]**
+
+```bash
+docker exec mentora-nginx nginx -v
+docker exec mentora-nginx grep wasm /etc/nginx/mime.types
+```
+
+Attendu : une ligne `application/wasm   wasm;`. Remplacer `mentora-nginx` par le nom réel du conteneur nginx (`docker ps`). Si la ligne manque, s'arrêter et le dire : il faudra ajouter une entrée de type dans le fichier de configuration.
+
+### H. Installer la configuration nginx de l'admin **[SSH]**
+
+Le fichier `nginx/conf.d/mentora-admin.conf.example` du dépôt se copie sans le suffixe `.example`. Le dossier `~/mentora` du VPS n'est pas un clone git : le fichier s'envoie depuis le poste.
+
+H.1 Vérifier que le dossier `~/mentora/nginx/conf.d` est bien celui que le service nginx monte **[SSH]** :
+
+```bash
+cd ~/mentora
+ls ~/mentora/nginx/conf.d
+docker compose config | grep -A3 conf.d
+```
+
+Attendu : le volume de nginx pointe vers `./nginx/conf.d`. S'il pointe ailleurs, utiliser le dossier monté à la place de `~/mentora/nginx/conf.d` dans les commandes suivantes.
+
+H.2 Envoyer le fichier depuis le poste **[PS]** :
+
+```powershell
+scp nginx/conf.d/mentora-admin.conf.example mentora@87.106.108.91:~/mentora/nginx/conf.d/mentora-admin.conf.example
+```
+
+H.3 Activer et tester **[SSH]** :
+
+```bash
+cd ~/mentora
+cp nginx/conf.d/mentora-admin.conf.example nginx/conf.d/mentora-admin.conf
+docker compose exec nginx nginx -t
+```
+
+Attendu : `syntax is ok` et `test is successful`. Si `nginx -t` échoue, retirer `mentora-admin.conf` avant toute autre action :
+
+```bash
+rm nginx/conf.d/mentora-admin.conf
+```
+
+Puis recharger :
+
+```bash
+docker compose exec nginx nginx -s reload
+```
+
+Il n'y a qu'un seul fichier à copier : les en-têtes de sécurité sont déclarés directement dans le bloc serveur, il n'y a pas de fichier d'en-têtes séparé.
+
+### I. Contrôles avec curl **[PS]**
+
+```powershell
+curl.exe -I https://admin.mentorapp.fr/
+curl.exe -I https://admin.mentorapp.fr/exercices
+curl.exe -I https://admin.mentorapp.fr/_framework/dotnet.native.wasm
+curl.exe -I https://admin.mentorapp.fr/appsettings.Development.json
+curl.exe -I http://admin.mentorapp.fr/
+```
+
+Attendu :
+- `/` : `200`, `content-type: text/html`, et les en-têtes `strict-transport-security`, `x-content-type-options`, `x-frame-options`, `referrer-policy`, `permissions-policy`, `content-security-policy`, `cache-control: no-cache`.
+- `/exercices` : `200` (retour sur `index.html`, c'est normal pour une application à page unique).
+- le fichier `.wasm` : `200` et `content-type: application/wasm`. Si le nom du fichier diffère, lister `~/mentora/admin-www/_framework` côté VPS et en prendre un.
+- `appsettings.Development.json` : ne doit pas servir de configuration locale (le fichier n'existe pas dans le dossier publié, la réponse est un `200` de repli sur `index.html` sans contenu JSON, ou un `404`). Vérifier que le corps n'est pas du JSON : `curl.exe -s https://admin.mentorapp.fr/appsettings.Development.json | Select-String localhost` ne doit rien afficher.
+- `http://` : `301` vers `https://admin.mentorapp.fr/`.
+
+### J. Test dans le navigateur
+
+Ouvrir `https://admin.mentorapp.fr` (fenêtre privée de préférence). La page de connexion s'affiche avec le logo et le thème, la console ne contient aucune erreur de Content-Security-Policy. Demander un code de connexion et se connecter avec une des boîtes d'administration.
+
+### K. Retour arrière de l'admin **[SSH]**
+
+Version précédente des fichiers :
+
+```bash
+cd ~/mentora
+rm -rf admin-www.broken
+mv admin-www admin-www.broken
+mv admin-www.prev admin-www
+```
+
+Retirer complètement l'admin :
+
+```bash
+cd ~/mentora
+rm -f nginx/conf.d/mentora-admin.conf
+docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload
+cp docker-compose.yml.bak-<horodatage> docker-compose.yml
+docker compose up -d nginx
+```
+
+Remplacer `<horodatage>` par celui de la sauvegarde de l'étape F (`ls ~/mentora/docker-compose.yml.bak-*`). Ce retour arrière ne touche ni api-prod ni api-demo.
