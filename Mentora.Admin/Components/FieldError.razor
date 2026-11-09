@@ -1,0 +1,10 @@
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div id="@Id" class="field-error">@Message</div>
+}
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    [Parameter] public string? Message { get; set; }
+}

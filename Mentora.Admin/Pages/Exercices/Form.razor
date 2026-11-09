@@ -1,0 +1,865 @@
+@page "/exercices/nouveau"
+@page "/exercices/{ExerciseId:guid}"
+@layout ShellLayout
+@implements IDisposable
+@inject ExercisesApi Api
+@inject ReferencesCache RefCache
+@inject ExerciseUiState UiState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>@(_currentIsCreate ? "Nouvel exercice" : "Modifier l'exercice") · Mentora Admin</PageTitle>
+
+<NavigationLock OnBeforeInternalNavigation="OnBeforeNavigation" ConfirmExternalNavigation="@IsDirty" />
+
+@if (_loading)
+{
+    <div class="card pad"><p class="muted" role="status">Chargement…</p></div>
+}
+else if (_notFound)
+{
+    <div class="card pad">
+        <p><strong>Exercice introuvable.</strong></p>
+        <button type="button" class="btn" @onclick="GoBack">Retour aux exercices</button>
+    </div>
+}
+else if (_loadError is not null || _refs is null)
+{
+    <div class="card pad">
+        <div class="alert" role="alert">@(_loadError ?? ExerciseText.ServerDown)</div>
+        <button type="button" class="btn" @onclick="ReloadAsync">Réessayer</button>
+        <button type="button" class="btn" @onclick="GoBack">Retour aux exercices</button>
+    </div>
+}
+else
+{
+    <form @onsubmit="SaveAsync" @onsubmit:preventDefault novalidate>
+        <div class="pagehead">
+            <button type="button" class="btn btn-sm" @onclick="GoBack">Retour aux exercices</button>
+            <button type="submit" class="btn btn-primary" disabled="@_saving">Enregistrer l'exercice</button>
+        </div>
+
+        @if (IncompleteLabels().Count > 0)
+        {
+            <p class="muted">Champs à compléter : @string.Join(", ", IncompleteLabels()).</p>
+        }
+        @if (!string.IsNullOrEmpty(_flash))
+        {
+            <div class="info" role="status">@_flash</div>
+        }
+        @if (!string.IsNullOrEmpty(_saveError))
+        {
+            <div class="alert" role="alert">@_saveError</div>
+        }
+        @if (_summary)
+        {
+            <div class="alert" role="alert">
+                <div>Certaines valeurs ne sont pas acceptées, voir les champs signalés.</div>
+                @if (_unmapped.Count > 0)
+                {
+                    <ul class="alert-list">
+                        @foreach (var message in _unmapped)
+                        {
+                            <li>@message</li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+
+        @if (_detail is not null)
+        {
+            <div class="card pad spaced editbar">
+                <div class="muted">
+                    Utilisé dans : @_detail.Usage.Programs programme(s), @_detail.Usage.ProgramTemplates trame(s), @_detail.Usage.SessionTemplates séance(s) type
+                </div>
+                <div class="editbar-state">
+                    @if (_detail.IsActive)
+                    {
+                        <span class="badge">Actif</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-muted">Désactivé</span>
+                    }
+                    <button type="button" class="btn btn-sm" disabled="@(_activating || _saving)" @onclick="ToggleActivationAsync">
+                        @(_detail.IsActive ? "Désactiver" : "Activer")
+                    </button>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(_actionAlert))
+            {
+                <div class="alert spaced" role="alert">@_actionAlert</div>
+            }
+        }
+
+        <div class="card pad spaced">
+            <h2 class="sec-title">L'essentiel</h2>
+            <p class="muted">
+                @if (_detail is null)
+                {
+                    <span>Code attribué à l'enregistrement</span>
+                }
+                else
+                {
+                    <span>Code <span class="mono">@_detail.SourceCode</span></span>
+                }
+                <span> · Les champs marqués * sont obligatoires</span>
+            </p>
+
+            <div class="grid2">
+                <div class="field">
+                    <label class="label" for="f-name">Nom * @Todo("f-name")</label>
+                    <input id="f-name" class="input" type="text" maxlength="120" aria-required="true"
+                           aria-invalid="@Invalid("f-name")" aria-describedby="@Desc("f-name")"
+                           @bind="_m.Name" @bind:event="oninput" />
+                    <FieldError Id="e-f-name" Message="@Err("f-name")" />
+                    @if (_nameTaken is { } taken)
+                    {
+                        <div id="e-f-name" class="field-error">
+                            Un exercice porte déjà ce nom : <a href="exercices/@taken.Id">@taken.SourceCode @taken.Name</a>.
+                        </div>
+                    }
+                </div>
+
+                <div class="field">
+                    <label class="label" for="f-nameen">Nom anglais</label>
+                    <input id="f-nameen" class="input" type="text" maxlength="120"
+                           aria-invalid="@Invalid("f-nameen")" aria-describedby="@Desc("f-nameen")"
+                           @bind="_m.NameEn" @bind:event="oninput" />
+                    <FieldError Id="e-f-nameen" Message="@Err("f-nameen")" />
+                </div>
+
+                @SelectField("f-category", "Catégorie *", true, _m.CategoryId, v => _m.CategoryId = v,
+                    RefOptions(_refs.Categories), "Choisir…", _detail?.LegacyValues.Category)
+
+                @SelectField("f-level", "Niveau minimum *", true, _m.Level, v => _m.Level = v,
+                    _refs.Levels.Select(l => (l, ExerciseText.LevelLabel(l))).ToList(), "Choisir…")
+
+                @SelectField("f-primarygroup", "Groupe musculaire principal *", true, _m.PrimaryGroupId, OnPrimaryGroupChanged,
+                    _refs.MuscleGroups.Select(g => (g.Id.ToString(), g.Name)).ToList(), "Choisir…")
+
+                @SelectField("f-primaryequipment", "Matériel principal *", true, _m.PrimaryEquipmentId, OnPrimaryEquipmentChanged,
+                    _refs.Equipment.Select(q => (q.Id.ToString(), q.Name)).ToList(), "Choisir…")
+
+                @SelectField("f-secondaryequipment", "Matériel secondaire", false, _m.SecondaryEquipmentId, v => _m.SecondaryEquipmentId = v,
+                    SecondaryEquipmentOptions(), "Aucun")
+
+                <div class="field">
+                    <label class="label" for="f-searchtags">Synonymes pour la recherche</label>
+                    <input id="f-searchtags" class="input" type="text" maxlength="500"
+                           aria-invalid="@Invalid("f-searchtags")" aria-describedby="@Desc("f-searchtags", "h-searchtags")"
+                           @bind="_m.SearchTags" @bind:event="oninput" />
+                    <div id="h-searchtags" class="hint">Seulement des noms que l'on taperait pour trouver l'exercice, pas des mots-clés comme « débutant » ou « cardio ».</div>
+                    <FieldError Id="e-f-searchtags" Message="@Err("f-searchtags")" />
+                </div>
+            </div>
+        </div>
+
+        <div class="card pad spaced">
+            <h2 class="sec-title">Muscles et objectifs</h2>
+
+            <div class="field">
+                <div id="l-secondary" class="label">Muscles secondaires</div>
+                <ChipPicker Id="f-secondary" LabelId="l-secondary" Items="SecondaryGroupItems" Selected="_m.Secondary"
+                            Max="6" OnToggle="ToggleSecondary" />
+                <FieldError Id="e-f-secondary" Message="@Err("f-secondary")" />
+            </div>
+
+            <div class="field">
+                <div id="l-objectives" class="label">Objectifs compatibles</div>
+                <ChipPicker Id="f-objectives" LabelId="l-objectives" Items="_refs.Objectives" Selected="_m.Objectives"
+                            Max="20" OnToggle="ToggleObjective" />
+                <FieldError Id="e-f-objectives" Message="@Err("f-objectives")" />
+            </div>
+        </div>
+
+        <div class="card pad spaced">
+            <h2 class="sec-title">Le mouvement</h2>
+            <div class="grid2">
+                @SelectField("f-pattern", "Schéma de mouvement", false, _m.PatternId, v => _m.PatternId = v,
+                    RefOptions(_refs.MovementPatterns), "Non renseigné", _detail?.LegacyValues.MovementPattern)
+
+                @SelectField("f-type", "Type d'exercice", false, _m.TypeId, v => _m.TypeId = v,
+                    RefOptions(_refs.Types), "Non renseigné", _detail?.LegacyValues.Type)
+
+                @SelectField("f-laterality", "Latéralité", false, _m.LateralityId, v => _m.LateralityId = v,
+                    RefOptions(_refs.Lateralities), "Non renseigné", _detail?.LegacyValues.Laterality)
+
+                @SelectField("f-position", "Position de départ", false, _m.PositionId, v => _m.PositionId = v,
+                    RefOptions(_refs.StartingPositions), "Non renseigné", _detail?.LegacyValues.StartingPosition)
+
+                @SelectField("f-grip", "Type de prise", false, _m.GripId, v => _m.GripId = v,
+                    RefOptions(_refs.GripTypes), "Non renseigné", _detail?.LegacyValues.GripType)
+
+                <div class="field">
+                    <label class="label" for="f-poly">Polyarticulaire</label>
+                    <input id="f-poly" class="input" type="text" readonly value="@(IsPolyarticular ? "Oui" : "Non")"
+                           aria-describedby="h-poly" />
+                    <div id="h-poly" class="hint">Calculé d'après le type d'exercice.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card pad spaced">
+            <h2 class="sec-title">Consignes et sécurité</h2>
+
+            <div class="field">
+                <label class="label" for="f-description">Consigne courte * @Todo("f-description")</label>
+                <input id="f-description" class="input" type="text" maxlength="2000" aria-required="true"
+                       placeholder="Une phrase, affichée à l'élève pendant l'exercice"
+                       aria-invalid="@Invalid("f-description")" aria-describedby="@Desc("f-description")"
+                       @bind="_m.Description" @bind:event="oninput" />
+                <FieldError Id="e-f-description" Message="@Err("f-description")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-instructions">Exécution détaillée</label>
+                <textarea id="f-instructions" class="input" rows="6" maxlength="8000"
+                          aria-invalid="@Invalid("f-instructions")" aria-describedby="@Desc("f-instructions")"
+                          @bind="_m.Instructions" @bind:event="oninput"></textarea>
+                <FieldError Id="e-f-instructions" Message="@Err("f-instructions")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-breathing">Respiration</label>
+                <textarea id="f-breathing" class="input" rows="3" maxlength="2000"
+                          aria-invalid="@Invalid("f-breathing")" aria-describedby="@Desc("f-breathing")"
+                          @bind="_m.Breathing" @bind:event="oninput"></textarea>
+                <FieldError Id="e-f-breathing" Message="@Err("f-breathing")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-mistakes">Erreurs fréquentes (une par ligne)</label>
+                <textarea id="f-mistakes" class="input" rows="5"
+                          aria-invalid="@Invalid("f-mistakes")" aria-describedby="@Desc("f-mistakes", "h-mistakes")"
+                          @bind="_m.MistakesText" @bind:event="oninput"></textarea>
+                <div id="h-mistakes" class="hint">20 erreurs au plus, 300 caractères chacune.</div>
+                <FieldError Id="e-f-mistakes" Message="@Err("f-mistakes")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-precautions">Précautions</label>
+                <textarea id="f-precautions" class="input" rows="3" maxlength="2000"
+                          aria-invalid="@Invalid("f-precautions")" aria-describedby="@Desc("f-precautions")"
+                          @bind="_m.Precautions" @bind:event="oninput"></textarea>
+                <FieldError Id="e-f-precautions" Message="@Err("f-precautions")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-coachtip">Conseil du coach</label>
+                <textarea id="f-coachtip" class="input" rows="3" maxlength="2000"
+                          aria-invalid="@Invalid("f-coachtip")" aria-describedby="@Desc("f-coachtip")"
+                          @bind="_m.CoachTip" @bind:event="oninput"></textarea>
+                <FieldError Id="e-f-coachtip" Message="@Err("f-coachtip")" />
+            </div>
+        </div>
+    </form>
+}
+
+<ConfirmDialog Open="_showLeave" Title="Quitter sans enregistrer ?"
+               Text="Les modifications non enregistrées seront perdues."
+               ConfirmLabel="Quitter" CancelLabel="Rester" Danger="true"
+               OnConfirm="ConfirmLeave" OnCancel="CancelLeave" />
+
+<ConfirmDialog Open="_confirmDeactivate" Title="@($"Désactiver « {_detail?.Name} » ?")"
+               Text="Il ne sera plus proposé dans les apps."
+               ConfirmLabel="Désactiver" CancelLabel="Annuler" Danger="true"
+               OnConfirm="ConfirmDeactivateAsync" OnCancel="CancelDeactivate" />
+
+@code {
+    private const string NoEquipmentName = "Sans matériel";
+    private const string PolyarticularCode = "POLYARTICULAIRE";
+
+    // Clé de champ de l'API (casse ignorée) vers l'identifiant du champ dans la page.
+    private static readonly Dictionary<string, string> FieldIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Name"] = "f-name",
+        ["NameEn"] = "f-nameen",
+        ["Description"] = "f-description",
+        ["Instructions"] = "f-instructions",
+        ["CategoryId"] = "f-category",
+        ["TypeId"] = "f-type",
+        ["LateralityId"] = "f-laterality",
+        ["MovementPatternId"] = "f-pattern",
+        ["StartingPositionId"] = "f-position",
+        ["GripTypeId"] = "f-grip",
+        ["PrimaryMuscleGroupId"] = "f-primarygroup",
+        ["SecondaryMuscleGroupIds"] = "f-secondary",
+        ["PrimaryEquipmentId"] = "f-primaryequipment",
+        ["SecondaryEquipmentId"] = "f-secondaryequipment",
+        ["Level"] = "f-level",
+        ["Breathing"] = "f-breathing",
+        ["CommonMistakes"] = "f-mistakes",
+        ["Precautions"] = "f-precautions",
+        ["CoachTip"] = "f-coachtip",
+        ["SearchTags"] = "f-searchtags",
+        ["ObjectiveIds"] = "f-objectives"
+    };
+
+    // Ordre des champs dans la page : le premier champ en erreur reçoit le focus.
+    private static readonly string[] FocusOrder =
+    [
+        "f-name", "f-nameen", "f-category", "f-level", "f-primarygroup", "f-primaryequipment",
+        "f-secondaryequipment", "f-searchtags", "f-description", "f-instructions", "f-breathing",
+        "f-mistakes", "f-precautions", "f-coachtip"
+    ];
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = "";
+        public string NameEn { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Instructions { get; set; } = "";
+        public string CategoryId { get; set; } = "";
+        public string TypeId { get; set; } = "";
+        public string LateralityId { get; set; } = "";
+        public string PatternId { get; set; } = "";
+        public string PositionId { get; set; } = "";
+        public string GripId { get; set; } = "";
+        public string PrimaryGroupId { get; set; } = "";
+        public string PrimaryEquipmentId { get; set; } = "";
+        public string SecondaryEquipmentId { get; set; } = "";
+        public string Level { get; set; } = "";
+        public string Breathing { get; set; } = "";
+        public string MistakesText { get; set; } = "";
+        public string Precautions { get; set; } = "";
+        public string CoachTip { get; set; } = "";
+        public string SearchTags { get; set; } = "";
+        public HashSet<Guid> Secondary { get; } = [];
+        public HashSet<Guid> Objectives { get; } = [];
+    }
+
+    [Parameter] public Guid ExerciseId { get; set; }
+
+    private ExerciseReferences? _refs;
+    private ExerciseDetail? _detail;
+    private FormModel _m = new();
+    private HashSet<string> _held = [];
+    private HashSet<string> _incomplete = [];
+    private string _baseline = "";
+
+    private bool _initialized;
+    private bool _currentIsCreate = true;
+    private Guid? _currentId;
+    private int _loadToken;
+
+    private bool _loading = true;
+    private bool _notFound;
+    private string? _loadError;
+
+    private bool _saving;
+    private bool _activating;
+    private string? _flash;
+    private string? _saveError;
+    private string? _actionAlert;
+    private bool _summary;
+    private (Guid Id, string? SourceCode, string? Name)? _nameTaken;
+    private readonly Dictionary<string, string> _errors = [];
+    private readonly List<string> _unmapped = [];
+
+    private bool _confirmDeactivate;
+    private bool _showLeave;
+    private bool _leaving;
+    private string? _pendingTarget;
+
+    private bool IsDirty =>
+        !_loading && !_notFound && !_leaving && _refs is not null && Snapshot() != _baseline;
+
+    private bool IsPolyarticular =>
+        _refs?.Types.FirstOrDefault(t => t.Id.ToString() == _m.TypeId)?.Code == PolyarticularCode;
+
+    private IReadOnlyList<NamedRef> SecondaryGroupItems =>
+        _refs is null
+            ? []
+            : _refs.MuscleGroups
+                .Where(g => g.Id.ToString() != _m.PrimaryGroupId)
+                .Select(g => new NamedRef(g.Id, g.Name))
+                .ToList();
+
+    // Chargement
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var path = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
+        var create = path.EndsWith("/nouveau", StringComparison.OrdinalIgnoreCase);
+        Guid? id = create ? null : ExerciseId;
+
+        if (UiState.TakeFlash() is { } flash)
+            _flash = flash;
+
+        if (_initialized && create == _currentIsCreate && id == _currentId)
+            return;
+
+        _initialized = true;
+        _currentIsCreate = create;
+        _currentId = id;
+        _flash = UiState.TakeFlash() ?? _flash;
+        await LoadAsync();
+    }
+
+    private Task ReloadAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var token = ++_loadToken;
+        _loading = true;
+        _notFound = false;
+        _loadError = null;
+        ClearMessages();
+        StateHasChanged();
+
+        var refsTask = RefCache.GetAsync();
+        var detailTask = _currentId is { } id ? Api.GetAsync(id) : null;
+        var refs = await refsTask;
+        var detail = detailTask is null ? null : await detailTask;
+        if (token != _loadToken)
+            return;
+
+        _loading = false;
+        if (!refs.IsSuccess || refs.Data is null)
+        {
+            _loadError = ExerciseText.Failure(refs);
+            return;
+        }
+        _refs = refs.Data;
+
+        if (detail is null)
+        {
+            InitCreate();
+        }
+        else if (detail.Status == 404)
+        {
+            _notFound = true;
+            return;
+        }
+        else if (!detail.IsSuccess || detail.Data is null)
+        {
+            _loadError = ExerciseText.Failure(detail);
+            return;
+        }
+        else
+        {
+            Fill(detail.Data);
+        }
+        _baseline = Snapshot();
+    }
+
+    private void InitCreate()
+    {
+        _detail = null;
+        _held = [];
+        _incomplete = [];
+        _m = new FormModel();
+        var none = _refs!.Equipment.FirstOrDefault(q => q.Name == NoEquipmentName);
+        if (none is not null)
+            _m.PrimaryEquipmentId = none.Id.ToString();
+    }
+
+    private static string IdText(Guid? id) => id?.ToString() ?? "";
+
+    private void Fill(ExerciseDetail d)
+    {
+        _detail = d;
+        _m = new FormModel
+        {
+            Name = d.Name,
+            NameEn = d.NameEn ?? "",
+            Description = d.Description ?? "",
+            Instructions = d.Instructions ?? "",
+            CategoryId = IdText(d.Category?.Id),
+            TypeId = IdText(d.Type?.Id),
+            LateralityId = IdText(d.Laterality?.Id),
+            PatternId = IdText(d.MovementPattern?.Id),
+            PositionId = IdText(d.StartingPosition?.Id),
+            GripId = IdText(d.GripType?.Id),
+            PrimaryGroupId = IdText(d.PrimaryMuscleGroup?.Id),
+            PrimaryEquipmentId = IdText(d.PrimaryEquipment?.Id),
+            SecondaryEquipmentId = IdText(d.SecondaryEquipment?.Id),
+            Level = d.Level ?? "",
+            Breathing = d.Breathing ?? "",
+            MistakesText = string.Join("\n", d.CommonMistakes),
+            Precautions = d.Precautions ?? "",
+            CoachTip = d.CoachTip ?? "",
+            SearchTags = d.SearchTags ?? ""
+        };
+        foreach (var g in d.SecondaryMuscleGroups)
+            _m.Secondary.Add(g.Id);
+        foreach (var o in d.Objectives)
+            _m.Objectives.Add(o.Id);
+
+        _held = new[] { _m.CategoryId, _m.TypeId, _m.LateralityId, _m.PatternId, _m.PositionId, _m.GripId }
+            .Where(s => s.Length > 0)
+            .ToHashSet();
+
+        // Modification : un champ obligatoire déjà vide à l'ouverture ne bloque pas l'enregistrement.
+        _incomplete = Required.Where(r => IsEmpty(r.Id)).Select(r => r.Id).ToHashSet();
+    }
+
+    private static readonly (string Id, string Label)[] Required =
+    [
+        ("f-name", "Nom"),
+        ("f-category", "Catégorie"),
+        ("f-level", "Niveau minimum"),
+        ("f-primarygroup", "Groupe musculaire principal"),
+        ("f-primaryequipment", "Matériel principal"),
+        ("f-description", "Consigne courte")
+    ];
+
+    // Champs que l'API exige à chaque écriture (categoryId et primaryEquipmentId).
+    private static readonly HashSet<string> ApiRequired = ["f-category", "f-primaryequipment"];
+
+    private const string RejectedField = "Valeur refusée, vérifiez ce champ.";
+
+    private bool IsEmpty(string fieldId) => fieldId switch
+    {
+        "f-name" => Clean(_m.Name) is null,
+        "f-category" => ToGuid(_m.CategoryId) is null,
+        "f-level" => Clean(_m.Level) is null,
+        "f-primarygroup" => ToGuid(_m.PrimaryGroupId) is null,
+        "f-primaryequipment" => ToGuid(_m.PrimaryEquipmentId) is null,
+        "f-description" => Clean(_m.Description) is null,
+        _ => false
+    };
+
+    // Champ déjà vide à l'ouverture et toujours vide.
+    private bool StillIncomplete(string fieldId) => _incomplete.Contains(fieldId) && IsEmpty(fieldId);
+
+    private List<string> IncompleteLabels() =>
+        Required.Where(r => StillIncomplete(r.Id)).Select(r => r.Label).ToList();
+
+    private RenderFragment Todo(string fieldId) =>
+        @<text>@if (StillIncomplete(fieldId)) {<span class="badge badge-warn">À compléter</span>}</text>;
+
+    private void ClearMessages()
+    {
+        _errors.Clear();
+        _unmapped.Clear();
+        _summary = false;
+        _nameTaken = null;
+        _saveError = null;
+        _actionAlert = null;
+    }
+
+    // Modèle du formulaire
+
+    private string Snapshot() => string.Join("\u001f", new[]
+    {
+        _m.Name, _m.NameEn, _m.Description, _m.Instructions, _m.CategoryId, _m.TypeId, _m.LateralityId,
+        _m.PatternId, _m.PositionId, _m.GripId, _m.PrimaryGroupId, _m.PrimaryEquipmentId,
+        _m.SecondaryEquipmentId, _m.Level, _m.Breathing, _m.MistakesText, _m.Precautions, _m.CoachTip,
+        _m.SearchTags,
+        string.Join(",", _m.Secondary.OrderBy(x => x)),
+        string.Join(",", _m.Objectives.OrderBy(x => x))
+    });
+
+    private static string? Clean(string value)
+    {
+        var trimmed = value.Trim();
+        return trimmed.Length == 0 ? null : trimmed;
+    }
+
+    private static Guid? ToGuid(string value) => Guid.TryParse(value, out var g) ? g : null;
+
+    private List<string> Mistakes() =>
+        _m.MistakesText.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+
+    private ExerciseRequest BuildRequest()
+    {
+        var refs = _refs!;
+        var primaryGroup = ToGuid(_m.PrimaryGroupId);
+        return new ExerciseRequest(
+            Clean(_m.Name),
+            Clean(_m.NameEn),
+            Clean(_m.Description),
+            Clean(_m.Instructions),
+            ToGuid(_m.CategoryId),
+            ToGuid(_m.TypeId),
+            ToGuid(_m.LateralityId),
+            ToGuid(_m.PatternId),
+            ToGuid(_m.PositionId),
+            ToGuid(_m.GripId),
+            primaryGroup,
+            refs.MuscleGroups.Where(g => _m.Secondary.Contains(g.Id) && g.Id != primaryGroup).Select(g => g.Id).ToList(),
+            ToGuid(_m.PrimaryEquipmentId),
+            ToGuid(_m.SecondaryEquipmentId),
+            Clean(_m.Level),
+            Clean(_m.Breathing),
+            Mistakes(),
+            Clean(_m.Precautions),
+            Clean(_m.CoachTip),
+            Clean(_m.SearchTags),
+            refs.Objectives.Where(o => _m.Objectives.Contains(o.Id)).Select(o => o.Id).ToList());
+    }
+
+    // Listes
+
+    private List<(string Value, string Text)> RefOptions(IReadOnlyList<RefItem> items) =>
+        items
+            .Where(i => i.IsActive || _held.Contains(i.Id.ToString()))
+            .Select(i => (i.Id.ToString(), i.IsActive ? i.Label : i.Label + " (désactivé)"))
+            .ToList();
+
+    private List<(string Value, string Text)> SecondaryEquipmentOptions() =>
+        _refs!.Equipment
+            .Where(q => q.Id.ToString() != _m.PrimaryEquipmentId && q.Name != NoEquipmentName)
+            .Select(q => (q.Id.ToString(), q.Name))
+            .ToList();
+
+    private void OnPrimaryGroupChanged(string value)
+    {
+        _m.PrimaryGroupId = value;
+        if (Guid.TryParse(value, out var g))
+            _m.Secondary.Remove(g);
+    }
+
+    private void OnPrimaryEquipmentChanged(string value)
+    {
+        _m.PrimaryEquipmentId = value;
+        if (_m.SecondaryEquipmentId == value)
+            _m.SecondaryEquipmentId = "";
+    }
+
+    private void ToggleSecondary(Guid id)
+    {
+        if (!_m.Secondary.Remove(id) && _m.Secondary.Count < 6)
+            _m.Secondary.Add(id);
+    }
+
+    private void ToggleObjective(Guid id)
+    {
+        if (!_m.Objectives.Remove(id) && _m.Objectives.Count < 20)
+            _m.Objectives.Add(id);
+    }
+
+    // Aides d'affichage
+
+    private string? Err(string fieldId) => _errors.TryGetValue(fieldId, out var text) ? text : null;
+
+    private string? Invalid(string fieldId) =>
+        _errors.ContainsKey(fieldId) || (fieldId == "f-name" && _nameTaken is not null) ? "true" : null;
+
+    private string? Desc(string fieldId, string? help = null)
+    {
+        var hasError = _errors.ContainsKey(fieldId) || (fieldId == "f-name" && _nameTaken is not null);
+        if (hasError && help is not null)
+            return $"e-{fieldId} {help}";
+        return hasError ? $"e-{fieldId}" : help;
+    }
+
+    private RenderFragment SelectField(
+        string id, string label, bool required, string current, Action<string> set,
+        List<(string Value, string Text)> options, string emptyText, string? legacy = null) =>
+        @<div class="field">
+            <label class="label" for="@id">@label @Todo(id)</label>
+            <select id="@id" class="input" aria-required="@(required ? "true" : null)"
+                    aria-invalid="@Invalid(id)" aria-describedby="@Desc(id, legacy is null ? null : "h-" + id)"
+                    @onchange="e => set(e.Value?.ToString() ?? string.Empty)">
+                <option value="" selected="@(current == "")">@emptyText</option>
+                @foreach (var option in options)
+                {
+                    <option value="@option.Value" selected="@(current == option.Value)">@option.Text</option>
+                }
+            </select>
+            @if (legacy is not null)
+            {
+                <div id="@("h-" + id)" class="legacy">Valeur d'origine : « @legacy ». Choisissez la valeur correspondante dans la liste.</div>
+            }
+            <FieldError Id="@("e-" + id)" Message="@Err(id)" />
+        </div>;
+
+    // Navigation et modifications non enregistrées
+
+    private void GoBack() => Nav.NavigateTo(UiState.LastListUrl ?? "exercices");
+
+    private Task OnBeforeNavigation(LocationChangingContext context)
+    {
+        if (!IsDirty)
+            return Task.CompletedTask;
+
+        context.PreventNavigation();
+        _pendingTarget = context.TargetLocation;
+        _showLeave = true;
+        return Task.CompletedTask;
+    }
+
+    private void ConfirmLeave()
+    {
+        _showLeave = false;
+        _leaving = true;
+        if (_pendingTarget is not null)
+            Nav.NavigateTo(_pendingTarget);
+    }
+
+    private void CancelLeave()
+    {
+        _showLeave = false;
+        _pendingTarget = null;
+    }
+
+    // Enregistrement
+
+    private async Task SaveAsync()
+    {
+        if (_saving || _refs is null)
+            return;
+
+        ClearMessages();
+        _flash = null;
+
+        // Création : tous bloquent. Modification : la catégorie et le matériel principal bloquent
+        // toujours (l'API les exige à chaque écriture) ; les autres seulement s'ils étaient remplis
+        // à l'ouverture puis vidés.
+        foreach (var (id, _) in Required)
+            if (IsEmpty(id) && (_currentIsCreate || ApiRequired.Contains(id) || !_incomplete.Contains(id)))
+                _errors[id] = "Ce champ est obligatoire.";
+
+        var mistakes = Mistakes();
+        if (mistakes.Count > 20 || mistakes.Any(m => m.Length > 300))
+            _errors["f-mistakes"] = "20 erreurs au plus, 300 caractères chacune.";
+
+        if (_errors.Count > 0)
+        {
+            var first = FocusOrder.First(_errors.ContainsKey);
+            await JS.InvokeVoidAsync("mentoraAdmin.focusById", first);
+            return;
+        }
+
+        _saving = true;
+        ApiResult<ExerciseDetail> result;
+        try
+        {
+            var request = BuildRequest();
+            result = _currentIsCreate
+                ? await Api.CreateAsync(request)
+                : await Api.UpdateAsync(_currentId!.Value, request);
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (result.IsSuccess && result.Data is { } saved)
+        {
+            Fill(saved);
+            _baseline = Snapshot();
+            if (_currentIsCreate)
+            {
+                UiState.Flash = $"Exercice enregistré (code {saved.SourceCode}).";
+                _currentIsCreate = false;
+                _currentId = saved.ExerciseId;
+                Nav.NavigateTo("exercices/" + saved.ExerciseId, replace: true);
+            }
+            else
+            {
+                _flash = "Exercice enregistré.";
+            }
+            await JS.InvokeVoidAsync("mentoraAdmin.scrollTop");
+            return;
+        }
+
+        await ApplyFailureAsync(result);
+    }
+
+    private async Task ApplyFailureAsync(ApiResult<ExerciseDetail> result)
+    {
+        string? focus = null;
+
+        if (result.Status == 404)
+        {
+            _notFound = true;
+            return;
+        }
+
+        if (result.Status == 409 && result.Error == "EXERCISE_NAME_TAKEN")
+        {
+            if (ExerciseText.NameTaken(result.Details) is { } taken)
+                _nameTaken = taken;
+            else
+                _errors["f-name"] = "Un exercice porte déjà ce nom.";
+            focus = "f-name";
+        }
+        else if (result.Status == 422)
+        {
+            _summary = true;
+            foreach (var (key, messages) in result.Errors ?? new Dictionary<string, string[]>())
+            {
+                // Le message de l'API est en anglais : il n'est jamais affiché tel quel.
+                if (FieldIds.TryGetValue(key, out var fieldId))
+                    _errors[fieldId] = RejectedField;
+                else if (!_unmapped.Contains("Une valeur est refusée, vérifiez le formulaire."))
+                    _unmapped.Add("Une valeur est refusée, vérifiez le formulaire.");
+            }
+            focus = FocusOrder.FirstOrDefault(_errors.ContainsKey);
+        }
+        else
+        {
+            _saveError = ExerciseText.Failure(result);
+        }
+
+        if (focus is not null)
+            await JS.InvokeVoidAsync("mentoraAdmin.focusById", focus);
+        else
+            await JS.InvokeVoidAsync("mentoraAdmin.scrollTop");
+    }
+
+    // Activation
+
+    private async Task ToggleActivationAsync()
+    {
+        if (_detail is null || _activating)
+            return;
+        if (_detail.IsActive)
+        {
+            _confirmDeactivate = true;
+            return;
+        }
+        await SetActiveAsync(true);
+    }
+
+    private void CancelDeactivate() => _confirmDeactivate = false;
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        _confirmDeactivate = false;
+        await SetActiveAsync(false);
+    }
+
+    private async Task SetActiveAsync(bool target)
+    {
+        if (_detail is null || _currentId is not { } id)
+            return;
+
+        _activating = true;
+        _actionAlert = null;
+        _flash = null;
+        try
+        {
+            var result = await Api.SetActivationAsync(id, target);
+            if (result.IsSuccess && result.Data is { } updated)
+            {
+                // Seuls l'état et l'usage changent : les saisies en cours restent intactes.
+                _detail = _detail with { IsActive = updated.IsActive, Usage = updated.Usage, UpdatedDate = updated.UpdatedDate };
+                _flash = target ? "Exercice activé." : "Exercice désactivé.";
+            }
+            else if (result.Status == 409 && result.Error == "EXERCISE_IN_USE")
+            {
+                _actionAlert = ExerciseText.InUseMessage(result.Details);
+            }
+            else if (result.Status == 404)
+            {
+                _notFound = true;
+            }
+            else
+            {
+                _actionAlert = ExerciseText.Failure(result);
+            }
+        }
+        finally
+        {
+            _activating = false;
+        }
+    }
+
+    public void Dispose() => _loadToken++;
+}

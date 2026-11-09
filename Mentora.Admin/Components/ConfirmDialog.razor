@@ -1,0 +1,55 @@
+@inject IJSRuntime JS
+
+@if (Open)
+{
+    <dialog @ref="_dialog" class="dlg" aria-labelledby="dlg-title" @oncancel="CancelAsync">
+        <h2 id="dlg-title" class="dlg-title">@Title</h2>
+        @if (!string.IsNullOrEmpty(Text))
+        {
+            <p class="muted">@Text</p>
+        }
+        <div class="dlg-actions">
+            <button type="button" class="btn" @onclick="CancelAsync">@CancelLabel</button>
+            <button type="button" class="btn @(Danger ? "btn-danger" : "btn-primary")" @onclick="ConfirmAsync">@ConfirmLabel</button>
+        </div>
+    </dialog>
+}
+
+@code {
+    private ElementReference _dialog;
+    private bool _shown;
+
+    [Parameter] public bool Open { get; set; }
+
+    [Parameter] public string Title { get; set; } = "";
+
+    [Parameter] public string? Text { get; set; }
+
+    [Parameter] public string ConfirmLabel { get; set; } = "Confirmer";
+
+    [Parameter] public string CancelLabel { get; set; } = "Annuler";
+
+    [Parameter] public bool Danger { get; set; }
+
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Open && !_shown)
+        {
+            _shown = true;
+            // showModal : focus piégé dans la boîte, Échap = annuler, fond inerte.
+            await JS.InvokeVoidAsync("mentoraAdmin.showDialog", _dialog);
+        }
+        else if (!Open)
+        {
+            _shown = false;
+        }
+    }
+
+    private Task ConfirmAsync() => OnConfirm.InvokeAsync();
+
+    private Task CancelAsync() => OnCancel.InvokeAsync();
+}

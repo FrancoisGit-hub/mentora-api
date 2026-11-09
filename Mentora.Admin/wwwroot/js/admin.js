@@ -53,6 +53,18 @@
         },
         syncTheme: function () { applyTheme(getMode()); },
 
+        // Boîte de dialogue native (focus piégé, Échap, fond inerte).
+        showDialog: function (el) {
+            try { if (el && !el.open && el.showModal) el.showModal(); } catch (e) { }
+        },
+        scrollTop: function () {
+            try { window.scrollTo(0, 0); } catch (e) { }
+        },
+        focusById: function (id) {
+            var el = document.getElementById(id);
+            if (el && el.focus) el.focus();
+        },
+
         getRefreshToken: function () { return readStorage(REFRESH_KEY); },
         setRefreshToken: function (value) { return writeStorage(REFRESH_KEY, value); },
         clearRefreshToken: function () { removeStorage(REFRESH_KEY); },

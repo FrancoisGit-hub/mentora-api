@@ -95,8 +95,15 @@ else
         ? "Catalogue Mentora : fiches d'exercices et vidéos de démonstration"
         : "Espace d'administration";
 
-    private bool IsExercises =>
-        new Uri(Nav.Uri).AbsolutePath.TrimEnd('/').Equals("/exercices", StringComparison.OrdinalIgnoreCase);
+    private bool IsExercises
+    {
+        get
+        {
+            var path = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
+            return path.Equals("/exercices", StringComparison.OrdinalIgnoreCase)
+                   || path.StartsWith("/exercices/", StringComparison.OrdinalIgnoreCase);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

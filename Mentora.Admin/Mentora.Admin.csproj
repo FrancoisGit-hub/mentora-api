@@ -12,6 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Les records de l'API sont lus par réflexion (System.Text.Json) : le linker ne doit pas les élaguer. -->
+    <TrimmerRootAssembly Include="Mentora.Admin" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Config locale de développement : jamais dans le dossier publié. -->
     <Content Update="wwwroot\appsettings.Development.json" CopyToPublishDirectory="Never" />
   </ItemGroup>

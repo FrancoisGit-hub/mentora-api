@@ -1,0 +1,27 @@
+<div id="@Id" class="chips" role="group" aria-labelledby="@LabelId">
+    @foreach (var item in Items)
+    {
+        var selected = Selected.Contains(item.Id);
+        var blocked = !selected && Selected.Count >= Max;
+        <button type="button" class="chip" aria-pressed="@(selected ? "true" : "false")"
+                disabled="@blocked" @onclick="() => OnToggle.InvokeAsync(item.Id)">@item.Name</button>
+    }
+</div>
+@if (Selected.Count >= Max)
+{
+    <div class="hint">@Max au maximum</div>
+}
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    [Parameter] public string? LabelId { get; set; }
+
+    [Parameter, EditorRequired] public IReadOnlyList<NamedRef> Items { get; set; } = [];
+
+    [Parameter, EditorRequired] public HashSet<Guid> Selected { get; set; } = [];
+
+    [Parameter] public int Max { get; set; } = int.MaxValue;
+
+    [Parameter] public EventCallback<Guid> OnToggle { get; set; }
+}

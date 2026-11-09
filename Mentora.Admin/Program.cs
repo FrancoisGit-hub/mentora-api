@@ -22,5 +22,8 @@ builder.Services.AddScoped<ApiTransport>();
 builder.Services.AddScoped<AdminSession>();
 builder.Services.AddScoped<ApiClient>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<ExercisesApi>();
+builder.Services.AddScoped<ReferencesCache>();
+builder.Services.AddScoped<ExerciseUiState>();
 
 await builder.Build().RunAsync();

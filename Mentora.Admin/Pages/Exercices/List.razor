@@ -1,0 +1,516 @@
+@page "/exercices"
+@layout ShellLayout
+@implements IDisposable
+@inject ExercisesApi Api
+@inject ReferencesCache RefCache
+@inject ExerciseUiState UiState
+@inject NavigationManager Nav
+
+<PageTitle>Exercices et vidéos · Mentora Admin</PageTitle>
+
+<div class="card pad">
+    <div class="toolbar" role="search">
+        <div class="tool tool-wide">
+            <label class="label" for="flt-search">Rechercher</label>
+            <input id="flt-search" class="input" type="search" maxlength="60" autocomplete="off"
+                   placeholder="Code, nom, nom anglais ou synonyme"
+                   value="@_search" @oninput="OnSearchInput" />
+            @if (_searchTooShort)
+            {
+                <div class="hint">Saisissez au moins 2 caractères pour rechercher.</div>
+            }
+        </div>
+
+        <div class="tool">
+            <label class="label" for="flt-category">Catégorie</label>
+            <select id="flt-category" class="input" @onchange="OnCategoryChanged">
+                <option value="" selected="@(_cat == "")">Toutes</option>
+                @foreach (var c in CategoryOptions)
+                {
+                    <option value="@c.Id" selected="@(_cat == c.Id.ToString())">@c.Label</option>
+                }
+            </select>
+        </div>
+
+        <div class="tool">
+            <label class="label" for="flt-muscle">Groupe musculaire</label>
+            <select id="flt-muscle" class="input" @onchange="OnMuscleChanged">
+                <option value="" selected="@(_mg == "")">Tous</option>
+                @if (_refs is not null)
+                {
+                    @foreach (var g in _refs.MuscleGroups)
+                    {
+                        <option value="@g.Id" selected="@(_mg == g.Id.ToString())">@g.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="tool">
+            <label class="label" for="flt-level">Niveau</label>
+            <select id="flt-level" class="input" @onchange="OnLevelChanged">
+                <option value="" selected="@(_lvl == "")">Tous</option>
+                @if (_refs is not null)
+                {
+                    @foreach (var l in _refs.Levels)
+                    {
+                        <option value="@l" selected="@(_lvl == l)">@ExerciseText.LevelLabel(l)</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="tool">
+            <label class="label" for="flt-state">État</label>
+            <select id="flt-state" class="input" @onchange="OnStateChanged">
+                <option value="" selected="@(_etat == "")">Tous</option>
+                <option value="actifs" selected="@(_etat == "actifs")">Actifs</option>
+                <option value="desactives" selected="@(_etat == "desactives")">Désactivés</option>
+            </select>
+        </div>
+
+        <div class="tool tool-check">
+            <label class="check">
+                <input type="checkbox" checked="@_reprendre" @onchange="OnReprendreChanged" />
+                <span>À reprendre seulement</span>
+            </label>
+        </div>
+
+        <div class="tool tool-action">
+            <button type="button" class="btn btn-primary" @onclick="GoCreate">Nouvel exercice</button>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_actionAlert))
+{
+    <div class="alert spaced" role="alert">@_actionAlert</div>
+}
+@if (!string.IsNullOrEmpty(_notice))
+{
+    <div class="info spaced" role="status">@_notice</div>
+}
+
+<div class="card spaced">
+    @if (_loading && _items.Count == 0)
+    {
+        <div class="tablewrap" aria-busy="true">
+            <p class="muted pad" role="status">Chargement…</p>
+            <table class="t t-list" aria-hidden="true">
+                <tbody>
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        <tr>
+                            <td><div class="skel"></div></td>
+                            <td><div class="skel"></div></td>
+                            <td><div class="skel"></div></td>
+                            <td><div class="skel"></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="pad">
+            <div class="alert" role="alert">@_error</div>
+            <button type="button" class="btn" @onclick="ReloadAsync">Réessayer</button>
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="pad muted">Aucun exercice ne correspond à ces filtres.</p>
+    }
+    else
+    {
+        <div class="tablewrap" role="region" aria-label="Liste des exercices" tabindex="0">
+            <table class="t t-list">
+                <thead>
+                    <tr>
+                        <th scope="col">Exercice</th>
+                        <th scope="col">Catégorie</th>
+                        <th scope="col">Groupe musculaire</th>
+                        <th scope="col">Niveau minimum</th>
+                        <th scope="col">Matériel</th>
+                        <th scope="col">Vidéo</th>
+                        <th scope="col">État</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr @key="item.ExerciseId">
+                            <td>
+                                <button type="button" class="linkbtn name-link" @onclick="() => Open(item.ExerciseId)">@item.Name</button>
+                                <div class="muted small"><span class="mono">@item.SourceCode</span></div>
+                            </td>
+                            <td>@Show(item.Category)</td>
+                            <td>@Show(item.PrimaryMuscleGroup)</td>
+                            <td>@ExerciseText.LevelLabel(item.Level)</td>
+                            <td>@Show(item.PrimaryEquipment)</td>
+                            <td>
+                                @if (item.HasVideo)
+                                {
+                                    <span class="badge">Avec vidéo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-muted">Sans vidéo</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge">Actif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-muted">Désactivé</span>
+                                }
+                                @if (item.HasLegacyValues)
+                                {
+                                    <span class="badge badge-warn">À reprendre</span>
+                                }
+                            </td>
+                            <td class="actions">
+                                <button type="button" class="btn btn-sm" @onclick="() => Open(item.ExerciseId)">Modifier</button>
+                                @if (item.IsActive)
+                                {
+                                    <button type="button" class="btn btn-sm" disabled="@(_busyId == item.ExerciseId)"
+                                            @onclick="() => AskDeactivate(item)">Désactiver</button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm" disabled="@(_busyId == item.ExerciseId)"
+                                            @onclick="() => ActivateAsync(item)">Activer</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="listfoot">
+            <span class="muted" role="status">@(_items.Count == 1 ? "1 exercice affiché" : $"{_items.Count} exercices affichés")</span>
+            @if (_next is not null)
+            {
+                <button type="button" class="btn btn-sm" disabled="@_loadingMore" @onclick="LoadMoreAsync">
+                    @(_loadingMore ? "Chargement…" : "Afficher plus")
+                </button>
+            }
+        </div>
+    }
+</div>
+
+<ConfirmDialog Open="@(_confirmItem is not null)"
+               Title="@($"Désactiver « {_confirmItem?.Name} » ?")"
+               Text="Il ne sera plus proposé dans les apps."
+               ConfirmLabel="Désactiver" CancelLabel="Annuler" Danger="true"
+               OnConfirm="ConfirmDeactivateAsync" OnCancel="CancelDeactivate" />
+
+@code {
+    private const int PageSize = 50;
+    private static readonly string[] KnownLevels = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
+
+    [SupplyParameterFromQuery(Name = "q")] public string? Q { get; set; }
+
+    // Toutes les valeurs de l'adresse sont lues en texte puis analysées ici : une valeur
+    // mal formée est ignorée (filtre non appliqué), jamais une exception.
+    [SupplyParameterFromQuery(Name = "categorie")] public string? Categorie { get; set; }
+
+    [SupplyParameterFromQuery(Name = "groupe")] public string? Groupe { get; set; }
+
+    [SupplyParameterFromQuery(Name = "niveau")] public string? Niveau { get; set; }
+
+    [SupplyParameterFromQuery(Name = "etat")] public string? Etat { get; set; }
+
+    [SupplyParameterFromQuery(Name = "reprendre")] public string? Reprendre { get; set; }
+
+    private Guid? _catGuid;
+    private Guid? _mgGuid;
+
+    private static Guid? ParseGuid(string? value) =>
+        Guid.TryParse(value, out var g) && g != Guid.Empty ? g : null;
+
+    private ExerciseReferences? _refs;
+    private readonly List<ExerciseListItem> _items = [];
+    private string? _next;
+    private string? _error;
+    private string? _actionAlert;
+    private string? _notice;
+    private bool _loading = true;
+    private bool _loadingMore;
+    private Guid? _busyId;
+    private ExerciseListItem? _confirmItem;
+
+    // Valeurs affichées dans les filtres (recopiées de l'adresse).
+    private string _search = "";
+    private string _cat = "";
+    private string _mg = "";
+    private string _lvl = "";
+    private string _etat = "";
+    private bool _reprendre;
+    private bool _searchTooShort;
+
+    private string? _key;
+    private string _lastSentQ = "";
+    private int _request;
+    private CancellationTokenSource? _debounce;
+
+    private IEnumerable<RefItem> CategoryOptions =>
+        _refs is null
+            ? []
+            : _refs.Categories.Where(c => c.IsActive || c.Id.ToString() == _cat);
+
+    private static string Show(string? value) => string.IsNullOrWhiteSpace(value) ? "Non renseigné" : value;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var level = Niveau is not null && KnownLevels.Contains(Niveau) ? Niveau : null;
+        var etat = Etat is "actifs" or "desactives" ? Etat : null;
+        var catGuid = ParseGuid(Categorie);
+        var mgGuid = ParseGuid(Groupe);
+        var reprendre = string.Equals(Reprendre, "true", StringComparison.OrdinalIgnoreCase);
+        if (Q is { Length: > 60 })
+            Q = Q[..60];
+        var key = $"{Q}|{catGuid}|{mgGuid}|{level}|{etat}|{reprendre}";
+
+        UiState.LastListUrl = Nav.ToBaseRelativePath(Nav.Uri);
+
+        if (key == _key)
+            return;
+        _key = key;
+
+        // Une adresse modifiée de l'extérieur (retour arrière) remplace le texte de recherche.
+        if ((Q ?? "") != _lastSentQ)
+        {
+            _search = Q ?? "";
+            _lastSentQ = Q ?? "";
+        }
+        _searchTooShort = false;
+        _catGuid = catGuid;
+        _mgGuid = mgGuid;
+        _cat = catGuid?.ToString() ?? "";
+        _mg = mgGuid?.ToString() ?? "";
+        _lvl = level ?? "";
+        _etat = etat ?? "";
+        _reprendre = reprendre;
+
+        await LoadFirstPageAsync();
+    }
+
+    private ExerciseFilter CurrentFilter()
+    {
+        var term = Q?.Trim();
+        return new ExerciseFilter(
+            term is { Length: >= 2 } ? term : null,
+            _catGuid,
+            _mgGuid,
+            _lvl.Length > 0 ? _lvl : null,
+            _etat switch { "actifs" => true, "desactives" => false, _ => null },
+            _reprendre ? true : null);
+    }
+
+    private async Task LoadFirstPageAsync()
+    {
+        var token = ++_request;
+        _loading = true;
+        _error = null;
+        _items.Clear();
+        _next = null;
+        _notice = null;
+        _actionAlert = null;
+        StateHasChanged();
+
+        var refsTask = RefCache.GetAsync();
+        var listTask = Api.ListAsync(CurrentFilter(), null, PageSize);
+        var refs = await refsTask;
+        var list = await listTask;
+        if (token != _request)
+            return;
+
+        _loading = false;
+        if (!refs.IsSuccess)
+        {
+            _error = ExerciseText.Failure(refs);
+            return;
+        }
+        _refs = refs.Data;
+
+        if (!list.IsSuccess || list.Data is null)
+        {
+            _error = ExerciseText.Failure(list);
+            return;
+        }
+        _items.AddRange(list.Data.Items);
+        _next = list.Data.NextCursor;
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        if (_loadingMore || _next is null)
+            return;
+
+        var token = _request;
+        _loadingMore = true;
+        _actionAlert = null;
+        try
+        {
+            var list = await Api.ListAsync(CurrentFilter(), _next, PageSize);
+            if (token != _request)
+                return;
+            if (!list.IsSuccess || list.Data is null)
+            {
+                _actionAlert = ExerciseText.Failure(list);
+                return;
+            }
+            var known = _items.Select(i => i.ExerciseId).ToHashSet();
+            _items.AddRange(list.Data.Items.Where(i => !known.Contains(i.ExerciseId)));
+            _next = list.Data.NextCursor;
+        }
+        finally
+        {
+            _loadingMore = false;
+        }
+    }
+
+    private Task ReloadAsync() => LoadFirstPageAsync();
+
+    // Filtres : tout passe par l'adresse (elle garde l'état au rechargement et au retour arrière).
+    private void Navigate(
+        string? q, string? categorie, string? groupe, string? niveau, string? etat, bool reprendre)
+    {
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["q"] = string.IsNullOrEmpty(q) ? null : q,
+            ["categorie"] = string.IsNullOrEmpty(categorie) ? null : categorie,
+            ["groupe"] = string.IsNullOrEmpty(groupe) ? null : groupe,
+            ["niveau"] = string.IsNullOrEmpty(niveau) ? null : niveau,
+            ["etat"] = string.IsNullOrEmpty(etat) ? null : etat,
+            ["reprendre"] = reprendre ? "true" : null
+        });
+        Nav.NavigateTo(uri, replace: true);
+    }
+
+    private static string Value(ChangeEventArgs e) => e.Value?.ToString() ?? "";
+
+    private void OnCategoryChanged(ChangeEventArgs e) =>
+        Navigate(Q, Value(e), _mg, _lvl, _etat, _reprendre);
+
+    private void OnMuscleChanged(ChangeEventArgs e) =>
+        Navigate(Q, _cat, Value(e), _lvl, _etat, _reprendre);
+
+    private void OnLevelChanged(ChangeEventArgs e) =>
+        Navigate(Q, _cat, _mg, Value(e), _etat, _reprendre);
+
+    private void OnStateChanged(ChangeEventArgs e) =>
+        Navigate(Q, _cat, _mg, _lvl, Value(e), _reprendre);
+
+    private void OnReprendreChanged(ChangeEventArgs e) =>
+        Navigate(Q, _cat, _mg, _lvl, _etat, e.Value is true);
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _search = Value(e);
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+        _debounce = new CancellationTokenSource();
+        _ = DebounceAsync(_debounce.Token);
+    }
+
+    private async Task DebounceAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(300, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+        await InvokeAsync(ApplySearch);
+    }
+
+    private void ApplySearch()
+    {
+        var term = _search.Trim();
+        _searchTooShort = term.Length == 1;
+        if (_searchTooShort)
+        {
+            StateHasChanged();
+            return;
+        }
+        if (term == (Q ?? ""))
+        {
+            StateHasChanged();
+            return;
+        }
+        _lastSentQ = term;
+        Navigate(term, _cat, _mg, _lvl, _etat, _reprendre);
+    }
+
+    private void GoCreate() => Nav.NavigateTo("exercices/nouveau");
+
+    private void Open(Guid id) => Nav.NavigateTo("exercices/" + id);
+
+    // Activation : la ligne est remplacée par la réponse, sans recharger la liste.
+    private void AskDeactivate(ExerciseListItem item) => _confirmItem = item;
+
+    private void CancelDeactivate() => _confirmItem = null;
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        var item = _confirmItem;
+        _confirmItem = null;
+        if (item is not null)
+            await SetActiveAsync(item, false);
+    }
+
+    private Task ActivateAsync(ExerciseListItem item) => SetActiveAsync(item, true);
+
+    private async Task SetActiveAsync(ExerciseListItem item, bool target)
+    {
+        if (_busyId is not null)
+            return;
+
+        _busyId = item.ExerciseId;
+        _actionAlert = null;
+        _notice = null;
+        try
+        {
+            var result = await Api.SetActivationAsync(item.ExerciseId, target);
+            if (result.IsSuccess && result.Data is { } detail)
+            {
+                var index = _items.FindIndex(i => i.ExerciseId == item.ExerciseId);
+                if (index >= 0)
+                    _items[index] = _items[index] with { IsActive = detail.IsActive, UpdatedDate = detail.UpdatedDate };
+                _notice = target ? $"« {item.Name} » est activé." : $"« {item.Name} » est désactivé.";
+            }
+            else if (result.Status == 409 && result.Error == "EXERCISE_IN_USE")
+            {
+                _actionAlert = ExerciseText.InUseMessage(result.Details);
+            }
+            else if (result.Status == 404)
+            {
+                _actionAlert = "Cet exercice n'existe plus.";
+            }
+            else
+            {
+                _actionAlert = ExerciseText.Failure(result);
+            }
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        _request++;
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+    }
+}
