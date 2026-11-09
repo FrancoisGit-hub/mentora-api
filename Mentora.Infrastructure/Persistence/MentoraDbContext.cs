@@ -18,6 +18,7 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
     public DbSet<AdminOtp> AdminOtps => Set<AdminOtp>();
     public DbSet<AdminRefreshToken> AdminRefreshTokens => Set<AdminRefreshToken>();
+    public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
 
     public DbSet<CoachParameter> CoachParameters => Set<CoachParameter>();
     public DbSet<MemberParameter> MemberParameters => Set<MemberParameter>();

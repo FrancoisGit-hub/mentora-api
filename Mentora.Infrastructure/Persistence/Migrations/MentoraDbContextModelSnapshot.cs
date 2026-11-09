@@ -23,6 +23,57 @@ namespace Mentora.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Mentora.Core.Entities.AdminAuditLog", b =>
+                {
+                    b.Property<Guid>("AdminAuditLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_AUDIT_LOG_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("AdminAuditLogAction")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ADMIN_AUDIT_LOG_ACTION");
+
+                    b.Property<Guid>("AdminAuditLogAdminUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_AUDIT_LOG_ADMIN_USER_ID");
+
+                    b.Property<string>("AdminAuditLogChanges")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("ADMIN_AUDIT_LOG_CHANGES");
+
+                    b.Property<DateTime>("AdminAuditLogCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_AUDIT_LOG_CREATED_DATE");
+
+                    b.Property<Guid>("AdminAuditLogEntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_AUDIT_LOG_ENTITY_ID");
+
+                    b.Property<string>("AdminAuditLogEntityType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ADMIN_AUDIT_LOG_ENTITY_TYPE");
+
+                    b.HasKey("AdminAuditLogId");
+
+                    b.HasIndex("AdminAuditLogAdminUserId")
+                        .HasDatabaseName("IX_ADMIN_AUDIT_LOG_ADMIN_USER");
+
+                    b.HasIndex("AdminAuditLogCreatedDate")
+                        .HasDatabaseName("IX_ADMIN_AUDIT_LOG_CREATED_DATE");
+
+                    b.HasIndex("AdminAuditLogEntityType", "AdminAuditLogEntityId", "AdminAuditLogCreatedDate")
+                        .HasDatabaseName("IX_ADMIN_AUDIT_LOG_ENTITY");
+
+                    b.ToTable("ADMIN_AUDIT_LOG", (string)null);
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.AdminOtp", b =>
                 {
                     b.Property<Guid>("AdminOtpId")
@@ -3142,6 +3193,18 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("USER_DEVICES", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.AdminAuditLog", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.AdminUser", "AdminUser")
+                        .WithMany()
+                        .HasForeignKey("AdminAuditLogAdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ADMIN_AUDIT_LOG_ADMIN_USER");
+
+                    b.Navigation("AdminUser");
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.AdminOtp", b =>

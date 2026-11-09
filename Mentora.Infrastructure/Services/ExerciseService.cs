@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using FluentValidation;
 using Mentora.Core.DTOs.Exercise;
 using Mentora.Core.Entities;
@@ -8,6 +6,7 @@ using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using static Mentora.Infrastructure.Services.ExerciseListPaging;
 
 namespace Mentora.Infrastructure.Services;
 
@@ -15,9 +14,6 @@ public class ExerciseService(
     MentoraDbContext db,
     IValidator<ExerciseRequest> validator) : IExerciseService
 {
-    private const int SearchMinLength = 2;
-    private const int SearchMaxLength = 60;
-
     public async Task<List<ExerciseResponse>> ListForCoachAsync(
         Guid coachId, string? search, string? muscleGroup, string? equipment,
         Guid? muscleGroupId, Guid? equipmentId, Guid? objectiveId, string? level,
@@ -152,19 +148,11 @@ public class ExerciseService(
         Guid memberId, Guid? muscleGroupId, Guid? equipmentId, Guid? objectiveId, string? level,
         string? search, int limit, string? cursor, CancellationToken ct)
     {
-        if (limit is < 1 or > 100)
-            throw new InvalidOperationException($"limit must be between 1 and 100 (got {limit}).");
+        ValidateLimit(limit);
 
         var maxLevel = ParseLevelFilter(level);
 
-        string? term = null;
-        if (search is not null)
-        {
-            term = search.Trim();
-            if (term.Length is < SearchMinLength or > SearchMaxLength)
-                throw new InvalidOperationException(
-                    $"search must be between {SearchMinLength} and {SearchMaxLength} characters (got {term.Length}).");
-        }
+        var term = NormalizeSearch(search);
 
         var query = ApplyCatalogFilters(VisibleToMember(memberId), muscleGroupId, equipmentId, objectiveId, maxLevel);
 
@@ -406,55 +394,7 @@ public class ExerciseService(
         return EnumMappings.ExerciseLevelMapping.Parse(normalized);
     }
 
-    // ── Cursor helpers ─────────────────────────────────────────────────────────
-
-    private static string EncodeCursor(string name, Guid exerciseId)
-    {
-        var payload = JsonSerializer.Serialize(new CursorPayload(name, exerciseId));
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(payload));
-    }
-
-    private static CursorPayload DecodeCursor(string cursor)
-    {
-        try
-        {
-            var json = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
-            var payload = JsonSerializer.Deserialize<CursorPayload>(json);
-            if (payload is null || payload.Name is null)
-                throw new InvalidOperationException("Invalid cursor.");
-            return payload;
-        }
-        catch (FormatException)   { throw new InvalidOperationException("Invalid cursor format."); }
-        catch (JsonException)     { throw new InvalidOperationException("Invalid cursor format."); }
-        catch (ArgumentException) { throw new InvalidOperationException("Invalid cursor format."); }
-    }
-
-    private sealed record CursorPayload(string Name, Guid ExerciseId);
-
-    // Search cursor: the position in the (rank, name, id) order. A cursor of the plain (name, id)
-    // format has no rank and is rejected like any cursor of the wrong shape.
-    private static string EncodeSearchCursor(int rank, string name, Guid exerciseId)
-    {
-        var payload = JsonSerializer.Serialize(new SearchCursorPayload(rank, name, exerciseId));
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(payload));
-    }
-
-    private static SearchCursorPayload DecodeSearchCursor(string cursor)
-    {
-        try
-        {
-            var json = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
-            var payload = JsonSerializer.Deserialize<SearchCursorPayload>(json);
-            if (payload is null || payload.Name is null || payload.Rank is not (>= 0 and <= ExerciseSearch.MaxRank))
-                throw new InvalidOperationException("Invalid cursor.");
-            return payload;
-        }
-        catch (FormatException)   { throw new InvalidOperationException("Invalid cursor format."); }
-        catch (JsonException)     { throw new InvalidOperationException("Invalid cursor format."); }
-        catch (ArgumentException) { throw new InvalidOperationException("Invalid cursor format."); }
-    }
-
-    private sealed record SearchCursorPayload(int? Rank, string Name, Guid ExerciseId);
+    // Cursor, limit and search term handling: ExerciseListPaging (shared with the admin list).
 
     private sealed record ListRow(
         Guid ExerciseId, string ExerciseName, ExerciseLevel? ExerciseMinLevel,

@@ -647,28 +647,17 @@ public static class CatalogSeeder
 
     // ── Legacy columns (new exercises only) ─────────────────────────────────────
 
-    private static MuscleGroup LegacyMuscleGroup(string? category, GroupResolution resolution)
-    {
-        if (category != null && category.Contains("cardio", StringComparison.OrdinalIgnoreCase))
-            return MuscleGroup.Cardio;
-        if (resolution.Group is { } group)
-        {
-            if (string.Equals(group.MuscleGroupName, "Bras", StringComparison.OrdinalIgnoreCase)
-                && resolution.PrincipalMuscle?.Contains("triceps", StringComparison.OrdinalIgnoreCase) == true)
-                return MuscleGroup.Triceps;
-            if (MuscleGroupFromCode(group.MuscleGroupLegacyCode) is { } legacy)
-                return legacy;
-        }
-        return MuscleGroup.FullBody;
-    }
+    // The muscle group rule and the code mappings live in LegacyExerciseColumns (shared with the admin API).
+    private static MuscleGroup LegacyMuscleGroup(string? category, GroupResolution resolution) =>
+        LegacyExerciseColumns.MuscleGroupFor(category, resolution.Group, resolution.PrincipalMuscle);
 
     private static Equipment LegacyEquipment(EquipmentItem? primary, string? primaryRaw)
     {
         if (primary != null)
-            return EquipmentFromCode(primary.EquipmentLegacyCode) ?? Equipment.Other;
+            return LegacyExerciseColumns.EquipmentFor(primary);
         if (primaryRaw is null)
             return Equipment.Bodyweight;
-        return EquipmentFromCode(MapEquipmentKeywords(RawEquipmentKeywords, primaryRaw)) ?? Equipment.Other;
+        return LegacyExerciseColumns.EquipmentFromCode(MapEquipmentKeywords(RawEquipmentKeywords, primaryRaw)) ?? Equipment.Other;
     }
 
     private static string? MapEquipmentKeywords((string Keyword, string Code)[] keywords, params string?[] fields)
@@ -683,37 +672,6 @@ public static class CatalogSeeder
         }
         return null;
     }
-
-    private static MuscleGroup? MuscleGroupFromCode(string? code) => code switch
-    {
-        "CHEST"      => MuscleGroup.Chest,
-        "BACK"       => MuscleGroup.Back,
-        "SHOULDERS"  => MuscleGroup.Shoulders,
-        "BICEPS"     => MuscleGroup.Biceps,
-        "TRICEPS"    => MuscleGroup.Triceps,
-        "FOREARMS"   => MuscleGroup.Forearms,
-        "ABS"        => MuscleGroup.Abs,
-        "QUADRICEPS" => MuscleGroup.Quadriceps,
-        "HAMSTRINGS" => MuscleGroup.Hamstrings,
-        "GLUTES"     => MuscleGroup.Glutes,
-        "CALVES"     => MuscleGroup.Calves,
-        "FULL_BODY"  => MuscleGroup.FullBody,
-        "CARDIO"     => MuscleGroup.Cardio,
-        _            => null,
-    };
-
-    private static Equipment? EquipmentFromCode(string? code) => code switch
-    {
-        "BODYWEIGHT" => Equipment.Bodyweight,
-        "BARBELL"    => Equipment.Barbell,
-        "DUMBBELL"   => Equipment.Dumbbell,
-        "KETTLEBELL" => Equipment.Kettlebell,
-        "MACHINE"    => Equipment.Machine,
-        "CABLE"      => Equipment.Cable,
-        "ELASTIC"    => Equipment.Elastic,
-        "OTHER"      => Equipment.Other,
-        _            => null,
-    };
 
     // ── CSV and text helpers ────────────────────────────────────────────────────
 

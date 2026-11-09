@@ -255,6 +255,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Lot 12.1 — admin authentication
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 
+// Lot 12.2b — admin exercise catalog (validators are registered by AddValidatorsFromAssemblyContaining above)
+builder.Services.AddScoped<IAdminExerciseService, AdminExerciseService>();
+
 // Lot 2.1
 builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
 builder.Services.AddScoped<ICoachSessionPreferencesService, CoachSessionPreferencesService>();
