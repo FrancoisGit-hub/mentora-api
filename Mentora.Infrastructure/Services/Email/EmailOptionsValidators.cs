@@ -22,3 +22,13 @@ public sealed class EmailRoutingOptionsValidator : IValidateOptions<EmailRouting
         return error == null ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(error);
     }
 }
+
+/// <summary>Lot 12.1. Failure messages never contain an address or a secret.</summary>
+public sealed class AdminAuthOptionsValidator : IValidateOptions<AdminAuthOptions>
+{
+    public ValidateOptionsResult Validate(string? name, AdminAuthOptions options)
+    {
+        var error = options.Validate();
+        return error == null ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(error);
+    }
+}

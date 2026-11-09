@@ -15,6 +15,7 @@ using Mentora.Core.Settings;
 using Mentora.Infrastructure.Persistence;
 using Mentora.Infrastructure.Seeding;
 using Mentora.Infrastructure.Services;
+using Mentora.Infrastructure.Services.Admin;
 using Mentora.Infrastructure.Services.Email;
 using Mentora.Infrastructure.Services.Quiz;
 using Mentora.Infrastructure.Services.Visio;
@@ -48,6 +49,13 @@ builder.Services.AddSwaggerGen(c =>
         Title = "Mentora API — Internal",
         Version = "v1",
         Description = "Internal endpoints: health checks, webhooks, debug, monitoring. Not consumed by clients."
+    });
+    // Lot 12.1 — admin back-office (Mentora associates), own JWT scheme AdminBearer
+    c.SwaggerDoc(AdminAuthDefaults.SwaggerDoc, new OpenApiInfo
+    {
+        Title = "Mentora API — Admin",
+        Version = "v1",
+        Description = "Endpoints consumed by the Mentora admin back-office (associates only, AdminBearer tokens)."
     });
 
     // Endpoints without an explicit GroupName default to "internal" (safe: least exposed)
@@ -98,10 +106,23 @@ builder.Services.AddSwaggerGen(c =>
         }
     };
     c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, jwtScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    c.AddSecurityDefinition(AdminAuthDefaults.Scheme, new OpenApiSecurityScheme
     {
-        { jwtScheme, [] }
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your admin JWT access token.",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = AdminAuthDefaults.Scheme
+        }
     });
+    // Lot 12.1 — document-level requirement per doc (Bearer for mobile/coach/internal,
+    // AdminBearer for admin); replaces the former global AddSecurityRequirement.
+    c.DocumentFilter<SecuritySchemePerDocumentFilter>();
 
     var xmlFiles = new[]
     {
@@ -175,11 +196,45 @@ builder.Services
                 return Task.CompletedTask;
             }
         };
+    })
+    // Lot 12.1 — admin tokens: separate scheme, never the default. Key, issuer and audience come
+    // from AdminAuthOptions (configured below, resolved after the startup validation).
+    .AddJwtBearer(AdminAuthDefaults.Scheme, options =>
+    {
+        options.MapInboundClaims = false;
+    });
+
+builder.Services.AddOptions<AdminAuthOptions>()
+    .Bind(builder.Configuration.GetSection(AdminAuthOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<AdminAuthOptions>, AdminAuthOptionsValidator>();
+builder.Services.AddOptions<JwtBearerOptions>(AdminAuthDefaults.Scheme)
+    .Configure<IOptions<AdminAuthOptions>>((options, adminOptions) =>
+    {
+        var admin = adminOptions.Value;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = admin.JwtIssuer,
+            ValidAudience = admin.JwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(admin.JwtSecret)),
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            ClockSkew = TimeSpan.Zero
+        };
     });
 
 // Authorization policies — see AuthService.GenerateAccessToken for claim definitions
 builder.Services.AddAuthorization(options =>
 {
+    // Lot 12.1 — admin routes: AdminBearer only (an app token is rejected with 401).
+    options.AddPolicy(AdminAuthDefaults.Policy, policy =>
+        policy.AddAuthenticationSchemes(AdminAuthDefaults.Scheme)
+              .RequireAuthenticatedUser()
+              .RequireClaim(AdminAuthDefaults.AdminIdClaim));
+
     options.AddPolicy("CoachOnly", policy =>
         policy.RequireClaim("userType", "COACH", "BOTH"));
 
@@ -196,6 +251,9 @@ builder.Services.AddSingleton<IAuthorizationHandler, QuizPlayerHandler>();
 
 // Lot 1
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Lot 12.1 — admin authentication
+builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 
 // Lot 2.1
 builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
@@ -285,7 +343,11 @@ builder.Services.AddOptions<QuizOptions>()
     .ValidateOnStart();
 builder.Services.AddScoped<IQuizBasicService, QuizBasicService>();
 builder.Services.AddScoped<IQuizDeviceClaimService, QuizDeviceClaimService>();
-builder.Services.AddRateLimiter(o => o.AddQuizPolicy());
+builder.Services.AddRateLimiter(o =>
+{
+    o.AddQuizPolicy();
+    o.AddAdminAuthPolicy(); // Lot 12.1 — shares the 429 envelope set by AddQuizPolicy
+});
 
 // Lot 3.3 — SignalR (enum serialization mirrors the REST JSON convention)
 builder.Services.AddSignalR()
@@ -389,6 +451,20 @@ var app = builder.Build();
         routingOpts.TestRecipientList.Count, routingOpts.ProductionBccList.Count);
 }
 
+// Lot 12.1 — same for the admin authentication: .Value runs AdminAuthOptionsValidator, then the
+// admin key and audience must differ from the app ones. Messages and log line carry no value.
+{
+    var adminOpts = app.Services.GetRequiredService<IOptions<AdminAuthOptions>>().Value;
+    var appJwt = app.Services.GetRequiredService<IOptions<JwtSettings>>().Value;
+    if (string.Equals(adminOpts.JwtSecret, appJwt.Secret, StringComparison.Ordinal))
+        throw new InvalidOperationException("AdminAuth:JwtSecret must differ from Jwt:Secret.");
+    if (string.Equals(adminOpts.JwtAudience, appJwt.Audience, StringComparison.Ordinal))
+        throw new InvalidOperationException("AdminAuth:JwtAudience must differ from Jwt:Audience.");
+    app.Logger.LogInformation(
+        "[ADMIN] auth emails={Emails} accessMinutes={AccessMinutes} refreshHours={RefreshHours}",
+        adminOpts.EmailList.Count, adminOpts.AccessTokenMinutes, adminOpts.RefreshTokenHours);
+}
+
 // Auto-migrate and seed at startup
 await using (var scope = app.Services.CreateAsyncScope())
 {
@@ -402,6 +478,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await CatalogSeeder.SeedAsync(scope.ServiceProvider);
     await ProgramTemplateSeeder.SeedAsync(scope.ServiceProvider);
     await QuizQuestionSeeder.SeedAsync(scope.ServiceProvider);
+    await AdminUserSeeder.SeedAsync(scope.ServiceProvider); // Lot 12.1
 }
 
 // Must run first so downstream middleware (and Request.Scheme in URL generation) see the
@@ -417,6 +494,7 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/mobile/swagger.json",   "Mobile API");
     c.SwaggerEndpoint("/swagger/coach/swagger.json",    "Coach Back-Office API");
     c.SwaggerEndpoint("/swagger/internal/swagger.json", "Internal API");
+    c.SwaggerEndpoint("/swagger/admin/swagger.json",    "Admin API");
     c.RoutePrefix    = "swagger";
     c.DocumentTitle  = "Mentora API";
 });

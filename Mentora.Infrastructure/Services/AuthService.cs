@@ -170,7 +170,9 @@ public class AuthService(
             .FirstOrDefaultAsync(r =>
                 r.AuthRefreshTokenId == tokenId &&
                 !r.AuthRefreshTokenIsRevoked &&
-                r.AuthRefreshTokenExpirationDate > DateTime.UtcNow)
+                r.AuthRefreshTokenExpirationDate > DateTime.UtcNow &&
+                r.User.UserIsEnabled) // Lot 12.1 (12.D) — a disabled user cannot renew
+
             ?? throw new UnauthorizedException("Invalid or expired refresh token.");
 
         if (!BCrypt.Net.BCrypt.Verify(rawSecret, record.AuthRefreshTokenHash))
@@ -329,13 +331,9 @@ public class AuthService(
         return true;
     }
 
+    // Lot 12.1 — uniform over [100000, 999999]; the former Math.Abs(int.MinValue) path could overflow.
     private static string GenerateOtp()
-    {
-        Span<byte> bytes = stackalloc byte[4];
-        RandomNumberGenerator.Fill(bytes);
-        var value = Math.Abs(BitConverter.ToInt32(bytes)) % 900_000 + 100_000;
-        return value.ToString();
-    }
+        => RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
 
     private static string GenerateSecureRandom()
     {

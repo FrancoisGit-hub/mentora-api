@@ -23,6 +23,129 @@ namespace Mentora.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Mentora.Core.Entities.AdminOtp", b =>
+                {
+                    b.Property<Guid>("AdminOtpId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_OTP_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("AdminOtpAdminUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_OTP_ADMIN_USER_ID");
+
+                    b.Property<string>("AdminOtpCodeHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("ADMIN_OTP_CODE_HASH");
+
+                    b.Property<DateTime>("AdminOtpCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_OTP_CREATED_DATE");
+
+                    b.Property<DateTime>("AdminOtpExpirationDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_OTP_EXPIRATION_DATE");
+
+                    b.Property<int>("AdminOtpFailedAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("ADMIN_OTP_FAILED_ATTEMPTS");
+
+                    b.Property<bool>("AdminOtpIsUsed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ADMIN_OTP_IS_USED");
+
+                    b.HasKey("AdminOtpId");
+
+                    b.HasIndex("AdminOtpAdminUserId")
+                        .HasDatabaseName("IX_ADMIN_OTPS_ADMIN_USER");
+
+                    b.ToTable("ADMIN_OTPS", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.AdminRefreshToken", b =>
+                {
+                    b.Property<Guid>("AdminRefreshTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_REFRESH_TOKEN_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("AdminRefreshTokenAdminUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_REFRESH_TOKEN_ADMIN_USER_ID");
+
+                    b.Property<DateTime>("AdminRefreshTokenCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_REFRESH_TOKEN_CREATED_DATE");
+
+                    b.Property<DateTime>("AdminRefreshTokenExpirationDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_REFRESH_TOKEN_EXPIRATION_DATE");
+
+                    b.Property<string>("AdminRefreshTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("ADMIN_REFRESH_TOKEN_HASH");
+
+                    b.Property<bool>("AdminRefreshTokenIsRevoked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ADMIN_REFRESH_TOKEN_IS_REVOKED");
+
+                    b.Property<DateTime?>("AdminRefreshTokenRevokedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_REFRESH_TOKEN_REVOKED_DATE");
+
+                    b.HasKey("AdminRefreshTokenId");
+
+                    b.HasIndex("AdminRefreshTokenAdminUserId")
+                        .HasDatabaseName("IX_ADMIN_REFRESH_TOKENS_ADMIN_USER");
+
+                    b.ToTable("ADMIN_REFRESH_TOKENS", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.AdminUser", b =>
+                {
+                    b.Property<Guid>("AdminUserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("ADMIN_USER_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("AdminUserCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_USER_CREATED_DATE");
+
+                    b.Property<string>("AdminUserEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("ADMIN_USER_EMAIL");
+
+                    b.Property<bool>("AdminUserIsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ADMIN_USER_IS_ENABLED");
+
+                    b.Property<DateTime?>("AdminUserLastLoginDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_USER_LAST_LOGIN_DATE");
+
+                    b.Property<DateTime>("AdminUserUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ADMIN_USER_UPDATED_DATE");
+
+                    b.HasKey("AdminUserId");
+
+                    b.HasIndex("AdminUserEmail")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ADMIN_USERS_EMAIL");
+
+                    b.ToTable("ADMIN_USERS", (string)null);
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.AgentToken", b =>
                 {
                     b.Property<Guid>("AgentTokenId")
@@ -2651,6 +2774,28 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.ToTable("USER_DEVICES", (string)null);
                 });
 
+            modelBuilder.Entity("Mentora.Core.Entities.AdminOtp", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.AdminUser", "AdminUser")
+                        .WithMany("AdminOtps")
+                        .HasForeignKey("AdminOtpAdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AdminUser");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.AdminRefreshToken", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.AdminUser", "AdminUser")
+                        .WithMany("AdminRefreshTokens")
+                        .HasForeignKey("AdminRefreshTokenAdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AdminUser");
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.AgentToken", b =>
                 {
                     b.HasOne("Mentora.Core.Entities.Coach", "Coach")
@@ -3233,6 +3378,13 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.AdminUser", b =>
+                {
+                    b.Navigation("AdminOtps");
+
+                    b.Navigation("AdminRefreshTokens");
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.Cart", b =>

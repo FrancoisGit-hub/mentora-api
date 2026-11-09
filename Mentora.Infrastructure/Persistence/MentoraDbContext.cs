@@ -13,6 +13,12 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<AuthOtp> AuthOtps => Set<AuthOtp>();
     public DbSet<AuthRefreshToken> AuthRefreshTokens => Set<AuthRefreshToken>();
     public DbSet<AgentToken> AgentTokens => Set<AgentToken>();
+
+    // Lot 12.1 — admin back-office authentication (separate from USERS)
+    public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
+    public DbSet<AdminOtp> AdminOtps => Set<AdminOtp>();
+    public DbSet<AdminRefreshToken> AdminRefreshTokens => Set<AdminRefreshToken>();
+
     public DbSet<CoachParameter> CoachParameters => Set<CoachParameter>();
     public DbSet<MemberParameter> MemberParameters => Set<MemberParameter>();
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();
