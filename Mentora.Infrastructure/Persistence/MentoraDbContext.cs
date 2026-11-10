@@ -45,6 +45,7 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<Objective> Objectives => Set<Objective>();
     public DbSet<ExerciseObjective> ExerciseObjectives => Set<ExerciseObjective>();
     public DbSet<ExerciseVideo> ExerciseVideos => Set<ExerciseVideo>();
+    public DbSet<MuxWebhookEvent> MuxWebhookEvents => Set<MuxWebhookEvent>(); // Lot 12.3a
 
     // Lot 12.2a — closed reference lists, secondary muscle links, one-time data patches
     public DbSet<ExerciseCategoryItem> ExerciseCategories => Set<ExerciseCategoryItem>();

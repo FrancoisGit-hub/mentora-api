@@ -18,6 +18,7 @@ using Mentora.Infrastructure.Seeding;
 using Mentora.Infrastructure.Services;
 using Mentora.Infrastructure.Services.Admin;
 using Mentora.Infrastructure.Services.Email;
+using Mentora.Infrastructure.Services.Mux;
 using Mentora.Infrastructure.Services.Quiz;
 using Mentora.Infrastructure.Services.Visio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -263,6 +264,21 @@ builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 // Lot 12.2b — admin exercise catalog (validators are registered by AddValidatorsFromAssemblyContaining above)
 builder.Services.AddScoped<IAdminExerciseService, AdminExerciseService>();
 
+// Lot 12.3a — MUX videos. Settings from the environment variables Mux__* only; .Value is read before the
+// migrations (below) so a bad setup stops the API first. Empty settings are allowed in Development only
+// (the admin video routes and the webhook then answer 503 MUX_NOT_CONFIGURED).
+builder.Services.AddOptions<MuxOptions>()
+    .Bind(builder.Configuration.GetSection(MuxOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<MuxOptions>, MuxOptionsValidator>();
+builder.Services.AddHttpClient<IMuxClient, MuxClient>((sp, client) =>
+{
+    client.BaseAddress = new Uri(sp.GetRequiredService<IOptions<MuxOptions>>().Value.ApiBaseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddScoped<IAdminExerciseVideoService, AdminExerciseVideoService>();
+builder.Services.AddScoped<IMuxWebhookService, MuxWebhookService>();
+
 // Lot 2.1
 builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
 builder.Services.AddScoped<ICoachSessionPreferencesService, CoachSessionPreferencesService>();
@@ -480,6 +496,15 @@ var app = builder.Build();
         configuredOrigins.Count, app.Environment.IsDevelopment());
     foreach (var origin in configuredOrigins.Where(o => !Mentora.Core.Options.CorsOptions.IsLocalhostOrigin(o)))
         app.Logger.LogInformation("[CORS] origin {Origin}", origin);
+}
+
+// Lot 12.3a: .Value runs MuxOptionsValidator now (before migrations). The line never prints a token or a secret.
+{
+    var muxOpts = app.Services.GetRequiredService<IOptions<MuxOptions>>().Value;
+    app.Logger.LogInformation("[MUX] configured={Configured} corsOrigin={CorsOrigin} apiBase={ApiBase}",
+        muxOpts.IsConfigured,
+        muxOpts.IsConfigured ? muxOpts.NormalizedCorsOrigin : "none",
+        new Uri(muxOpts.ApiBaseUrl).Host);
 }
 
 // Lot 12.1 — same for the admin authentication: .Value runs AdminAuthOptionsValidator, then the

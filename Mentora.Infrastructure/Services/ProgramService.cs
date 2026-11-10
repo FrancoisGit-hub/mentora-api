@@ -10,6 +10,7 @@ using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Validators.Program;
 using Mentora.Infrastructure.Persistence;
+using Mentora.Infrastructure.Services.Mux;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mentora.Infrastructure.Services;
@@ -749,8 +750,9 @@ public class ProgramService(
             : [];
 
         var exerciseIds = exercises.Select(e => e.ProgramExerciseExerciseId).Distinct().ToList();
+        // Lot 12.3a: the video comes in the same statement (LEFT JOIN), so the count stays constant.
         var exerciseDetails = exerciseIds.Count > 0
-            ? await db.Exercises.AsNoTracking().Where(e => exerciseIds.Contains(e.ExerciseId)).ToDictionaryAsync(e => e.ExerciseId, ct)
+            ? await db.Exercises.AsNoTracking().Include(e => e.Video).Where(e => exerciseIds.Contains(e.ExerciseId)).ToDictionaryAsync(e => e.ExerciseId, ct)
             : new Dictionary<Guid, Exercise>();
 
         var lastPerformedByExercise = await ResolveLastPerformedAsync(
@@ -894,10 +896,10 @@ public class ProgramService(
         var circuits  = await db.ProgramCircuits.AsNoTracking().Where(c => c.ProgramCircuitProgramId == programId).ToListAsync(ct);
         var exercises = await db.ProgramExercises.AsNoTracking().Where(e => e.ProgramExerciseProgramId == programId).ToListAsync(ct);
 
-        // Resolve every referenced exercise in ONE query for the whole tree.
+        // Resolve every referenced exercise in ONE query for the whole tree (video included, Lot 12.3a).
         var exerciseIds = exercises.Select(e => e.ProgramExerciseExerciseId).Distinct().ToList();
         var exerciseDetails = exerciseIds.Count > 0
-            ? await db.Exercises.AsNoTracking().Where(e => exerciseIds.Contains(e.ExerciseId)).ToDictionaryAsync(e => e.ExerciseId, ct)
+            ? await db.Exercises.AsNoTracking().Include(e => e.Video).Where(e => exerciseIds.Contains(e.ExerciseId)).ToDictionaryAsync(e => e.ExerciseId, ct)
             : new Dictionary<Guid, Exercise>();
 
         // AUTHORITY RULE (Lot 6.5): once a session is linked, SESSIONS.SESSION_SCHEDULED_AT is the
@@ -1025,7 +1027,9 @@ public class ProgramService(
                     e.ProgramExerciseActualWeightKg,
                     e.ProgramExerciseActualRpe,
                     e.ProgramExerciseMemberFeedback,
-                    lastPerformed);
+                    lastPerformed,
+                    // Lot 12.3a (1A, 2A): READY with a playback id only, else null.
+                    ExerciseVideoMapping.ForApps(detail?.Video));
             }).ToList();
 
     private static List<ProgramCircuitResponse> BuildCircuitResponses(

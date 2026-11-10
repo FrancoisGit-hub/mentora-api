@@ -96,6 +96,7 @@ public record AdminExerciseListItem(
     string? Level,
     bool IsActive,
     bool HasVideo,
+    string? VideoStatus,
     bool HasLegacyValues,
     DateTime UpdatedDate);
 
@@ -141,7 +142,7 @@ public record AdminExerciseResponse(
     string? CoachTip,
     string? SearchTags,
     IReadOnlyList<AdminNamedRef> Objectives,
-    ExerciseVideoResponse? Video,
+    AdminExerciseVideoResponse? Video,
     bool IsActive,
     AdminExerciseUsage Usage,
     DateTime CreatedDate,

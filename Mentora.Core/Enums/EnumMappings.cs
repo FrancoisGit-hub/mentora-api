@@ -441,22 +441,45 @@ public static class EnumMappings
     public static class ExerciseVideoStatusMapping
     {
         public static readonly ReadOnlyCollection<string> WireValues =
-            new(["WAITING", "READY", "ERRORED"]);
+            new(["UPLOADING", "WAITING", "READY", "ERRORED"]);
 
         public static ExerciseVideoStatus Parse(string value)
         {
-            if (value == "WAITING") return ExerciseVideoStatus.Waiting;
-            if (value == "READY")   return ExerciseVideoStatus.Ready;
-            if (value == "ERRORED") return ExerciseVideoStatus.Errored;
+            if (value == "UPLOADING") return ExerciseVideoStatus.Uploading;
+            if (value == "WAITING")   return ExerciseVideoStatus.Waiting;
+            if (value == "READY")     return ExerciseVideoStatus.Ready;
+            if (value == "ERRORED")   return ExerciseVideoStatus.Errored;
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ExerciseVideoStatus wire value.");
         }
 
         public static string ToWire(ExerciseVideoStatus value)
         {
-            if (value == ExerciseVideoStatus.Waiting) return "WAITING";
-            if (value == ExerciseVideoStatus.Ready)   return "READY";
-            if (value == ExerciseVideoStatus.Errored) return "ERRORED";
+            if (value == ExerciseVideoStatus.Uploading) return "UPLOADING";
+            if (value == ExerciseVideoStatus.Waiting)   return "WAITING";
+            if (value == ExerciseVideoStatus.Ready)     return "READY";
+            if (value == ExerciseVideoStatus.Errored)   return "ERRORED";
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown ExerciseVideoStatus enum value.");
+        }
+    }
+
+    /// <summary>Lot 12.3a — MUX_WEBHOOK_EVENT_STATUS (VARCHAR(10)).</summary>
+    public static class MuxWebhookEventStatusMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["PROCESSED", "IGNORED"]);
+
+        public static MuxWebhookEventStatus Parse(string value)
+        {
+            if (value == "PROCESSED") return MuxWebhookEventStatus.Processed;
+            if (value == "IGNORED")   return MuxWebhookEventStatus.Ignored;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MuxWebhookEventStatus wire value.");
+        }
+
+        public static string ToWire(MuxWebhookEventStatus value)
+        {
+            if (value == MuxWebhookEventStatus.Processed) return "PROCESSED";
+            if (value == MuxWebhookEventStatus.Ignored)   return "IGNORED";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MuxWebhookEventStatus enum value.");
         }
     }
 

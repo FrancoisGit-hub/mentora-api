@@ -1104,12 +1104,16 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(8,2)")
                         .HasColumnName("EXERCISE_VIDEO_DURATION_SECONDS");
 
+                    b.Property<string>("ExerciseVideoError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("EXERCISE_VIDEO_ERROR");
+
                     b.Property<Guid>("ExerciseVideoExerciseId")
                         .HasColumnType("uuid")
                         .HasColumnName("EXERCISE_VIDEO_EXERCISE_ID");
 
                     b.Property<string>("ExerciseVideoMuxAssetId")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("EXERCISE_VIDEO_MUX_ASSET_ID");
@@ -1118,6 +1122,11 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("EXERCISE_VIDEO_MUX_PLAYBACK_ID");
+
+                    b.Property<string>("ExerciseVideoMuxUploadId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("EXERCISE_VIDEO_MUX_UPLOAD_ID");
 
                     b.Property<string>("ExerciseVideoPlaybackPolicy")
                         .IsRequired()
@@ -1139,6 +1148,10 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("EXERCISE_VIDEO_UPDATED_DATE");
 
+                    b.Property<DateTime?>("ExerciseVideoUploadExpiresDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("EXERCISE_VIDEO_UPLOAD_EXPIRES_DATE");
+
                     b.HasKey("ExerciseVideoId");
 
                     b.HasIndex("ExerciseVideoExerciseId")
@@ -1148,6 +1161,10 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.HasIndex("ExerciseVideoMuxAssetId")
                         .IsUnique()
                         .HasDatabaseName("UX_EXERCISE_VIDEOS_MUX_ASSET");
+
+                    b.HasIndex("ExerciseVideoMuxUploadId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EXERCISE_VIDEOS_MUX_UPLOAD");
 
                     b.ToTable("EXERCISE_VIDEOS", (string)null);
                 });
@@ -1538,6 +1555,63 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("UX_MUSCLE_GROUPS_NAME");
 
                     b.ToTable("MUSCLE_GROUPS", (string)null);
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.MuxWebhookEvent", b =>
+                {
+                    b.Property<Guid>("MuxWebhookEventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("MuxWebhookEventCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_CREATED_DATE");
+
+                    b.Property<string>("MuxWebhookEventMuxId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_MUX_ID");
+
+                    b.Property<string>("MuxWebhookEventObjectId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_OBJECT_ID");
+
+                    b.Property<string>("MuxWebhookEventPayload")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_PAYLOAD");
+
+                    b.Property<string>("MuxWebhookEventResult")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_RESULT");
+
+                    b.Property<string>("MuxWebhookEventStatus")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_STATUS");
+
+                    b.Property<string>("MuxWebhookEventType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("MUX_WEBHOOK_EVENT_TYPE");
+
+                    b.HasKey("MuxWebhookEventId");
+
+                    b.HasIndex("MuxWebhookEventCreatedDate")
+                        .HasDatabaseName("IX_MUX_WEBHOOK_EVENTS_CREATED_DATE");
+
+                    b.HasIndex("MuxWebhookEventMuxId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_MUX_WEBHOOK_EVENTS_MUX_ID");
+
+                    b.ToTable("MUX_WEBHOOK_EVENTS", (string)null);
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.Objective", b =>

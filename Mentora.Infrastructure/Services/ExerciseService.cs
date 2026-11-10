@@ -5,6 +5,7 @@ using Mentora.Core.Enums;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Infrastructure.Persistence;
+using Mentora.Infrastructure.Services.Mux;
 using Microsoft.EntityFrameworkCore;
 using static Mentora.Infrastructure.Services.ExerciseListPaging;
 
@@ -442,12 +443,7 @@ public class ExerciseService(
             .Select(o => new ExerciseObjectiveRef(o.ExerciseObjectiveObjectiveId, o.Objective.ObjectiveName))
             .OrderBy(o => o.Name, StringComparer.OrdinalIgnoreCase)
             .ToList(),
-        e.Video is null
-            ? null
-            : new ExerciseVideoResponse(
-                e.Video.ExerciseVideoMuxPlaybackId,
-                EnumMappings.ExerciseVideoStatusMapping.ToWire(e.Video.ExerciseVideoStatus),
-                e.Video.ExerciseVideoDurationSeconds,
-                e.Video.ExerciseVideoAspectRatio)
+        // Lot 12.3a (2A): the apps get the video only when READY with a playback id.
+        ExerciseVideoMapping.ForApps(e.Video)
     );
 }

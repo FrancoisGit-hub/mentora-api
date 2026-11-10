@@ -54,6 +54,17 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
                 errors
             });
         }
+        catch (MuxUnavailableException ex)
+        {
+            // Lot 12.3a — MuxClient already logged the operation, status code and request id (no URL, no body).
+            logger.LogWarning("MUX unavailable: {Message}", ex.Message);
+            await WriteResponseAsync(context, 502, "MUX_UNAVAILABLE");
+        }
+        catch (MuxNotConfiguredException)
+        {
+            logger.LogWarning("MUX feature called while MUX is not configured");
+            await WriteResponseAsync(context, 503, "MUX_NOT_CONFIGURED");
+        }
         catch (InvalidOperationException ex)
         {
             logger.LogWarning(ex, "Bad request: {Message}", ex.Message);

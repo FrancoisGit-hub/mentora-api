@@ -7,6 +7,8 @@ public enum AdminAuditAction
     ExerciseUpdated,
     ExerciseActivated,
     ExerciseDeactivated,
+    ExerciseVideoUploadCreated, // Lot 12.3a
+    ExerciseVideoRemoved,       // Lot 12.3a
 }
 
 /// <summary>Lot 12.2b — kind of row an audit entry is about (ADMIN_AUDIT_LOG_ENTITY_TYPE).</summary>
@@ -24,6 +26,8 @@ public static class AdminAuditMappings
         if (value == AdminAuditAction.ExerciseUpdated)     return "EXERCISE_UPDATED";
         if (value == AdminAuditAction.ExerciseActivated)   return "EXERCISE_ACTIVATED";
         if (value == AdminAuditAction.ExerciseDeactivated) return "EXERCISE_DEACTIVATED";
+        if (value == AdminAuditAction.ExerciseVideoUploadCreated) return "EXERCISE_VIDEO_UPLOAD_CREATED";
+        if (value == AdminAuditAction.ExerciseVideoRemoved)       return "EXERCISE_VIDEO_REMOVED";
         throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown AdminAuditAction value.");
     }
 
@@ -33,6 +37,8 @@ public static class AdminAuditMappings
         if (value == "EXERCISE_UPDATED")     return AdminAuditAction.ExerciseUpdated;
         if (value == "EXERCISE_ACTIVATED")   return AdminAuditAction.ExerciseActivated;
         if (value == "EXERCISE_DEACTIVATED") return AdminAuditAction.ExerciseDeactivated;
+        if (value == "EXERCISE_VIDEO_UPLOAD_CREATED") return AdminAuditAction.ExerciseVideoUploadCreated;
+        if (value == "EXERCISE_VIDEO_REMOVED")        return AdminAuditAction.ExerciseVideoRemoved;
         throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown AdminAuditAction DB value.");
     }
 

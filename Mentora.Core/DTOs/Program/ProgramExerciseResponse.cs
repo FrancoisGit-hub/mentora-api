@@ -1,9 +1,13 @@
+using Mentora.Core.DTOs.Exercise;
+
 namespace Mentora.Core.DTOs.Program;
 
 /// <summary>
 /// A prescribed exercise within a program circuit. Only <see cref="ProgramExerciseId"/> and the
 /// prescribed/actual/position/loadType/customNote fields are stored per-program; the exercise
 /// details (name, instructions, media, muscleGroup, equipment) are resolved live from EXERCISES.
+/// <see cref="Video"/> (Lot 12.3a, last key "video"): the MUX video of the exercise, only when READY
+/// with a playback id, else null (same rule as the exercise detail).
 /// </summary>
 public record ProgramExerciseResponse(
     Guid ProgramExerciseId,
@@ -28,5 +32,6 @@ public record ProgramExerciseResponse(
     decimal? ActualWeightKg,
     int? ActualRpe,
     string? MemberFeedback,
-    LastPerformedResponse? LastPerformed
+    LastPerformedResponse? LastPerformed,
+    ExerciseVideoResponse? Video
 );

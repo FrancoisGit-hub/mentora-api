@@ -21,14 +21,25 @@ public class ExerciseVideoConfiguration : IEntityTypeConfiguration<ExerciseVideo
             .HasColumnName("EXERCISE_VIDEO_EXERCISE_ID")
             .IsRequired();
 
+        // Lot 12.3a: nullable while the row is UPLOADING (the asset does not exist yet).
         builder.Property(e => e.ExerciseVideoMuxAssetId)
             .HasColumnName("EXERCISE_VIDEO_MUX_ASSET_ID")
-            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(e => e.ExerciseVideoMuxPlaybackId)
             .HasColumnName("EXERCISE_VIDEO_MUX_PLAYBACK_ID")
             .HasMaxLength(100);
+
+        builder.Property(e => e.ExerciseVideoMuxUploadId)
+            .HasColumnName("EXERCISE_VIDEO_MUX_UPLOAD_ID")
+            .HasMaxLength(100);
+
+        builder.Property(e => e.ExerciseVideoUploadExpiresDate)
+            .HasColumnName("EXERCISE_VIDEO_UPLOAD_EXPIRES_DATE");
+
+        builder.Property(e => e.ExerciseVideoError)
+            .HasColumnName("EXERCISE_VIDEO_ERROR")
+            .HasMaxLength(500);
 
         var policyConverter = new ValueConverter<VideoPlaybackPolicy, string>(
             v => VideoPlaybackPolicyToDb(v),
@@ -50,7 +61,11 @@ public class ExerciseVideoConfiguration : IEntityTypeConfiguration<ExerciseVideo
             .IsRequired()
             .HasMaxLength(10)
             .HasConversion(statusConverter)
-            .HasDefaultValueSql("'WAITING'");
+            .HasDefaultValueSql("'WAITING'")
+            // Lot 12.3a: Uploading is now the CLR default (0). Without a sentinel EF would omit the column
+            // on insert for Uploading and the database default would store WAITING. -1 is never a real
+            // value, so EF always sends the status.
+            .HasSentinel((ExerciseVideoStatus)(-1));
 
         builder.Property(e => e.ExerciseVideoDurationSeconds)
             .HasColumnName("EXERCISE_VIDEO_DURATION_SECONDS")
@@ -69,7 +84,10 @@ public class ExerciseVideoConfiguration : IEntityTypeConfiguration<ExerciseVideo
             .IsRequired();
 
         // One video per exercise for now: the uniqueness on the exercise id is what a later lot
-        // lifts. CHECKs on policy and status are raw SQL in the Lot9_ExerciseCatalog migration.
+        // lifts. CHECKs on policy and status are raw SQL in the Lot9_ExerciseCatalog migration;
+        // Lot12_3a_MuxVideos re-creates the status CHECK (UPLOADING added) and adds
+        // CK_EXERCISE_VIDEOS_MUX_REF (upload id or asset id set). NULL asset or upload ids do not
+        // collide in the unique indexes (PostgreSQL NULLs are distinct).
         builder.HasIndex(e => e.ExerciseVideoExerciseId)
             .IsUnique()
             .HasDatabaseName("UX_EXERCISE_VIDEOS_EXERCISE");
@@ -77,6 +95,10 @@ public class ExerciseVideoConfiguration : IEntityTypeConfiguration<ExerciseVideo
         builder.HasIndex(e => e.ExerciseVideoMuxAssetId)
             .IsUnique()
             .HasDatabaseName("UX_EXERCISE_VIDEOS_MUX_ASSET");
+
+        builder.HasIndex(e => e.ExerciseVideoMuxUploadId)
+            .IsUnique()
+            .HasDatabaseName("UX_EXERCISE_VIDEOS_MUX_UPLOAD");
 
         builder.HasOne(e => e.Exercise)
             .WithOne(x => x.Video)
@@ -100,17 +122,19 @@ public class ExerciseVideoConfiguration : IEntityTypeConfiguration<ExerciseVideo
 
     private static string ExerciseVideoStatusToDb(ExerciseVideoStatus v)
     {
-        if (v == ExerciseVideoStatus.Waiting) return "WAITING";
-        if (v == ExerciseVideoStatus.Ready)   return "READY";
-        if (v == ExerciseVideoStatus.Errored) return "ERRORED";
+        if (v == ExerciseVideoStatus.Uploading) return "UPLOADING";
+        if (v == ExerciseVideoStatus.Waiting)   return "WAITING";
+        if (v == ExerciseVideoStatus.Ready)     return "READY";
+        if (v == ExerciseVideoStatus.Errored)   return "ERRORED";
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown ExerciseVideoStatus value.");
     }
 
     private static ExerciseVideoStatus ExerciseVideoStatusFromDb(string v)
     {
-        if (v == "WAITING") return ExerciseVideoStatus.Waiting;
-        if (v == "READY")   return ExerciseVideoStatus.Ready;
-        if (v == "ERRORED") return ExerciseVideoStatus.Errored;
+        if (v == "UPLOADING") return ExerciseVideoStatus.Uploading;
+        if (v == "WAITING")   return ExerciseVideoStatus.Waiting;
+        if (v == "READY")     return ExerciseVideoStatus.Ready;
+        if (v == "ERRORED")   return ExerciseVideoStatus.Errored;
         throw new ArgumentOutOfRangeException(nameof(v), v, "Unknown ExerciseVideoStatus DB value.");
     }
 }

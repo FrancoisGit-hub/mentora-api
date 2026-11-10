@@ -11,6 +11,7 @@ using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Infrastructure.Persistence;
 using Mentora.Infrastructure.Seeding;
+using Mentora.Infrastructure.Services.Mux;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using static Mentora.Infrastructure.Services.ExerciseListPaging;
@@ -172,6 +173,7 @@ public class AdminExerciseService(
                     e.ExerciseMinLevel,
                     e.ExerciseIsActive,
                     e.Video != null,
+                    e.Video != null ? (ExerciseVideoStatus?)e.Video.ExerciseVideoStatus : null,
                     (e.ExerciseCategory != null && e.ExerciseCategoryId == null)
                         || (e.ExerciseType != null && e.ExerciseTypeId == null)
                         || (e.ExerciseLaterality != null && e.ExerciseLateralityId == null)
@@ -215,6 +217,7 @@ public class AdminExerciseService(
                     r.Exercise.ExerciseMinLevel,
                     r.Exercise.ExerciseIsActive,
                     r.Exercise.Video != null,
+                    r.Exercise.Video != null ? (ExerciseVideoStatus?)r.Exercise.Video.ExerciseVideoStatus : null,
                     (r.Exercise.ExerciseCategory != null && r.Exercise.ExerciseCategoryId == null)
                         || (r.Exercise.ExerciseType != null && r.Exercise.ExerciseTypeId == null)
                         || (r.Exercise.ExerciseLaterality != null && r.Exercise.ExerciseLateralityId == null)
@@ -233,7 +236,9 @@ public class AdminExerciseService(
             .Select(r => new AdminExerciseListItem(
                 r.ExerciseId, r.SourceCode, r.Name, r.Category, r.PrimaryMuscleGroup, r.PrimaryEquipment,
                 r.Level is { } l ? EnumMappings.ExerciseLevelMapping.ToWire(l) : null,
-                r.IsActive, r.HasVideo, r.HasLegacy, r.UpdatedDate))
+                r.IsActive, r.HasVideo,
+                r.VideoStatus is { } vs ? EnumMappings.ExerciseVideoStatusMapping.ToWire(vs) : null,
+                r.HasLegacy, r.UpdatedDate))
             .ToList();
 
         string? nextCursor = null;
@@ -250,8 +255,8 @@ public class AdminExerciseService(
 
     private sealed record ListRow(
         Guid ExerciseId, string? SourceCode, string Name, string? Category, string? PrimaryMuscleGroup,
-        string? PrimaryEquipment, ExerciseLevel? Level, bool IsActive, bool HasVideo, bool HasLegacy,
-        DateTime UpdatedDate, int Rank);
+        string? PrimaryEquipment, ExerciseLevel? Level, bool IsActive, bool HasVideo,
+        ExerciseVideoStatus? VideoStatus, bool HasLegacy, DateTime UpdatedDate, int Rank);
 
     private static ExerciseLevel? ParseExactLevel(string? value)
     {
@@ -342,13 +347,8 @@ public class AdminExerciseService(
             .Select(o => new AdminNamedRef(o.ExerciseObjectiveObjectiveId, o.Objective.ObjectiveName))
             .OrderBy(o => o.Name, StringComparer.OrdinalIgnoreCase)
             .ToList(),
-        e.Video is null
-            ? null
-            : new ExerciseVideoResponse(
-                e.Video.ExerciseVideoMuxPlaybackId,
-                EnumMappings.ExerciseVideoStatusMapping.ToWire(e.Video.ExerciseVideoStatus),
-                e.Video.ExerciseVideoDurationSeconds,
-                e.Video.ExerciseVideoAspectRatio),
+        // Lot 12.3a: the admin sees every status (with the error and the upload expiry).
+        ExerciseVideoMapping.ForAdmin(e.Video),
         e.ExerciseIsActive,
         usage,
         e.ExerciseCreatedDate,
