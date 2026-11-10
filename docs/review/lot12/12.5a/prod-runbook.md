@@ -1,210 +1,203 @@
-# Runbook Beta PROD (lot 12, 12.5a)
+# Runbook Beta PROD (lot 12, 12.5a, mis à jour après le déploiement du 10/11/2026)
 
 But : mettre en ligne l'API de la Beta PROD sur `https://api.mentorapp.fr`, sur le même VPS que api-demo, avec une base neuve. Aucune valeur de secret n'est écrite ici : chaque secret est généré sur le serveur et écrit directement dans `~/mentora/.env`, sans jamais être affiché.
 
-Légende : **[PS]** = terminal PowerShell de VS Code sur ton poste. **[SSH]** = session SSH sur le VPS (`ssh <utilisateur>@87.106.108.91`). Les noms de conteneur et de service ci-dessous sont ceux du plan (`mentora-postgres`, `nginx`, `api`, `api-prod`) : vérifie-les une fois avec `docker ps` et `docker compose ps` avant de commencer.
+Ce mode d'emploi décrit ce qui a réellement été fait le 10/11/2026 (preuves : `docs/review/lot12/12.5a/vps-evidence.md`). Il sert aussi pour un redéploiement.
 
-Règles pendant tout le runbook : ne jamais faire `cat ~/mentora/.env`, ne jamais coller un secret dans un chat, un ticket ou un message.
+Légende : **[PS]** = terminal PowerShell de VS Code sur le poste, à la racine du dépôt. **[SSH]** = session SSH sur le VPS (`ssh mentora@87.106.108.91`), dans `~/mentora`.
+
+Noms réels sur le VPS : conteneurs `mentora-postgres`, `mentora-api` (service `api`, api-demo), `mentora-api-prod` (service `api-prod`), `mentora-nginx`, `mentora-livekit` ; réseau `mentora-network` ; hôte PostgreSQL `postgres`. `~/mentora` n'est pas un clone git : les fichiers du dépôt s'y envoient par `scp`.
+
+Règles pendant tout le runbook : ne jamais faire `cat ~/mentora/.env` ni `docker compose config` sans filtre (il affiche les valeurs), ne jamais coller un secret ni un code de connexion dans un chat, un ticket ou un message. Toujours `--no-deps` sur `docker compose up` : sans lui, une commande visant un service peut recréer api-demo ou la base.
+
+Ordre important : certificat, puis démarrage de `api-prod`, puis activation de `mentora-prod.conf`. nginx résout le nom `api-prod` au chargement de sa configuration : si le conteneur ne tourne pas, `nginx -t` échoue.
 
 ---
 
 ## 1. Vérifier le DNS **[PS]**
 
 ```powershell
-Resolve-DnsName api.mentorapp.fr -Type A
-Resolve-DnsName admin.mentorapp.fr -Type A
+Resolve-DnsName api.mentorapp.fr -Type A; Resolve-DnsName admin.mentorapp.fr -Type A
 ```
 
-Attendu : les deux noms répondent `87.106.108.91`. Sinon, ne pas continuer (le certificat de l'étape 6 échouerait).
+Attendu : les deux noms répondent `87.106.108.91`. Sinon, ne pas continuer (le certificat échouerait). Un « nom DNS n'existe pas » juste après la création de l'enregistrement peut venir du cache local : relancer quelques minutes plus tard.
 
 ## 2. Sauvegarder la base api-demo **[SSH]**
 
 Toujours avant de toucher à quoi que ce soit.
 
 ```bash
-cd ~/mentora
-mkdir -p ~/mentora/backups
-docker exec mentora-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > ~/mentora/backups/api-demo-$(date +%Y%m%d-%H%M%S).dump
-ls -l ~/mentora/backups | tail -3
+cd ~/mentora && docker exec mentora-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > ~/backup-$(date +%Y%m%d-%H%M).dump && ls -lht ~/backup-*.dump | head -3
 ```
 
-Attendu : un fichier `.dump` de taille non nulle. Si `POSTGRES_USER` ou `POSTGRES_DB` ne sont pas définis dans le conteneur, regarder les variables du service postgres dans `docker-compose.yml` (noms seulement) et les écrire en clair dans la commande.
+Attendu : un fichier `.dump` de taille cohérente avec le précédent.
 
-## 3. Créer le rôle et la base PROD **[SSH]**
+## 3. Construire l'image et l'envoyer
 
-Le mot de passe est généré par `openssl`, écrit dans `.env`, relu dans une variable, et passé à PostgreSQL par l'entrée standard. Il n'est jamais affiché.
+Étiquette dédiée `mentora-api:lot12` : api-demo garde `mentora-api:latest` tant qu'on ne le bascule pas volontairement.
+
+**[PS]**
+
+```powershell
+git --no-optional-locks status --short
+git --no-optional-locks log --oneline -1
+Get-Content .dockerignore | Select-String "docs"
+docker build --platform linux/amd64 -f Mentora.API/Dockerfile -t mentora-api:lot12 .
+docker save -o mentora-api-lot12.tar mentora-api:lot12
+scp mentora-api-lot12.tar mentora@87.106.108.91:~/
+scp nginx/conf.d/mentora-prod.conf.example nginx/conf.d/mentora-admin.conf.example mentora@87.106.108.91:~/mentora/nginx/conf.d/
+Remove-Item mentora-api-lot12.tar; Test-Path mentora-api-lot12.tar
+```
+
+Attendu : arbre propre, dernier commit de la branche, `docs/review` dans `.dockerignore`, puis `False`. Les deux fichiers `.example` restent inactifs sur le VPS tant qu'ils gardent ce suffixe (nginx ne charge que `*.conf`).
+
+**[SSH]**
 
 ```bash
-cd ~/mentora
-cp .env .env.bak-$(date +%Y%m%d-%H%M%S)
-grep -q '^POSTGRES_PROD_PASSWORD=' .env && echo "DEJA PRESENT: ne pas regenerer" || echo "POSTGRES_PROD_PASSWORD=$(openssl rand -hex 24)" >> .env
-PW=$(grep '^POSTGRES_PROD_PASSWORD=' .env | cut -d= -f2-)
-docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1' <<SQL
+docker load -i ~/mentora-api-lot12.tar && docker images mentora-api --format '{{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.CreatedAt}}'
+rm ~/mentora-api-lot12.tar
+```
+
+## 4. Base, rôle et secrets PROD **[SSH]**
+
+Sauvegarde du `.env`, puis retour à la ligne final s'il manque (sinon la ligne ajoutée se collerait à la dernière) :
+
+```bash
+cd ~/mentora && cp .env .env.bak-$(date +%Y%m%d-%H%M%S) && ls -l .env*
+[ -n "$(tail -c1 .env)" ] && echo >> .env; echo ok
+```
+
+Mot de passe de la base, généré dans le `.env`, puis rôle et base créés sans afficher le mot de passe. La base n'accepte pas les autres comptes (REVOKE CONNECT) :
+
+```bash
+grep -q '^POSTGRES_PROD_PASSWORD=' .env && echo "DEJA PRESENT" || echo "POSTGRES_PROD_PASSWORD=$(openssl rand -hex 24)" >> .env
+PW=$(grep '^POSTGRES_PROD_PASSWORD=' .env | cut -d= -f2-); docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1' <<SQL
 CREATE ROLE mentora_prod_user LOGIN PASSWORD '$PW';
 CREATE DATABASE mentora_prod OWNER mentora_prod_user;
+REVOKE CONNECT ON DATABASE mentora_prod FROM PUBLIC;
 SQL
 unset PW
-docker exec mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -Atc "select rolname from pg_roles where rolname = '"'"'mentora_prod_user'"'"'; select datname from pg_database where datname = '"'"'mentora_prod'"'"';"'
 ```
 
-Attendu : les deux dernières lignes affichent `mentora_prod_user` puis `mentora_prod`. Si le rôle ou la base existe déjà, PostgreSQL le dit : s'arrêter et comprendre avant de relancer (ne jamais supprimer sans sauvegarde).
+Attendu : `CREATE ROLE`, `CREATE DATABASE`, `REVOKE`. Si le rôle ou la base existe déjà, s'arrêter et comprendre avant de relancer (ne jamais supprimer sans sauvegarde).
 
-## 4. Variables à ajouter dans `~/mentora/.env` pour PROD **[SSH]**
-
-Noms seulement. Chaque ligne s'ajoute avec `echo "NOM=..." >> ~/mentora/.env` ou avec un éditeur (`nano ~/mentora/.env`). Sauvegarde déjà faite à l'étape 3.
-
-| Nom dans `.env` | D'où vient la valeur |
-|---|---|
-| `POSTGRES_PROD_PASSWORD` | déjà créé à l'étape 3 |
-| `JWT_SECRET_PROD` | nouveau, aléatoire : `echo "JWT_SECRET_PROD=$(openssl rand -base64 48)" >> ~/mentora/.env` |
-| `ADMIN_JWT_SECRET_PROD` | nouveau, aléatoire, **différent** du précédent : `echo "ADMIN_JWT_SECRET_PROD=$(openssl rand -base64 48)" >> ~/mentora/.env` |
-| `ADMIN_EMAILS_PROD` | les 4 boîtes mentorapp.fr des administrateurs, séparées par des virgules, sans espace |
-| `EMAIL_ROUTING_TEST_RECIPIENTS_PROD` | la même valeur que celle utilisée par api-demo (le PROD reste en mode TEST jusqu'à l'Alpha) |
-| SMTP (`Email__Smtp__Host`, `Port`, `UseStartTls`, `Username`, `Password`) et `Email__FromAddress` | les mêmes valeurs que api-demo : réutiliser les lignes déjà présentes dans `.env`, ne rien recopier |
-| LiveKit (`LiveKit__Url`, `LiveKit__ApiKey`, `LiveKit__ApiSecret`) | les mêmes valeurs que api-demo : réutiliser les lignes déjà présentes |
-
-Vérifier sans rien afficher que les noms sont présents :
+Secrets aléatoires (hexadécimal, 64 caractères, tous différents) et liste des comptes admin :
 
 ```bash
-for n in POSTGRES_PROD_PASSWORD JWT_SECRET_PROD ADMIN_JWT_SECRET_PROD ADMIN_EMAILS_PROD EMAIL_ROUTING_TEST_RECIPIENTS_PROD; do grep -q "^$n=" ~/mentora/.env && echo "$n present" || echo "$n MANQUANT"; done
+for n in JWT_SECRET_PROD ADMIN_JWT_SECRET_PROD ADMIN_JWT_SECRET_DEMO; do grep -q "^$n=" .env && echo "$n DEJA PRESENT" || echo "$n=$(openssl rand -hex 32)" >> .env; done
+grep -q '^ADMIN_EMAILS=' .env && echo "DEJA PRESENT" || echo "ADMIN_EMAILS=<les 4 boîtes mentorapp.fr des associés, séparées par des virgules, sans espace>" >> .env
+for n in POSTGRES_PROD_PASSWORD JWT_SECRET_PROD ADMIN_JWT_SECRET_PROD ADMIN_JWT_SECRET_DEMO ADMIN_EMAILS; do grep -q "^$n=" .env && echo "$n present" || echo "$n MANQUANT"; done
 ```
 
-Le service de l'étape 5 construit lui-même la chaîne de connexion à `mentora_prod` à partir de `POSTGRES_PROD_PASSWORD`, et fixe `Cors__AllowedOrigins=https://admin.mentorapp.fr` (une origine publique, pas un secret).
-
-L'API refuse de démarrer en Production si `Jwt__Secret` manque ou fait moins de 32 caractères, si `ConnectionStrings__DefaultConnection` manque, si `Cors__AllowedOrigins` est vide, en `http://` ou avec un joker, ou si `AdminAuth__JwtSecret` est identique à `Jwt__Secret`. Dans ces cas elle s'arrête avant les migrations.
+Les réglages SMTP (hors mot de passe), LiveKit (hors clés) et Quiz viennent du `appsettings.json` commun à tous les environnements (`appsettings.Development.json` n'est pas dans l'image). `api-prod` reprend donc les mêmes variables que `api` : `EMAIL_SMTP_PASSWORD`, `EMAIL_ROUTING_TEST_RECIPIENTS`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`.
 
 ## 5. Ajouter le service `api-prod` à `docker-compose.yml` **[SSH]**
 
-Sauvegarde d'abord :
-
 ```bash
-cd ~/mentora
-cp docker-compose.yml docker-compose.yml.bak-$(date +%Y%m%d-%H%M%S)
+cp docker-compose.yml docker-compose.yml.pre-lot12 && nano docker-compose.yml
 ```
 
-Ajouter sous `services:` (éditeur `nano docker-compose.yml`), en copiant le bloc du service `api` existant pour l'image, le réseau et les volumes éventuels, puis en changeant ce qui suit. L'image est la même que celle de api-demo. Le nom d'hôte PostgreSQL (`postgres` ci-dessous) doit être celui que le service `api` utilise déjà.
+Coller ce bloc entre le service `api` et `nginx:` (deux espaces devant chaque ligne). Dans nano : Ctrl+O, puis **Entrée** pour confirmer le nom du fichier, puis Ctrl+X. Si VS Code intercepte une touche : F3 pour enregistrer, F2 pour quitter.
 
 ```yaml
   api-prod:
-    image: <la meme image que le service api>
+    image: mentora-api:lot12
     container_name: mentora-api-prod
     restart: unless-stopped
-    depends_on:
-      - postgres
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=mentora_prod;Username=mentora_prod_user;Password=${POSTGRES_PROD_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=mentora_prod;Username=mentora_prod_user;Password=${POSTGRES_PROD_PASSWORD}
       - Jwt__Secret=${JWT_SECRET_PROD}
       - AdminAuth__JwtSecret=${ADMIN_JWT_SECRET_PROD}
-      - AdminAuth__Emails=${ADMIN_EMAILS_PROD}
+      - AdminAuth__Emails=${ADMIN_EMAILS}
       - Cors__AllowedOrigins=https://admin.mentorapp.fr
-      - EmailRouting__Mode=Test
-      - EmailRouting__TestRecipients=${EMAIL_ROUTING_TEST_RECIPIENTS_PROD}
-      - Email__Provider=${Email__Provider}
-      - Email__FromAddress=${Email__FromAddress}
-      - Email__Smtp__Host=${Email__Smtp__Host}
-      - Email__Smtp__Port=${Email__Smtp__Port}
-      - Email__Smtp__UseStartTls=${Email__Smtp__UseStartTls}
-      - Email__Smtp__Username=${Email__Smtp__Username}
-      - Email__Smtp__Password=${Email__Smtp__Password}
-      - LiveKit__Url=${LiveKit__Url}
-      - LiveKit__ApiKey=${LiveKit__ApiKey}
-      - LiveKit__ApiSecret=${LiveKit__ApiSecret}
-    # pas de "ports:" : seul nginx parle a ce conteneur
+      - Email__Smtp__Password=${EMAIL_SMTP_PASSWORD}
+      - EmailRouting__TestRecipients=${EMAIL_ROUTING_TEST_RECIPIENTS}
+      - LiveKit__ApiKey=${LIVEKIT_API_KEY}
+      - LiveKit__ApiSecret=${LIVEKIT_API_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
-      - <le meme reseau que nginx>
+      - mentora-network
 ```
 
-Contrôles sans afficher de secret :
+Pas de `ports:` : seul nginx parle à ce conteneur. Pas de `EmailRouting__Mode` : mode TEST jusqu'au jour de la Bêta. Fenêtre visio par défaut (15 minutes avant, 15 minutes après).
 
 ```bash
-docker compose config --quiet && echo "compose valide"
-docker compose config | grep -c 'api-prod'
+docker compose config --quiet && echo "compose valide"; docker compose config --services | grep api-prod
 ```
 
-Attendu : `compose valide`, et un nombre supérieur à 0. Ne jamais lancer `docker compose config` sans filtre dans un terminal partagé : il affiche les valeurs.
+L'API refuse de démarrer en Production si `Jwt__Secret` ou `AdminAuth__JwtSecret` ne vient pas d'une variable d'environnement d'au moins 32 caractères, si `ConnectionStrings__DefaultConnection` manque, si `Cors__AllowedOrigins` est vide, en `http://` ou avec un joker, ou si le secret admin est celui de l'app. Dans ces cas elle s'arrête avant les migrations.
 
-## 6. Certificat et nginx **[SSH]**
+## 6. Certificat **[SSH]**
 
-Ordre important : nginx ne doit jamais charger le bloc HTTPS avant que le certificat existe.
+certbot est installé sur le VPS lui-même (pas dans un conteneur) ; le dossier `/var/www/certbot` est monté dans nginx.
 
-6.1 Bloc HTTP seul pour les deux noms, dans un fichier temporaire de `nginx/conf.d/` (par exemple `mentora-prod-http.conf`) :
+6.1 Bloc HTTP provisoire pour les deux noms :
 
-```nginx
+```bash
+cat > nginx/conf.d/mentora-prod-http.conf <<'CONF'
 server {
     listen 80;
     server_name api.mentorapp.fr admin.mentorapp.fr;
-
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
         default_type "text/plain";
     }
-
     location / {
         return 404;
     }
 }
-```
-
-6.2 Recharger nginx :
-
-```bash
-cd ~/mentora
+CONF
 docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload
 ```
 
-6.3 Demander le certificat (webroot, un certificat pour les deux noms). Reprendre la commande certbot déjà utilisée pour api-demo (même dossier webroot `/var/www/certbot`, mêmes volumes), en changeant seulement les noms :
+6.2 Un certificat pour les deux noms (mot de passe sudo demandé) :
 
 ```bash
-docker compose run --rm certbot certonly --webroot -w /var/www/certbot -d api.mentorapp.fr -d admin.mentorapp.fr --cert-name api.mentorapp.fr
+sudo certbot certonly --webroot -w /var/www/certbot -d api.mentorapp.fr -d admin.mentorapp.fr --cert-name api.mentorapp.fr
 ```
 
-Attendu : `Successfully received certificate`. Le certificat est enregistré sous `/etc/letsencrypt/live/api.mentorapp.fr/`, le chemin utilisé par le fichier d'exemple.
+Attendu : `Successfully received certificate`, fichiers sous `/etc/letsencrypt/live/api.mentorapp.fr/`.
 
-6.4 Remplacer le bloc temporaire par la configuration définitive : supprimer `mentora-prod-http.conf`, puis copier le fichier d'exemple du dépôt :
+6.3 Rechargement de nginx après chaque renouvellement (le renouvellement automatique est fait par le minuteur `snap.certbot.renew.timer` ; sans ce hook, nginx garderait l'ancien certificat en mémoire) :
 
 ```bash
-cd ~/mentora
-rm nginx/conf.d/mentora-prod-http.conf
-cp nginx/conf.d/mentora-prod.conf.example nginx/conf.d/mentora-prod.conf
-docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload
+printf '#!/bin/sh\ndocker exec mentora-nginx nginx -s reload\n' | sudo tee /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh >/dev/null && sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh && sudo ls -l /etc/letsencrypt/renewal-hooks/deploy/
 ```
 
-Attendu : `syntax is ok` et `test is successful`. Si `nginx -t` échoue, retirer `mentora-prod.conf` et recharger avant toute autre action. Le nom `admin.mentorapp.fr` sera servi à l'étape 12.5b : en attendant, il ne répond rien d'utile, c'est normal.
+## 7. Démarrer api-prod et contrôler
 
-## 7. Démarrer api-prod et contrôler **[SSH]**
+**[SSH]**
 
 ```bash
-cd ~/mentora
-docker compose up -d api-prod
-sleep 15
-docker logs mentora-api-prod 2>&1 | grep -E 'Applying migration|No migrations were applied|Seeder|\[EMAIL\] routing|\[ADMIN\]|\[CORS\]|\[PATCH\]|fail:|crit:'
+docker compose up -d --no-deps api-prod && sleep 25 && docker logs mentora-api-prod 2>&1 | grep -c "Applying migration"
+docker logs mentora-api-prod 2>&1 | grep -E 'Seeder|seeded|\[EMAIL\] routing|\[ADMIN\]|\[CORS\]|\[PATCH\]|Application started|Now listening|fail:|crit:|Exception' | grep -v -E 'OTP|EMAIL-LOG'
+docker ps --filter name=mentora-api-prod --format '{{.Names}}\t{{.Status}}\t{{.Ports}}'
 ```
 
-Attendu : des lignes `Applying migration` (base neuve), `[EMAIL] routing mode=TEST`, `[CORS] origins=1 localhost=False`, `[CORS] origin https://admin.mentorapp.fr`, `[ADMIN] auth emails=4`, aucune ligne `fail:` ni `crit:`. Ne jamais afficher les lignes contenant le marqueur OTP ou le marqueur d'envoi d'email.
+Attendu : toutes les migrations sur une base neuve, `[EMAIL] routing mode=TEST`, `[CORS] origins=1 localhost=False`, `[CORS] origin https://admin.mentorapp.fr`, `[ADMIN] accounts listed=4 created=4`, seeders et patchs, `Application started`, aucune ligne `fail:` ni `crit:`, et le port `8080/tcp` seul (non publié). Ne jamais afficher les lignes contenant le marqueur OTP ou le marqueur d'envoi d'email.
 
-Contrôles HTTP, depuis ton poste **[PS]** :
+Puis, api-prod tournant, la conf nginx définitive de l'API :
+
+```bash
+rm nginx/conf.d/mentora-prod-http.conf && cp nginx/conf.d/mentora-prod.conf.example nginx/conf.d/mentora-prod.conf && docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload
+```
+
+Si `nginx -t` échoue : `rm nginx/conf.d/mentora-prod.conf`, puis comprendre avant toute autre action.
+
+**[PS]**
 
 ```powershell
 (Invoke-WebRequest https://api.mentorapp.fr/api/v1/health -UseBasicParsing).StatusCode
-```
-
-Attendu : `200`.
-
-```powershell
 try { Invoke-WebRequest https://api.mentorapp.fr/api/v1/admin/exercises -UseBasicParsing } catch { [int]$_.Exception.Response.StatusCode }
+$r = Invoke-WebRequest https://api.mentorapp.fr/api/v1/admin/auth/otp/request -Method Options -UseBasicParsing -Headers @{ Origin = "https://admin.mentorapp.fr"; "Access-Control-Request-Method" = "POST"; "Access-Control-Request-Headers" = "content-type" }; "$($r.StatusCode) $($r.Headers['Access-Control-Allow-Origin'])"
 ```
 
-Attendu : `401` (route admin sans jeton).
+Attendu : `200`, `401`, `204 https://admin.mentorapp.fr`.
 
-```powershell
-$r = Invoke-WebRequest https://api.mentorapp.fr/api/v1/admin/auth/otp/request -Method Options -UseBasicParsing -Headers @{ Origin = "https://admin.mentorapp.fr"; "Access-Control-Request-Method" = "POST"; "Access-Control-Request-Headers" = "content-type" }
-"$($r.StatusCode) $($r.Headers['Access-Control-Allow-Origin'])"
-```
-
-Attendu : `204 https://admin.mentorapp.fr`.
-
-## 8. Retour arrière **[SSH]**
+## 8. Retour arrière de la PROD **[SSH]**
 
 À faire dans cet ordre, en s'arrêtant dès que le problème est réglé :
 
@@ -214,16 +207,14 @@ docker compose stop api-prod
 docker compose rm -f api-prod
 rm -f nginx/conf.d/mentora-prod.conf nginx/conf.d/mentora-prod-http.conf
 docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload
-cp docker-compose.yml.bak-<horodatage> docker-compose.yml
+cp docker-compose.yml.pre-lot12 docker-compose.yml
 ```
 
-Remplacer `<horodatage>` par celui de la sauvegarde de l'étape 5 (`ls ~/mentora/docker-compose.yml.bak-*`). api-demo n'est jamais touché par ce retour arrière. La base `mentora_prod` peut rester : elle est vide ou jetable, et ne sert qu'à api-prod.
+api-demo n'est jamais touché par ce retour arrière. La base `mentora_prod` peut rester : elle ne sert qu'à api-prod.
 
 ---
 
-## Pour api-demo : avant de déployer le code du lot 12
-
-Deux contrôles, avant de mettre le nouveau code sur api-demo.
+## Pour api-demo : déployer le code du lot 12
 
 **A. Doublons de noms d'exercices Mentora (lecture seule) [SSH].** Le lot 12 ajoute un index unique sur le nom (insensible à la casse et aux espaces de bord) pour les exercices Mentora (sans coach). Si un doublon existe, la migration échouerait au démarrage.
 
@@ -259,7 +250,43 @@ SQL
 
 Attendu : `(0 rows)`. Si une ligne sort, la migration passe quand même, mais il faut renommer l'un des deux exercices sur api-demo avant de déployer, avec François.
 
-**B. Variables d'administration pour api-demo.** Ajouter dans `.env` puis dans l'environnement du service `api` : `AdminAuth__JwtSecret` (aléatoire, `openssl rand -base64 48`, différent de `Jwt__Secret`) et `AdminAuth__Emails` (les 4 boîtes mentorapp.fr). Sans elles, l'API refuse de démarrer. Faire la sauvegarde `pg_dump` de l'étape 2 juste avant.
+**B. Variables d'administration pour api-demo [SSH].** La sauvegarde `pg_dump` de l'étape 2 doit être récente. Dans le service `api` du compose, sous la dernière ligne `LiveKit__...`, ajouter (six espaces devant) :
+
+```bash
+cp docker-compose.yml docker-compose.yml.pre-demo-lot12 && nano docker-compose.yml
+```
+
+```yaml
+      - AdminAuth__JwtSecret=${ADMIN_JWT_SECRET_DEMO}
+      - AdminAuth__Emails=${ADMIN_EMAILS}
+```
+
+Sans elles, l'API refuse de démarrer.
+
+**C. Bascule d'api-demo [SSH].** L'ancienne image est gardée sous `pre-lot12` :
+
+```bash
+docker compose config --quiet && echo "compose valide" && docker tag mentora-api:latest mentora-api:pre-lot12 && docker tag mentora-api:lot12 mentora-api:latest && docker compose up -d --no-deps --force-recreate api && sleep 25 && docker logs mentora-api 2>&1 | grep -c "Applying migration"
+docker logs mentora-api 2>&1 | grep -E 'Seeder|\[EMAIL\] routing|\[ADMIN\]|\[CORS\]|\[PATCH\].*applied|\[PATCH\].*skipped|Application started|fail:|crit:|Exception' | grep -v -E 'OTP|EMAIL-LOG'
+```
+
+Attendu : `3` migrations, `[ADMIN] accounts listed=4 created=4`, `[CORS] origins=0 localhost=True` (Development : seules les origines localhost), les deux patchs `applied`, seeders en `existing`, aucune ligne `fail:` ni `crit:`.
+
+**[PS]**
+
+```powershell
+(Invoke-WebRequest https://api-demo.mentorapp.fr/api/v1/health -UseBasicParsing).StatusCode; try { Invoke-WebRequest https://api-demo.mentorapp.fr/api/v1/admin/exercises -UseBasicParsing } catch { [int]$_.Exception.Response.StatusCode }
+```
+
+Attendu : `200` puis `401`.
+
+**D. Retour arrière d'api-demo [SSH]** (seulement en cas de problème) :
+
+```bash
+cp docker-compose.yml.pre-demo-lot12 docker-compose.yml && docker tag mentora-api:pre-lot12 mentora-api:latest && docker compose up -d --no-deps --force-recreate api
+```
+
+Les migrations du lot 12 restent alors dans la base : pour revenir à l'état d'avant, restaurer la sauvegarde de l'étape 2 avec `pg_restore` (avec François, après avoir arrêté `api`).
 
 ---
 
@@ -272,10 +299,10 @@ Légende : **[PS]** = terminal PowerShell de VS Code sur ton poste, à la racine
 ### A. Publier l'admin **[PS]**
 
 ```powershell
-dotnet publish Mentora.Admin -c Release -o docs/review/lot12/12.5b/publish
+if (Test-Path docs/review/lot12/12.5b/publish) { Remove-Item -Recurse -Force docs/review/lot12/12.5b/publish }; dotnet publish Mentora.Admin -c Release -o docs/review/lot12/12.5b/publish
 ```
 
-Le dossier `publish/` est ignoré par git. Le résultat utile est le sous-dossier `wwwroot`.
+Le dossier `publish/` est ignoré par git ; il est vidé avant chaque publication pour ne jamais envoyer d'ancien fichier. Le résultat utile est le sous-dossier `wwwroot`.
 
 ### B. Contrôler les fichiers de configuration publiés **[PS]**
 
@@ -322,10 +349,10 @@ Sauvegarde d'abord :
 
 ```bash
 cd ~/mentora
-cp docker-compose.yml docker-compose.yml.bak-$(date +%Y%m%d-%H%M%S)
+cp docker-compose.yml docker-compose.yml.pre-admin
 ```
 
-Dans `docker-compose.yml` (`nano docker-compose.yml`), sous `volumes:` du service `nginx`, ajouter cette ligne (en lecture seule) à côté des autres volumes :
+Dans `docker-compose.yml` (`nano docker-compose.yml`), sous `volumes:` du service `nginx`, ajouter cette ligne (en lecture seule, six espaces devant) sous `- /var/www/certbot:/var/www/certbot:ro`. Dans nano : Ctrl+O, puis **Entrée** pour confirmer le nom du fichier, puis Ctrl+X :
 
 ```yaml
       - ./admin-www:/var/www/mentora-admin:ro
@@ -335,7 +362,7 @@ Puis :
 
 ```bash
 docker compose config --quiet && echo "compose valide"
-docker compose up -d nginx
+docker compose up -d --no-deps nginx
 ```
 
 ### G. Version de nginx et type MIME du wasm **[SSH]**
@@ -408,7 +435,7 @@ Attendu :
 
 ### J. Test dans le navigateur
 
-Ouvrir `https://admin.mentorapp.fr` (fenêtre privée de préférence). La page de connexion s'affiche avec le logo et le thème, la console ne contient aucune erreur de Content-Security-Policy. Demander un code de connexion et se connecter avec une des boîtes d'administration.
+Fait par Claude avec Claude in Chrome, dans son propre onglet : page de connexion, console et Content-Security-Policy, demande d'un code. François lit le code dans sa boîte mail (en mode TEST, le code part aux 4 associés) et le tape lui-même dans l'onglet, jamais dans un chat. Puis : liste et recherche des exercices, ouverture d'une fiche sans enregistrer, session après rechargement, déconnexion.
 
 ### K. Retour arrière de l'admin **[SSH]**
 
@@ -427,8 +454,8 @@ Retirer complètement l'admin :
 cd ~/mentora
 rm -f nginx/conf.d/mentora-admin.conf
 docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload
-cp docker-compose.yml.bak-<horodatage> docker-compose.yml
-docker compose up -d nginx
+cp docker-compose.yml.pre-admin docker-compose.yml
+docker compose up -d --no-deps nginx
 ```
 
-Remplacer `<horodatage>` par celui de la sauvegarde de l'étape F (`ls ~/mentora/docker-compose.yml.bak-*`). Ce retour arrière ne touche ni api-prod ni api-demo.
+`docker-compose.yml.pre-admin` est la sauvegarde de l'étape F. Ce retour arrière ne touche ni api-prod ni api-demo.
