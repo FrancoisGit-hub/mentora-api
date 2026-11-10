@@ -16,7 +16,7 @@ namespace Mentora.API.Controllers.Admin;
 [Route("api/v1/admin/auth")]
 [ApiExplorerSettings(GroupName = AdminAuthDefaults.SwaggerDoc)]
 [EnableRateLimiting(AdminAuthDefaults.RateLimitPolicy)]
-[Tags("Admin — Auth")]
+[Tags("Admin: Auth")]
 public class AdminAuthController(IAdminAuthService adminAuthService) : ControllerBase
 {
     /// <summary>

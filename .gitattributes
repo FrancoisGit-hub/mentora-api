@@ -1,0 +1,2 @@
+# The CSP hash of the admin inline script (nginx/conf.d/mentora-admin.conf.example) is computed on LF line endings.
+Mentora.Admin/wwwroot/index.html text eol=lf

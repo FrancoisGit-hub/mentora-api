@@ -28,6 +28,14 @@ public static class StartupGuards
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")))
             throw new InvalidOperationException(
                 "ConnectionStrings__DefaultConnection must be set as an environment variable outside Development (the appsettings.json default is never accepted).");
+
+        var adminSecret = Environment.GetEnvironmentVariable("AdminAuth__JwtSecret");
+        if (string.IsNullOrEmpty(adminSecret))
+            throw new InvalidOperationException(
+                "AdminAuth__JwtSecret must be set as an environment variable outside Development (the appsettings.json default is never accepted).");
+        if (adminSecret.Length < MinJwtSecretLength)
+            throw new InvalidOperationException(
+                $"AdminAuth__JwtSecret must be at least {MinJwtSecretLength} characters.");
     }
 }
 

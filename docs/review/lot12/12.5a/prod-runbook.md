@@ -241,6 +241,24 @@ SQL
 
 Attendu : `(0 rows)`. Sinon, ne pas déployer : traiter les doublons d'abord.
 
+Seconde requête, lecture seule aussi, qui ignore en plus les accents (même table de caractères que `AccentFolding` dans `Mentora.Core/Text`). L'index de la base ne voit pas ces doublons, mais l'admin les refuse : sur deux exercices qui ne diffèrent que par les accents, toute modification de l'un ou de l'autre répond 409 `EXERCISE_NAME_TAKEN`.
+
+```bash
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+BEGIN READ ONLY;
+SELECT lower(btrim(translate("EXERCISE_NAME",
+         'àâäÀÂÄéèêëÉÈÊËîïÎÏôöÔÖùûüÙÛÜÿŸçÇ',
+         'aaaAAAeeeeEEEEiiIIooOOuuuUUUyYcC'))) AS nom, count(*) AS nb
+FROM "EXERCISES"
+WHERE "EXERCISE_COACH_ID" IS NULL
+GROUP BY 1
+HAVING count(*) > 1;
+ROLLBACK;
+SQL
+```
+
+Attendu : `(0 rows)`. Si une ligne sort, la migration passe quand même, mais il faut renommer l'un des deux exercices sur api-demo avant de déployer, avec François.
+
 **B. Variables d'administration pour api-demo.** Ajouter dans `.env` puis dans l'environnement du service `api` : `AdminAuth__JwtSecret` (aléatoire, `openssl rand -base64 48`, différent de `Jwt__Secret`) et `AdminAuth__Emails` (les 4 boîtes mentorapp.fr). Sans elles, l'API refuse de démarrer. Faire la sauvegarde `pg_dump` de l'étape 2 juste avant.
 
 ---

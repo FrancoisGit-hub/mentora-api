@@ -295,7 +295,7 @@ public class AdminAuthService(
 <html>
 <head><meta charset=""utf-8""></head>
 <body style=""font-family: Arial, sans-serif; color: #1a1a1a; max-width: 560px; margin: 0 auto; padding: 24px;"">
-  <h1 style=""color: #1a1a1a; font-size: 20px;"">Mentora — Administration</h1>
+  <h1 style=""color: #1a1a1a; font-size: 20px;"">Mentora: Administration</h1>
   <p>Bonjour,</p>
   <p>Voici votre code de connexion à l'administration Mentora :</p>
   <p style=""font-size: 32px; font-weight: bold; letter-spacing: 4px; background: #f4f4f4; padding: 16px 24px; display: inline-block; border-radius: 8px;"">
@@ -308,7 +308,7 @@ public class AdminAuthService(
 </body>
 </html>";
 
-    private static string BuildCodeTextBody(string code, int lifetimeMinutes) => $@"Mentora — Administration
+    private static string BuildCodeTextBody(string code, int lifetimeMinutes) => $@"Mentora: Administration
 
 Bonjour,
 

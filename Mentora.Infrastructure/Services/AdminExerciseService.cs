@@ -826,9 +826,20 @@ public class AdminExerciseService(
             Clean(r.Breathing), mistakes.Count == 0 ? null : mistakes, Clean(r.Precautions), Clean(r.CoachTip),
             Clean(r.SearchTags),
             refs.Objectives.Select(o => o.ObjectiveId).OrderBy(o => o).ToList(),
-            refs.Type is not null && refs.Type.ExerciseTypeCode == PolyarticularTypeCode,
-            LegacyExerciseColumns.MuscleGroupFor(category.Text, refs.PrimaryGroup, null),
-            LegacyExerciseColumns.EquipmentFor(refs.PrimaryEquipment));
+            // A value the request does not decide keeps its stored value: no type in the request keeps
+            // isPolyarticular; the legacy muscle group is recomputed only when the category or the primary muscle group changes,
+            // the legacy equipment only when the primary equipment changes.
+            r.TypeId is null && current is not null
+                ? current.ExerciseIsPolyarticular
+                : refs.Type is not null && refs.Type.ExerciseTypeCode == PolyarticularTypeCode,
+            current is not null
+                && r.PrimaryMuscleGroupId == current.ExercisePrimaryMuscleGroupId
+                && r.CategoryId == current.ExerciseCategoryId
+                ? current.ExerciseMuscleGroup
+                : LegacyExerciseColumns.MuscleGroupFor(category.Text, refs.PrimaryGroup, null),
+            current is not null && r.PrimaryEquipmentId == current.ExercisePrimaryEquipmentId
+                ? current.ExerciseEquipment
+                : LegacyExerciseColumns.EquipmentFor(refs.PrimaryEquipment));
     }
 
     /// <summary>State currently stored (the exercise must have its two link collections loaded).</summary>

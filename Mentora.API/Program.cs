@@ -58,7 +58,7 @@ builder.Services.AddSwaggerGen(c =>
     // Lot 12.1 — admin back-office (Mentora associates), own JWT scheme AdminBearer
     c.SwaggerDoc(AdminAuthDefaults.SwaggerDoc, new OpenApiInfo
     {
-        Title = "Mentora API — Admin",
+        Title = "Mentora API: Admin",
         Version = "v1",
         Description = "Endpoints consumed by the Mentora admin back-office (associates only, AdminBearer tokens)."
     });

@@ -172,7 +172,6 @@ public class AuthService(
                 !r.AuthRefreshTokenIsRevoked &&
                 r.AuthRefreshTokenExpirationDate > DateTime.UtcNow &&
                 r.User.UserIsEnabled) // Lot 12.1 (12.D) — a disabled user cannot renew
-
             ?? throw new UnauthorizedException("Invalid or expired refresh token.");
 
         if (!BCrypt.Net.BCrypt.Verify(rawSecret, record.AuthRefreshTokenHash))

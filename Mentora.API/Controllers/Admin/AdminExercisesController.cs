@@ -16,7 +16,7 @@ namespace Mentora.API.Controllers.Admin;
 [Route("api/v1/admin")]
 [Authorize(Policy = AdminAuthDefaults.Policy)]
 [ApiExplorerSettings(GroupName = AdminAuthDefaults.SwaggerDoc)]
-[Tags("Admin — Exercises")]
+[Tags("Admin: Exercises")]
 public class AdminExercisesController(IAdminExerciseService exerciseService) : ControllerBase
 {
     /// <summary>
