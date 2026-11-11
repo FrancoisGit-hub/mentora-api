@@ -36,6 +36,7 @@ public sealed record ExerciseListItem(
     string? Level,
     bool IsActive,
     bool HasVideo,
+    string? VideoStatus,
     bool HasLegacyValues,
     DateTime UpdatedDate);
 
@@ -51,7 +52,27 @@ public sealed record LegacyValues(
 
 public sealed record ExerciseUsage(int Programs, int ProgramTemplates, int SessionTemplates);
 
-public sealed record ExerciseVideo(string? PlaybackId, string Status, decimal? DurationSeconds, string? AspectRatio);
+/// <summary>
+/// Vidéo d'un exercice vue par l'admin, quel que soit son statut (lot 12.3a).
+/// Status : UPLOADING, WAITING, READY ou ERRORED. Error (ERRORED seulement) : code, « : », message MUX.
+/// </summary>
+public sealed record AdminExerciseVideo(
+    string Status,
+    string? PlaybackId,
+    decimal? DurationSeconds,
+    string? AspectRatio,
+    string? Error,
+    DateTime? UploadExpiresAt,
+    DateTime UpdatedDate);
+
+/// <summary>Réponse de POST video-uploads. UploadUrl est un secret : jamais affichée ni journalisée.</summary>
+public sealed record VideoUploadResponse(
+    string UploadId,
+    string UploadUrl,
+    DateTime ExpiresAt,
+    AdminExerciseVideo Video);
+
+public sealed record VideoSyncResponse(AdminExerciseVideo Video);
 
 public sealed record ExerciseDetail(
     Guid ExerciseId,
@@ -79,7 +100,7 @@ public sealed record ExerciseDetail(
     string? CoachTip,
     string? SearchTags,
     IReadOnlyList<NamedRef> Objectives,
-    ExerciseVideo? Video,
+    AdminExerciseVideo? Video,
     bool IsActive,
     ExerciseUsage Usage,
     DateTime CreatedDate,

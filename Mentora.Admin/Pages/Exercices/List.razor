@@ -151,13 +151,21 @@
                             <td>@ExerciseText.LevelLabel(item.Level)</td>
                             <td>@Show(item.PrimaryEquipment)</td>
                             <td>
-                                @if (item.HasVideo)
+                                @switch (item.VideoStatus)
                                 {
-                                    <span class="badge">Avec vidéo</span>
-                                }
-                                else
-                                {
-                                    <span class="badge badge-muted">Sans vidéo</span>
+                                    case "READY":
+                                        <span class="badge">Avec vidéo</span>
+                                        break;
+                                    case "UPLOADING":
+                                    case "WAITING":
+                                        <span class="badge badge-warn">En traitement</span>
+                                        break;
+                                    case "ERRORED":
+                                        <span class="badge badge-error">Vidéo en erreur</span>
+                                        break;
+                                    default:
+                                        <span class="badge badge-muted">Sans vidéo</span>
+                                        break;
                                 }
                             </td>
                             <td>

@@ -49,4 +49,16 @@ public sealed class ExercisesApi(ApiClient client)
         Guid exerciseId, bool isActive, CancellationToken ct = default) =>
         client.SendAsync<ExerciseDetail>(
             HttpMethod.Put, Root + "exercises/" + exerciseId + "/activation", new ActivationBody(isActive), ct);
+
+    // Vidéo MUX (lot 12.3a). Aucun corps. L'adresse d'envoi de la réponse n'est jamais journalisée.
+
+    public Task<ApiResult<VideoUploadResponse>> CreateVideoUploadAsync(Guid exerciseId, CancellationToken ct = default) =>
+        client.SendAsync<VideoUploadResponse>(HttpMethod.Post, Root + "exercises/" + exerciseId + "/video-uploads", null, ct);
+
+    public Task<ApiResult<VideoSyncResponse>> SyncVideoAsync(Guid exerciseId, CancellationToken ct = default) =>
+        client.SendAsync<VideoSyncResponse>(HttpMethod.Post, Root + "exercises/" + exerciseId + "/video/sync", null, ct);
+
+    /// <summary>200 avec data null : le succès se lit sur IsSuccess.</summary>
+    public Task<ApiResult<object>> RemoveVideoAsync(Guid exerciseId, CancellationToken ct = default) =>
+        client.SendAsync<object>(HttpMethod.Delete, Root + "exercises/" + exerciseId + "/video", null, ct);
 }

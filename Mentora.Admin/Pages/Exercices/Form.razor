@@ -156,6 +156,108 @@ else
             </div>
         </div>
 
+        <div class="card pad spaced" id="video-block">
+            <h2 class="sec-title">Vidéo de démonstration</h2>
+            @if (_currentIsCreate)
+            {
+                <p class="muted">Enregistrez d'abord l'exercice : vous pourrez ensuite ajouter sa vidéo.</p>
+            }
+            else
+            {
+                <p class="muted">Cette vidéo est enregistrée tout de suite, sans passer par « Enregistrer l'exercice ».</p>
+
+                @if (!string.IsNullOrEmpty(_videoMessage))
+                {
+                    <div class="@(_videoMessageIsError ? "alert" : "info")" role="@(_videoMessageIsError ? "alert" : "status")">@_videoMessage</div>
+                }
+
+                <input id="@VideoInputId" type="file" accept="video/*" hidden tabindex="-1" aria-label="Fichier vidéo"
+                       @onchange="OnVideoPickedAsync" />
+
+                @if (_videoChecking)
+                {
+                    <p class="muted" role="status">Vérification de la vidéo…</p>
+                }
+                else if (_videoStarting)
+                {
+                    <p class="muted" role="status">Préparation de l'envoi…</p>
+                }
+                else if (_uploading)
+                {
+                    <p class="video-file"><strong>@_videoFileName</strong> (@FormatSize(_totalBytes))</p>
+                    <progress class="video-progress" value="@_sentBytes" max="@_totalBytes"
+                              aria-label="Envoi de la vidéo" aria-valuetext="@ProgressText()"></progress>
+                    <p class="muted small">@ProgressText()</p>
+                    <div class="video-actions">
+                        <button type="button" class="btn btn-sm" @onclick="CancelUpload">Annuler l'envoi</button>
+                    </div>
+                }
+                else if (_videoRemoving)
+                {
+                    <p class="muted" role="status">Suppression de la vidéo…</p>
+                }
+                else if (_video is null)
+                {
+                    <p class="muted">Aucune vidéo pour cet exercice.</p>
+                    <div class="video-actions">
+                        <button type="button" class="btn btn-primary" @onclick="OpenPicker">Choisir une vidéo</button>
+                    </div>
+                    <div class="hint">Un fichier vidéo de 2 Go au plus.</div>
+                }
+                else if (IsInterrupted(_video))
+                {
+                    <p><strong>L'envoi de la vidéo n'a pas été terminé.</strong></p>
+                    <p class="muted">@(InterruptedText(_video))</p>
+                    <div class="video-actions">
+                        <button type="button" class="btn btn-primary" @onclick="OpenPicker">Recommencer</button>
+                        <button type="button" class="btn" @onclick="AskRemoveVideo">Retirer la vidéo</button>
+                    </div>
+                }
+                else if (_video.Status == "ERRORED")
+                {
+                    <div class="alert" role="alert">
+                        <div>Le traitement de la vidéo a échoué. Choisissez le fichier de nouveau ou retirez la vidéo.</div>
+                        <div>Code : <span class="mono">@ErrorCode(_video.Error)</span></div>
+                    </div>
+                    <div class="video-actions">
+                        <button type="button" class="btn btn-primary" @onclick="OpenPicker">Recommencer</button>
+                        <button type="button" class="btn" @onclick="AskRemoveVideo">Retirer la vidéo</button>
+                    </div>
+                }
+                else if (_video.Status == "READY" && !string.IsNullOrEmpty(_video.PlaybackId))
+                {
+                    <div class="video-body">
+                        <img class="video-thumb" alt="Miniature de la vidéo de démonstration" loading="lazy"
+                             src="@ThumbnailUrl(_video.PlaybackId)" />
+                        <div class="video-info">
+                            <p class="video-meta">
+                                <span class="badge">Vidéo prête</span>
+                                <span class="muted"> Durée : @FormatDuration(_video.DurationSeconds)</span>
+                            </p>
+                            <a class="btn btn-sm" href="@PlayerUrl(_video.PlaybackId)" target="_blank" rel="noopener noreferrer">Voir la vidéo (nouvel onglet)</a>
+                            <div class="video-actions">
+                                <button type="button" class="btn btn-sm" @onclick="AskReplaceVideo">Remplacer la vidéo</button>
+                                <button type="button" class="btn btn-sm btn-danger" @onclick="AskRemoveVideo">Retirer la vidéo</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    // WAITING (ou UPLOADING terminé) : MUX traite le fichier.
+                    <p role="status"><strong>Traitement de la vidéo en cours…</strong></p>
+                    <p class="muted">Cela prend en général une à deux minutes. Vous pouvez continuer à modifier l'exercice.</p>
+                    @if (!_processing)
+                    {
+                        <div class="video-actions">
+                            <button type="button" class="btn btn-sm" @onclick="CheckNow">Vérifier maintenant</button>
+                            <button type="button" class="btn btn-sm" @onclick="AskRemoveVideo">Retirer la vidéo</button>
+                        </div>
+                    }
+                }
+            }
+        </div>
+
         <div class="card pad spaced">
             <h2 class="sec-title">Muscles et objectifs</h2>
 
@@ -261,6 +363,21 @@ else
                Text="Les modifications non enregistrées seront perdues."
                ConfirmLabel="Quitter" CancelLabel="Rester" Danger="true"
                OnConfirm="ConfirmLeave" OnCancel="CancelLeave" />
+
+<ConfirmDialog Open="_showLeaveUpload" Title="Quitter pendant l'envoi ?"
+               Text="L'envoi de la vidéo sera annulé."
+               ConfirmLabel="Quitter" CancelLabel="Rester" Danger="true"
+               OnConfirm="ConfirmLeaveUpload" OnCancel="CancelLeaveUpload" />
+
+<ConfirmDialog Open="_confirmReplaceVideo" Title="Remplacer la vidéo ?"
+               Text="La vidéo actuelle sera supprimée dès le début de l'envoi et remplacée par la nouvelle."
+               ConfirmLabel="Remplacer" CancelLabel="Annuler" Danger="true"
+               OnConfirm="ConfirmReplaceVideoAsync" OnCancel="CancelReplaceVideo" />
+
+<ConfirmDialog Open="_confirmRemoveVideo" Title="Retirer la vidéo ?"
+               Text="La vidéo sera supprimée de l'exercice et du service vidéo."
+               ConfirmLabel="Retirer" CancelLabel="Annuler" Danger="true"
+               OnConfirm="ConfirmRemoveVideoAsync" OnCancel="CancelRemoveVideo" />
 
 <ConfirmDialog Open="_confirmDeactivate" Title="@($"Désactiver « {_detail?.Name} » ?")"
                Text="Il ne sera plus proposé dans les apps."
@@ -403,6 +520,7 @@ else
     private async Task LoadAsync()
     {
         var token = ++_loadToken;
+        ResetVideoState();
         _loading = true;
         _notFound = false;
         _loadError = null;
@@ -441,6 +559,9 @@ else
         else
         {
             Fill(detail.Data);
+            // La vidéo vit à part du formulaire : elle n'entre pas dans l'état modifié.
+            _video = detail.Data.Video;
+            _ = ResumeVideoAsync(_videoToken);
         }
         _baseline = Snapshot();
     }
@@ -674,6 +795,16 @@ else
 
     private Task OnBeforeNavigation(LocationChangingContext context)
     {
+        // Un envoi de vidéo en cours est demandé en premier ; les modifications non enregistrées
+        // passent ensuite par leur propre question (la navigation est relancée après l'annulation).
+        if (_uploading)
+        {
+            context.PreventNavigation();
+            _pendingTarget = context.TargetLocation;
+            _showLeaveUpload = true;
+            return Task.CompletedTask;
+        }
+
         if (!IsDirty)
             return Task.CompletedTask;
 
@@ -681,6 +812,21 @@ else
         _pendingTarget = context.TargetLocation;
         _showLeave = true;
         return Task.CompletedTask;
+    }
+
+    private void ConfirmLeaveUpload()
+    {
+        _showLeaveUpload = false;
+        AbortUploadNow();
+        _uploading = false;
+        if (_pendingTarget is not null)
+            Nav.NavigateTo(_pendingTarget);
+    }
+
+    private void CancelLeaveUpload()
+    {
+        _showLeaveUpload = false;
+        _pendingTarget = null;
     }
 
     private void ConfirmLeave()
@@ -861,5 +1007,410 @@ else
         }
     }
 
-    public void Dispose() => _loadToken++;
+    public void Dispose()
+    {
+        _loadToken++;
+        ResetVideoState();
+    }
+
+    // Vidéo de démonstration (lot 12.3b). Tout est indépendant de l'état modifié du formulaire.
+
+    private const string VideoInputId = "f-video-file";
+    private const long MaxVideoBytes = 2L * 1024 * 1024 * 1024;
+    private static readonly TimeSpan PollEvery = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan PollMax = TimeSpan.FromMinutes(10);
+
+    public sealed record PickedFile(string Name, long Size, string Type);
+
+    public sealed record UploadOutcome(bool Ok, bool Aborted, int Status, bool Network);
+
+    private AdminExerciseVideo? _video;
+    private string? _videoMessage;
+    private bool _videoMessageIsError;
+    private bool _videoChecking;
+    private bool _videoStarting;
+    private bool _uploading;
+    private bool _processing;
+    private bool _videoRemoving;
+    private bool _confirmRemoveVideo;
+    private bool _showLeaveUpload;
+    private long _sentBytes;
+    private long _totalBytes;
+    private string _videoFileName = "";
+    private int _videoToken;
+    private CancellationTokenSource? _pollCts;
+    private DotNetObjectReference<Form>? _selfRef;
+
+    private bool VideoBusy => _videoChecking || _videoStarting || _uploading || _videoRemoving;
+
+    // Un envoi commencé puis jamais terminé (page fermée, envoi annulé, adresse expirée).
+    private bool IsInterrupted(AdminExerciseVideo v) =>
+        !_processing
+        && ((v.Status == "UPLOADING" && !_uploading)
+            || (v.Status == "ERRORED"
+                && ErrorCode(v.Error) is "UPLOAD_TIMED_OUT" or "UPLOAD_CANCELLED" or "UPLOAD_NOT_FOUND"));
+
+    private static string InterruptedText(AdminExerciseVideo v) =>
+        v.Status == "ERRORED" || (v.UploadExpiresAt is { } at && at < DateTime.UtcNow)
+            ? "Le délai d'envoi est dépassé. Choisissez le fichier de nouveau."
+            : "Le fichier n'est pas arrivé en entier. Choisissez le fichier de nouveau.";
+
+    private static string ErrorCode(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+            return "inconnu";
+        var cut = error.IndexOf(':');
+        return (cut > 0 ? error[..cut] : error).Trim();
+    }
+
+    private static string ThumbnailUrl(string playbackId) =>
+        "https://image.mux.com/" + Uri.EscapeDataString(playbackId) + "/thumbnail.jpg?width=480&time=1";
+
+    private static string PlayerUrl(string playbackId) =>
+        "https://player.mux.com/" + Uri.EscapeDataString(playbackId);
+
+    private static string FormatDuration(decimal? seconds)
+    {
+        if (seconds is null)
+            return "non renseignée";
+        var total = (int)Math.Round(seconds.Value, MidpointRounding.AwayFromZero);
+        return total < 60 ? $"{total} s" : $"{total / 60} min {total % 60:00} s";
+    }
+
+    private static string FormatSize(long bytes) =>
+        bytes >= 1024L * 1024 * 1024
+            ? $"{bytes / 1024d / 1024 / 1024:0.0} Go"
+            : $"{Math.Max(1, bytes / 1024 / 1024)} Mo";
+
+    private string ProgressText() =>
+        _totalBytes <= 0
+            ? "Envoi en cours…"
+            : $"Envoi en cours : {Math.Min(100, (int)(_sentBytes * 100 / _totalBytes))} %";
+
+    private void SetVideoMessage(string? text, bool error)
+    {
+        _videoMessage = text;
+        _videoMessageIsError = error;
+    }
+
+    private static string VideoFailure<T>(ApiResult<T> result) => result.Status switch
+    {
+        502 => "Le service vidéo ne répond pas, réessayez dans un instant.",
+        503 => "Le service vidéo n'est pas configuré sur ce serveur. Prévenez l'équipe technique.",
+        _ => ExerciseText.Failure(result)
+    };
+
+    private void ResetVideoState()
+    {
+        _videoToken++;
+        AbortUploadNow();
+        StopPolling();
+        _video = null;
+        _videoChecking = false;
+        _videoStarting = false;
+        _uploading = false;
+        _processing = false;
+        _videoRemoving = false;
+        _confirmRemoveVideo = false;
+        _confirmReplaceVideo = false;
+        _showLeaveUpload = false;
+        _videoMessage = null;
+        _sentBytes = 0;
+        _totalBytes = 0;
+        _selfRef?.Dispose();
+        _selfRef = null;
+    }
+
+    private void StopPolling()
+    {
+        _pollCts?.Cancel();
+        _pollCts?.Dispose();
+        _pollCts = null;
+        _processing = false;
+    }
+
+    private void AbortUploadNow()
+    {
+        if (!_uploading)
+            return;
+        _ = SafeAbortAsync();
+    }
+
+    private async Task SafeAbortAsync()
+    {
+        try { await JS.InvokeVoidAsync("mentoraAdmin.abortVideoUpload"); }
+        catch (Exception) { /* page quittée : rien à annuler */ }
+    }
+
+    [JSInvokable]
+    public Task OnVideoProgress(long sent, long total) =>
+        InvokeAsync(() =>
+        {
+            if (_uploading)
+            {
+                _sentBytes = sent;
+                _totalBytes = total;
+                StateHasChanged();
+            }
+        });
+
+    private Task OpenPicker() =>
+        VideoBusy ? Task.CompletedTask : JS.InvokeVoidAsync("mentoraAdmin.openFilePicker", VideoInputId).AsTask();
+
+    private void CancelUpload() => AbortUploadNow();
+
+    private async Task OnVideoPickedAsync()
+    {
+        if (VideoBusy || _currentId is not { } id)
+            return;
+
+        var picked = await JS.InvokeAsync<PickedFile?>("mentoraAdmin.getSelectedVideo", VideoInputId);
+        if (picked is null)
+            return;
+
+        string? problem = null;
+        if (!picked.Type.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
+            problem = "Ce fichier n'est pas une vidéo. Choisissez un fichier vidéo.";
+        else if (picked.Size <= 0)
+            problem = "Ce fichier est vide. Choisissez une autre vidéo.";
+        else if (picked.Size > MaxVideoBytes)
+            problem = "Cette vidéo dépasse 2 Go. Choisissez un fichier plus léger.";
+
+        if (problem is not null)
+        {
+            await JS.InvokeVoidAsync("mentoraAdmin.clearSelectedVideo", VideoInputId);
+            SetVideoMessage(problem, true);
+            return;
+        }
+
+        await StartUploadAsync(id, picked);
+    }
+
+    private async Task StartUploadAsync(Guid id, PickedFile picked)
+    {
+        var token = _videoToken;
+        StopPolling();
+        SetVideoMessage(null, false);
+        _videoStarting = true;
+        var created = await Api.CreateVideoUploadAsync(id);
+        if (token != _videoToken)
+            return;
+        _videoStarting = false;
+
+        if (!created.IsSuccess || created.Data is null)
+        {
+            await JS.InvokeVoidAsync("mentoraAdmin.clearSelectedVideo", VideoInputId);
+            if (created.Status == 404)
+                SetVideoMessage("Cet exercice n'existe plus.", true);
+            else
+                SetVideoMessage(VideoFailure(created), true);
+            return;
+        }
+
+        // L'ancienne vidéo (s'il y en avait une) vient d'être remplacée côté serveur.
+        _video = created.Data.Video;
+        _videoFileName = picked.Name;
+        _sentBytes = 0;
+        _totalBytes = picked.Size;
+        _selfRef ??= DotNetObjectReference.Create(this);
+        _uploading = true;
+        StateHasChanged();
+
+        UploadOutcome outcome;
+        try
+        {
+            outcome = await JS.InvokeAsync<UploadOutcome>("mentoraAdmin.uploadVideo", created.Data.UploadUrl, _selfRef);
+        }
+        catch (JSException)
+        {
+            outcome = new UploadOutcome(false, false, 0, true);
+        }
+
+        if (token != _videoToken)
+            return;
+        _uploading = false;
+        if (outcome.Ok)
+        {
+            // Avant le premier await : l'écran passe directement de l'envoi au traitement.
+            SetVideoMessage(null, false);
+            BeginProcessing(id);
+        }
+        await JS.InvokeVoidAsync("mentoraAdmin.clearSelectedVideo", VideoInputId);
+
+        if (outcome.Ok)
+            return;
+
+        if (outcome.Aborted)
+        {
+            SetVideoMessage("Envoi annulé.", false);
+        }
+        else if (outcome.Network || outcome.Status == 0)
+        {
+            SetVideoMessage("La connexion a été coupée pendant l'envoi. Cliquez sur « Recommencer ».", true);
+        }
+        else
+        {
+            SetVideoMessage($"Le service vidéo a refusé l'envoi (code {outcome.Status}). Cliquez sur « Recommencer ».", true);
+        }
+    }
+
+    // Reprise à l'ouverture de la fiche : traitement en cours = suivi ; envoi commencé = une vérification.
+    private async Task ResumeVideoAsync(int token)
+    {
+        if (_video is not { } v)
+            return;
+
+        if (v.Status == "WAITING")
+        {
+            BeginProcessing(_currentId!.Value);
+            return;
+        }
+
+        if (v.Status != "UPLOADING" || _currentId is not { } id)
+            return;
+
+        _videoChecking = true;
+        await InvokeAsync(StateHasChanged);
+        var result = await Api.SyncVideoAsync(id);
+        if (token != _videoToken)
+            return;
+        _videoChecking = false;
+
+        if (result.IsSuccess && result.Data is { } data)
+        {
+            _video = data.Video;
+            if (data.Video.Status == "WAITING")
+                BeginProcessing(id);
+        }
+        else if (result.Status != 404)
+        {
+            SetVideoMessage(VideoFailure(result), true);
+        }
+        else
+        {
+            _video = null;
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void BeginProcessing(Guid id)
+    {
+        StopPolling();
+        _pollCts = new CancellationTokenSource();
+        _processing = true;
+        _ = PollAsync(id, _videoToken, _pollCts.Token);
+    }
+
+    // Suivi du traitement : une synchronisation toutes les 5 secondes, 10 minutes au plus.
+    private async Task PollAsync(Guid id, int token, CancellationToken ct)
+    {
+        var started = DateTime.UtcNow;
+        var first = true;
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                if (!first)
+                    await Task.Delay(PollEvery, ct);
+                first = false;
+
+                if (DateTime.UtcNow - started > PollMax)
+                {
+                    _processing = false;
+                    SetVideoMessage("Le traitement dure plus longtemps que prévu. Vous pouvez vérifier de nouveau ou revenir plus tard.", false);
+                    break;
+                }
+
+                var result = await Api.SyncVideoAsync(id, ct);
+                if (ct.IsCancellationRequested || token != _videoToken)
+                    break;
+
+                if (result.IsSuccess && result.Data is { } data)
+                {
+                    _video = data.Video;
+                    SetVideoMessage(null, false);
+                    if (data.Video.Status is "READY" or "ERRORED")
+                    {
+                        _processing = false;
+                        break;
+                    }
+                }
+                else if (result.Status is 404 or 401 or 503)
+                {
+                    _processing = false;
+                    if (result.Status == 404)
+                        _video = null;
+                    if (result.Status != 401)
+                        SetVideoMessage(result.Status == 404 ? "Cette vidéo n'existe plus." : VideoFailure(result), true);
+                    break;
+                }
+                else
+                {
+                    // 502 ou réseau : on garde le suivi et on réessaie au prochain tour.
+                    SetVideoMessage(VideoFailure(result) + " Nouvel essai dans quelques secondes.", true);
+                }
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (token == _videoToken && !ct.IsCancellationRequested)
+                await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void CheckNow()
+    {
+        if (_currentId is { } id && !VideoBusy)
+        {
+            SetVideoMessage(null, false);
+            BeginProcessing(id);
+        }
+    }
+
+    private bool _confirmReplaceVideo;
+
+    private void AskReplaceVideo() => _confirmReplaceVideo = true;
+
+    private void CancelReplaceVideo() => _confirmReplaceVideo = false;
+
+    // Seul « Remplacer » ouvre le sélecteur de fichier.
+    private async Task ConfirmReplaceVideoAsync()
+    {
+        _confirmReplaceVideo = false;
+        await OpenPicker();
+    }
+
+    private void AskRemoveVideo() => _confirmRemoveVideo = true;
+
+    private void CancelRemoveVideo() => _confirmRemoveVideo = false;
+
+    private async Task ConfirmRemoveVideoAsync()
+    {
+        _confirmRemoveVideo = false;
+        if (_currentId is not { } id || VideoBusy)
+            return;
+
+        var token = _videoToken;
+        StopPolling();
+        SetVideoMessage(null, false);
+        _videoRemoving = true;
+        var result = await Api.RemoveVideoAsync(id);
+        if (token != _videoToken)
+            return;
+        _videoRemoving = false;
+
+        if (result.IsSuccess || result.Status == 404)
+        {
+            _video = null;
+            SetVideoMessage(result.IsSuccess ? "Vidéo retirée." : "Cet exercice n'a plus de vidéo.", false);
+        }
+        else
+        {
+            SetVideoMessage(VideoFailure(result), true);
+        }
+    }
 }

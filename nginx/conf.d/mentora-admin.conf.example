@@ -20,7 +20,7 @@
 #
 # One line of output per inline script (today: exactly one). If a second inline script
 # appears, add its hash too. No inline style attribute is used by the admin, so style-src
-# has no 'unsafe-inline'. MUX (12.3): its upload host will be added to connect-src then.
+# has no 'unsafe-inline'. MUX (12.3b): connect-src allows https://*.mux.com (the signed direct upload URL is on a MUX host whose exact name is not fixed), img-src allows https://image.mux.com (thumbnails). The player opens in a new tab, never framed here.
 
 # ---------------------------------------------------------------------------
 # HTTP server: ACME challenge (renewals) and redirect to HTTPS.
@@ -78,7 +78,7 @@ server {
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "no-referrer" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-oW+3IccTLsL4xJ3s2rKPxyyczlz2dfeyKhTyG6r3Zkc='; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.mentorapp.fr; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-oW+3IccTLsL4xJ3s2rKPxyyczlz2dfeyKhTyG6r3Zkc='; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://image.mux.com; connect-src 'self' https://api.mentorapp.fr https://*.mux.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
 
     # Single page application: unknown paths fall back to index.html.
     location / {

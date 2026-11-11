@@ -44,6 +44,115 @@
         if (ev.key === THEME_KEY) applyTheme(getMode());
     });
 
+    // Envoi par morceaux vers l'adresse signée MUX (PUT avec Content-Range).
+    var videoPicker = (function () {
+        var CHUNK = 8 * 1024 * 1024;            // multiple de 256 Kio, exigé par MUX
+        var RETRIES = 3;                        // nouvelles tentatives par morceau
+        var PROGRESS_EVERY_MS = 500;
+        var file = null;
+        var current = null;                     // { aborted, xhr }
+
+        function onBeforeUnload(ev) {
+            ev.preventDefault();
+            ev.returnValue = "";
+            return "";
+        }
+
+        function getSelected(inputId) {
+            var input = document.getElementById(inputId);
+            var f = input && input.files && input.files.length > 0 ? input.files[0] : null;
+            file = f;
+            return f ? { name: f.name, size: f.size, type: f.type || "" } : null;
+        }
+
+        function clear(inputId) {
+            file = null;
+            var input = document.getElementById(inputId);
+            if (input) { try { input.value = ""; } catch (e) { } }
+        }
+
+        // Un morceau : 308 = continuer, 200 ou 201 = fini. Retourne { status } ou { network: true }.
+        function sendChunk(url, start, end, total, state, report) {
+            return new Promise(function (resolve) {
+                var xhr = new XMLHttpRequest();
+                state.xhr = xhr;
+                xhr.open("PUT", url, true);
+                xhr.withCredentials = false;    // équivalent de credentials "omit" : ni cookie ni Authorization
+                xhr.setRequestHeader("Content-Range", "bytes " + start + "-" + (end - 1) + "/" + total);
+                xhr.upload.onprogress = function (ev) {
+                    if (ev.lengthComputable) report(start + ev.loaded);
+                };
+                xhr.onload = function () { resolve({ status: xhr.status }); };
+                xhr.onerror = function () { resolve({ network: true }); };
+                xhr.ontimeout = function () { resolve({ network: true }); };
+                xhr.onabort = function () { resolve({ aborted: true }); };
+                xhr.send(file.slice(start, end));
+            });
+        }
+
+        function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+        // Retourne { ok: true } | { ok: false, aborted: true } | { ok: false, status, network }.
+        async function upload(url, dotNetRef) {
+            if (!file || !url) return { ok: false, status: 0, network: false };
+            var total = file.size;
+            var state = { aborted: false, xhr: null };
+            current = state;
+            var lastSent = 0;
+            var lastReport = 0;
+
+            function report(sent, force) {
+                var now = Date.now();
+                if (!force && now - lastReport < PROGRESS_EVERY_MS) return;
+                lastReport = now;
+                lastSent = sent;
+                try { dotNetRef.invokeMethodAsync("OnVideoProgress", sent, total); } catch (e) { }
+            }
+
+            window.addEventListener("beforeunload", onBeforeUnload);
+            try {
+                var offset = 0;
+                while (offset < total) {
+                    var end = Math.min(offset + CHUNK, total);
+                    var attempt = 0;
+                    var result;
+                    while (true) {
+                        result = await sendChunk(url, offset, end, total, state, function (s) { report(s, false); });
+                        if (state.aborted || result.aborted) return { ok: false, aborted: true };
+                        var retryable = result.network || result.status >= 500 || result.status === 408 || result.status === 429;
+                        if (!retryable || attempt >= RETRIES) break;
+                        attempt++;
+                        await wait(1000 * attempt);
+                        if (state.aborted) return { ok: false, aborted: true };
+                    }
+
+                    if (result.network) return { ok: false, status: 0, network: true };
+                    var last = end >= total;
+                    var good = last
+                        ? (result.status === 200 || result.status === 201)
+                        : (result.status === 308);
+                    if (!good) return { ok: false, status: result.status, network: false };
+                    offset = end;
+                    report(offset, last);
+                }
+                return { ok: true };
+            } finally {
+                window.removeEventListener("beforeunload", onBeforeUnload);
+                if (current === state) current = null;
+                state.xhr = null;
+            }
+        }
+
+        function abort() {
+            if (current) {
+                current.aborted = true;
+                try { if (current.xhr) current.xhr.abort(); } catch (e) { }
+            }
+        }
+
+        return { getSelected: getSelected, clear: clear, upload: upload, abort: abort };
+    })();
+
     window.mentoraAdmin = {
         getThemeMode: function () { return getMode(); },
         setThemeMode: function (mode) {
@@ -77,6 +186,18 @@
                 });
             }
             return dotNetRef.invokeMethodAsync(methodName);
-        }
+        },
+
+        // Vidéo de démonstration (lot 12.3b). Le fichier va directement chez MUX par l'adresse signée
+        // reçue de l'API : aucun en-tête Authorization, aucun cookie. L'adresse n'est jamais écrite
+        // dans la console ni renvoyée à .NET.
+        openFilePicker: function (id) {
+            var el = document.getElementById(id);
+            if (el && el.click) el.click();
+        },
+        getSelectedVideo: videoPicker.getSelected,
+        clearSelectedVideo: videoPicker.clear,
+        uploadVideo: videoPicker.upload,
+        abortVideoUpload: videoPicker.abort
     };
 })();
