@@ -343,6 +343,14 @@ rm admin-www.tgz
 
 Attendu : on voit `index.html`, `_framework`, `css`, `js`, `img`, `appsettings.json`, `appsettings.Production.json`.
 
+**Obligatoire si nginx tournait déjà** (constaté le 12/11) : le volume `./admin-www:/var/www/mentora-admin:ro` suit le dossier par son identité sur le disque, pas par son nom. Après `mv admin-www admin-www.prev`, nginx continue de servir `admin-www.prev`. Redémarrer nginx (coupure de quelques secondes pour api, api-demo, admin et LiveKit), puis vérifier le fichier réellement vu par nginx :
+
+```bash
+docker compose restart nginx && sleep 3 && docker exec mentora-nginx ls -l /var/www/mentora-admin/js/admin.js
+```
+
+Le retour arrière K (échange des dossiers) demande le même redémarrage.
+
 ### F. Une seule fois : monter le dossier dans le service nginx **[SSH]**
 
 Sauvegarde d'abord :
@@ -459,3 +467,51 @@ docker compose up -d --no-deps nginx
 ```
 
 `docker-compose.yml.pre-admin` est la sauvegarde de l'étape F. Ce retour arrière ne touche ni api-prod ni api-demo.
+
+---
+
+## Vague 2 du lot 12 : vidéos MUX (déployée le 12/11/2026)
+
+Preuves : `docs/review/lot12/wave2-vps/vps-evidence.md`. Même déroulé que ci-dessus (sauvegardes, image construite sur le poste, `docker load`, api-demo puis api-prod, admin puis conf nginx), avec ces ajouts.
+
+### Environnements MUX
+
+Organisation MUX « tfoinm » : environnement « Mentora PROD » pour api-prod, « Mentora DEMO » pour api-demo. Dans chacun : un jeton d'accès (Settings > Access Tokens, droits Mux Video lecture et écriture) et un webhook (Settings > Webhooks) vers `https://api.mentorapp.fr/api/v1/webhooks/mux` (PROD) ou `https://api-demo.mentorapp.fr/api/v1/webhooks/mux` (DEMO). La clé de signature du webhook est la valeur masquée de la colonne SECRET (icône œil), à ne pas confondre avec « Signing Keys ».
+
+### Secrets dans `~/mentora/.env` **[SSH]**
+
+Sauvegarde du `.env` et retour à la ligne final (étape 4), puis saisie masquée. Coller chaque valeur **une seule fois** (dans le terminal de VS Code, Ctrl+V et clic droit collent chacun : la valeur se retrouve en double).
+
+```bash
+for n in MUX_TOKEN_ID_PROD MUX_TOKEN_SECRET_PROD MUX_WEBHOOK_SECRET_PROD MUX_TOKEN_ID_DEMO MUX_TOKEN_SECRET_DEMO MUX_WEBHOOK_SECRET_DEMO; do if grep -q "^$n=" .env; then echo "$n DEJA PRESENT"; else read -rs -p "$n : " v; echo; printf '%s=%s\n' "$n" "$v" >> .env; unset v; fi; done
+awk -F= '/^MUX_/{v=substr($0,length($1)+2); L=length(v); printf "%s longueur=%d espace=%s dollar=%s double=%s\n",$1,L,(v ~ /[[:space:]]/?"OUI":"non"),(index(v,"$")?"OUI":"non"),((L%2==0 && substr(v,1,L/2)==substr(v,L/2+1))?"OUI":"non")}' .env
+```
+
+Attendu : longueurs 36 (Token ID), 75 (Token Secret), 32 (clé de webhook), et `non` partout.
+
+### Compose **[SSH]**
+
+Dans `api-prod` (après `LiveKit__ApiSecret`) :
+
+```yaml
+      - Mux__TokenId=${MUX_TOKEN_ID_PROD}
+      - Mux__TokenSecret=${MUX_TOKEN_SECRET_PROD}
+      - Mux__WebhookSecret=${MUX_WEBHOOK_SECRET_PROD}
+      - Mux__CorsOrigin=https://admin.mentorapp.fr
+```
+
+Dans `api` (api-demo, après `AdminAuth__Emails`) : les mêmes avec les variables `_DEMO` et `Mux__CorsOrigin=http://localhost:4200` (pas d'admin-demo ; l'admin locale dépose sur MUX DEMO). Hors Development, api-prod refuse de démarrer si l'une des quatre manque, si la clé de webhook contient un espace, ou si l'origine n'est pas une seule origine https.
+
+### Contrôles après démarrage
+
+- Logs : `Applying migration '20261110104601_Lot12_3a_MuxVideos'` au premier démarrage, `[MUX] configured=True corsOrigin=<origine attendue> apiBase=api.mux.com`.
+- **[PS]** POST `/api/v1/admin/exercises/00000000-0000-0000-0000-000000000000/video-uploads` sans jeton : 401 ; POST `/api/v1/webhooks/mux` avec `{}` : 401 (un 503 voudrait dire MUX non configuré).
+- Conf nginx de l'admin : la CSP servie contient `img-src ... https://image.mux.com` et `connect-src ... https://*.mux.com`.
+- Admin servie : `admin.js` contient `HTTP_308_STALLED` (sinon, voir l'étape E : redémarrer nginx).
+
+### Retour arrière
+
+- api-demo : `docker tag mentora-api:pre-lot12-v2 mentora-api:latest && docker compose up -d --no-deps --force-recreate api`.
+- api-prod : `cp docker-compose.yml.pre-lot12-v2 docker-compose.yml && docker compose up -d --no-deps --force-recreate api-prod` (image `mentora-api:lot12`).
+- Admin : étape K, puis `cp ~/mentora-admin.conf.pre-v2 nginx/conf.d/mentora-admin.conf`, `nginx -t`, reload, et redémarrage de nginx.
+- La migration 12.3a reste dans les bases (colonnes et table ajoutées, sans effet sur l'ancien code).
