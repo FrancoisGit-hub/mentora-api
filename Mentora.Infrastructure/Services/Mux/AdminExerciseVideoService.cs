@@ -104,7 +104,7 @@ public sealed class AdminExerciseVideoService(
             catch
             {
                 // The new MUX upload is not referenced by any row: cancel it (else it expires on its own).
-                await BestEffortAsync("create upload rollback", videoId, assetId: null, uploadIdToCancel: upload.Id);
+                await BestEffortAsync("create upload rollback", videoId, assetId: null, pendingUploadId: upload.Id);
                 throw;
             }
         }
@@ -234,14 +234,19 @@ public sealed class AdminExerciseVideoService(
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    /// <summary>Deletes an asset and/or cancels an upload at MUX; never throws (the database is already committed).</summary>
-    private async Task BestEffortAsync(string context, Guid videoId, string? assetId, string? uploadIdToCancel)
+    /// <summary>
+    /// Deletes an asset and/or cleans up a pending upload at MUX; never throws (the database is already
+    /// committed). A pending upload (row UPLOADING, so no asset id in the database) is read first: the file
+    /// may already have reached MUX and created an asset that no row will ever reference (review V2). That
+    /// asset is deleted; an upload without asset is cancelled. A 404 at any step means already gone.
+    /// </summary>
+    private async Task BestEffortAsync(string context, Guid videoId, string? assetId, string? pendingUploadId)
     {
         if (assetId is not null)
         {
             try
             {
-                var deleted = await mux.DeleteAssetAsync(assetId, CancellationToken.None);
+                var deleted = await DeleteAssetWithRetryAsync(assetId);
                 logger.LogInformation("[MUX] {Context} video={VideoId} asset {AssetId} {Outcome}",
                     context, videoId, assetId, deleted ? "deleted" : "already gone");
             }
@@ -252,18 +257,58 @@ public sealed class AdminExerciseVideoService(
             }
         }
 
-        if (uploadIdToCancel is not null)
+        if (pendingUploadId is not null)
         {
             try
             {
-                var cancelled = await mux.CancelUploadAsync(uploadIdToCancel, CancellationToken.None);
-                logger.LogInformation("[MUX] {Context} video={VideoId} upload {UploadId} {Outcome}",
-                    context, videoId, uploadIdToCancel, cancelled ? "cancelled" : "already gone");
+                var upload = await mux.GetUploadAsync(pendingUploadId, CancellationToken.None);
+                if (upload is null)
+                {
+                    logger.LogInformation("[MUX] {Context} video={VideoId} upload {UploadId} already gone",
+                        context, videoId, pendingUploadId);
+                }
+                else if (!string.IsNullOrEmpty(upload.AssetId))
+                {
+                    var deleted = await DeleteAssetWithRetryAsync(upload.AssetId);
+                    logger.LogInformation(
+                        "[MUX] {Context} video={VideoId} upload {UploadId} found asset {AssetId}, asset {Outcome}",
+                        context, videoId, pendingUploadId, upload.AssetId, deleted ? "deleted" : "already gone");
+                }
+                else
+                {
+                    var cancelled = await mux.CancelUploadAsync(pendingUploadId, CancellationToken.None);
+                    logger.LogInformation("[MUX] {Context} video={VideoId} upload {UploadId} without asset, {Outcome}",
+                        context, videoId, pendingUploadId, cancelled ? "cancelled" : "already gone");
+                }
             }
             catch (Exception ex)
             {
-                logger.LogWarning("[MUX] {Context} video={VideoId} upload {UploadId} not cancelled ({Error})",
-                    context, videoId, uploadIdToCancel, ex.GetType().Name);
+                logger.LogWarning("[MUX] {Context} video={VideoId} upload {UploadId} not cleaned up ({Error})",
+                    context, videoId, pendingUploadId, ex.GetType().Name);
+            }
+        }
+    }
+
+    // MUX refuses to delete an asset in its first moments (HTTP 400 "Can't delete a preparing asset", seen at
+    // runtime right after a file reached MUX). The same call succeeds a couple of seconds later, so the
+    // best-effort cleanup retries a few times before giving up. The client does not expose the status code,
+    // so any MuxUnavailableException is retried; the last attempt rethrows to the caller, which logs it.
+    private const int AssetDeleteAttempts = 4;
+    private static readonly TimeSpan AssetDeleteRetryDelay = TimeSpan.FromSeconds(2);
+
+    private async Task<bool> DeleteAssetWithRetryAsync(string assetId)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await mux.DeleteAssetAsync(assetId, CancellationToken.None);
+            }
+            catch (MuxUnavailableException) when (attempt < AssetDeleteAttempts)
+            {
+                logger.LogInformation("[MUX] asset {AssetId} not deletable yet, attempt {Attempt} of {Max}",
+                    assetId, attempt, AssetDeleteAttempts);
+                await Task.Delay(AssetDeleteRetryDelay);
             }
         }
     }

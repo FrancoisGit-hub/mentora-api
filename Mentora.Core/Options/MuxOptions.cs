@@ -2,15 +2,16 @@ namespace Mentora.Core.Options;
 
 /// <summary>
 /// Lot 12.3a. MUX video settings, from the environment variables Mux__* only (no "Mux" section in
-/// appsettings.json). Outside Development the four secrets/origin are required; in Development they are
-/// either all empty (MUX disabled: the admin video routes and the webhook answer 503) or all valid.
+/// appsettings.json). Outside Development the four values are required (TokenId, TokenSecret and
+/// WebhookSecret non-empty, WebhookSecret without whitespace and without a minimum length since MUX
+/// generates it, CorsOrigin a single https origin); in Development they are either all empty (MUX
+/// disabled: the admin video routes and the webhook answer 503) or all valid.
 /// Failure messages never contain a value.
 /// </summary>
 public sealed class MuxOptions
 {
     public const string SectionName = "Mux";
 
-    public const int MinWebhookSecretLength = 32;
     public const int MinUploadTimeoutSeconds = 60;
     public const int MaxUploadTimeoutSeconds = 604800;
     public const int MinWebhookToleranceSeconds = 60;
@@ -88,8 +89,10 @@ public sealed class MuxOptions
             if (string.IsNullOrWhiteSpace(value))
                 return $"{name} must be set as an environment variable outside Development.";
 
-        if (!isDevelopment && WebhookSecret.Length < MinWebhookSecretLength)
-            return $"Mux:WebhookSecret must be at least {MinWebhookSecretLength} characters.";
+        // No minimum length: MUX generates the signing secret and its length is not ours to choose. A
+        // whitespace inside it is always a copy-paste mistake (MUX secrets have none), so it is refused.
+        if (WebhookSecret.Any(char.IsWhiteSpace))
+            return "Mux:WebhookSecret must not contain whitespace.";
 
         return ValidateCorsOrigin(isDevelopment);
     }

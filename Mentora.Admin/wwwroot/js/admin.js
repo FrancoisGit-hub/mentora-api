@@ -71,7 +71,16 @@
             if (input) { try { input.value = ""; } catch (e) { } }
         }
 
-        // Un morceau : 308 = continuer, 200 ou 201 = fini. Retourne { status } ou { network: true }.
+        // En-tête Range d'une réponse 308 ("bytes=0-N") : octet suivant attendu par MUX (N + 1),
+        // ou -1 quand l'en-tête est absent ou illisible (CORS peut le masquer).
+        function nextFromRange(value) {
+            var m = /^bytes=0-(\d+)$/.exec(typeof value === "string" ? value.trim() : "");
+            if (!m) return -1;
+            var n = parseInt(m[1], 10);
+            return isFinite(n) ? n + 1 : -1;
+        }
+
+        // Un morceau : 308 = continuer, 200 ou 201 = fini. Retourne { status, range } ou { network: true }.
         function sendChunk(url, start, end, total, state, report) {
             return new Promise(function (resolve) {
                 var xhr = new XMLHttpRequest();
@@ -82,7 +91,11 @@
                 xhr.upload.onprogress = function (ev) {
                     if (ev.lengthComputable) report(start + ev.loaded);
                 };
-                xhr.onload = function () { resolve({ status: xhr.status }); };
+                xhr.onload = function () {
+                    var range = null;
+                    try { range = xhr.getResponseHeader("Range"); } catch (e) { range = null; }
+                    resolve({ status: xhr.status, range: range });
+                };
                 xhr.onerror = function () { resolve({ network: true }); };
                 xhr.ontimeout = function () { resolve({ network: true }); };
                 xhr.onabort = function () { resolve({ aborted: true }); };
@@ -92,7 +105,8 @@
 
         function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-        // Retourne { ok: true } | { ok: false, aborted: true } | { ok: false, status, network }.
+        // Retourne { ok: true } | { ok: false, aborted: true } | { ok: false, status, network }
+        // | { ok: false, status: 308, code: "HTTP_308_STALLED" } (trois 308 de suite sans avancer).
         async function upload(url, dotNetRef) {
             if (!file || !url) return { ok: false, status: 0, network: false };
             var total = file.size;
@@ -112,6 +126,7 @@
             window.addEventListener("beforeunload", onBeforeUnload);
             try {
                 var offset = 0;
+                var stalls = 0;                 // 308 successifs sans avancer
                 while (offset < total) {
                     var end = Math.min(offset + CHUNK, total);
                     var attempt = 0;
@@ -128,12 +143,29 @@
 
                     if (result.network) return { ok: false, status: 0, network: true };
                     var last = end >= total;
-                    var good = last
-                        ? (result.status === 200 || result.status === 201)
-                        : (result.status === 308);
-                    if (!good) return { ok: false, status: result.status, network: false };
-                    offset = end;
-                    report(offset, last);
+                    var next;
+                    if (last && (result.status === 200 || result.status === 201)) {
+                        next = total;
+                    } else if (result.status === 308) {
+                        // MUX dit jusqu'où il a gardé le fichier. Range lisible : on reprend à N + 1
+                        // (au plus à la fin du morceau). Range absent ou masqué : morceau reçu en entier.
+                        var fromRange = nextFromRange(result.range);
+                        next = fromRange < 0 ? end : Math.min(fromRange, end);
+                        // Le dernier morceau doit finir par 200 ou 201 : un 308 qui n'a rien à
+                        // renvoyer est un refus, comme avant.
+                        if (last && next >= total) return { ok: false, status: 308, network: false };
+                    } else {
+                        return { ok: false, status: result.status, network: false };
+                    }
+
+                    if (next <= offset) {
+                        stalls++;
+                        if (stalls >= 3) return { ok: false, status: 308, network: false, code: "HTTP_308_STALLED" };
+                    } else {
+                        stalls = 0;
+                    }
+                    offset = next;
+                    report(offset, offset >= total);
                 }
                 return { ok: true };
             } finally {
