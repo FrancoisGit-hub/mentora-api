@@ -453,6 +453,8 @@ builder.Services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions
     .Configure<IOptions<Mentora.Core.Options.CorsOptions>>((options, configured) =>
     {
         var origins = configured.Value.OriginList.ToList();
+        // Lot 13.1: debug origins (localhost only, validated) feed the policy in every environment.
+        origins.AddRange(configured.Value.DebugOriginList);
         if (builder.Environment.IsDevelopment())
             origins.AddRange(developmentOrigins);
         options.AddPolicy("MentoraCorsPolicy", policy =>
@@ -488,7 +490,8 @@ var app = builder.Build();
 }
 
 // Lot 12.5a: .Value runs CorsOptionsValidator now (before migrations). The line prints counts and
-// the configured public origins only (never the localhost ones).
+// the configured public origins only (never the localhost ones). Lot 13.1: the debug origins
+// (localhost only, no secret) are always counted and listed by name on separate lines.
 {
     var corsOpts = app.Services.GetRequiredService<IOptions<Mentora.Core.Options.CorsOptions>>().Value;
     var configuredOrigins = corsOpts.OriginList;
@@ -496,6 +499,10 @@ var app = builder.Build();
         configuredOrigins.Count, app.Environment.IsDevelopment());
     foreach (var origin in configuredOrigins.Where(o => !Mentora.Core.Options.CorsOptions.IsLocalhostOrigin(o)))
         app.Logger.LogInformation("[CORS] origin {Origin}", origin);
+    var debugOrigins = corsOpts.DebugOriginList;
+    app.Logger.LogInformation("[CORS] debugOrigins={Count}", debugOrigins.Count);
+    foreach (var debugOrigin in debugOrigins)
+        app.Logger.LogInformation("[CORS] debug origin {Origin}", debugOrigin);
 }
 
 // Lot 12.3a: .Value runs MuxOptionsValidator now (before migrations). The line never prints a token or a secret.
