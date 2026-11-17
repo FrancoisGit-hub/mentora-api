@@ -515,3 +515,56 @@ Dans `api` (api-demo, après `AdminAuth__Emails`) : les mêmes avec les variable
 - api-prod : `cp docker-compose.yml.pre-lot12-v2 docker-compose.yml && docker compose up -d --no-deps --force-recreate api-prod` (image `mentora-api:lot12`).
 - Admin : étape K, puis `cp ~/mentora-admin.conf.pre-v2 nginx/conf.d/mentora-admin.conf`, `nginx -t`, reload, et redémarrage de nginx.
 - La migration 12.3a reste dans les bases (colonnes et table ajoutées, sans effet sur l'ancien code).
+
+---
+
+## Lot 13.1 : origine de débogage (Cors__DebugOrigins)
+
+Permet à l'app mobile lancée en local (navigateur sur `http://localhost:8100`) d'appeler l'API de PROD. Réglage séparé de `Cors__AllowedOrigins`, variable d'environnement uniquement, mêmes règles dans tous les environnements.
+
+### Compose **[SSH]**
+
+Dans `api-prod`, après `Cors__AllowedOrigins` (six espaces d'indentation, comme les autres lignes) :
+
+```yaml
+      - Cors__DebugOrigins=http://localhost:8100
+```
+
+Puis `docker compose up -d --no-deps --force-recreate api-prod`.
+
+### Règles de validation (refus au démarrage, avant les migrations)
+
+Chaque élément de `Cors__DebugOrigins` (séparés par des virgules, 5 au plus) doit être :
+
+- une origine absolue en `http` ou `https`, sans joker, sans identifiants, sans chemin, sans requête ni fragment ;
+- avec l'hôte exactement `localhost` (`127.0.0.1`, `[::1]`, `sub.localhost` et `localhost.evil.com` sont refusés) ;
+- avec un port explicite autre que le port par défaut (`http://localhost` et `http://localhost:80` sont refusés).
+
+Vide ou absent : aucune origine de débogage, démarrage normal. En plus, hors Development, un élément de `Cors__AllowedOrigins` dont l'hôte est `localhost` est refusé : il faut utiliser `Cors__DebugOrigins`. La règle « `https` obligatoire » de `Cors__AllowedOrigins` hors Development ne change pas. Les messages de refus nomment le réglage et le numéro de l'élément, jamais la valeur (par exemple `Cors:DebugOrigins item #1 must use the host localhost.`).
+
+### Contrôles après démarrage
+
+**[SSH]** Attendu dans les logs de PROD :
+
+```
+[CORS] origins=1 localhost=False
+[CORS] origin https://admin.mentorapp.fr
+[CORS] debugOrigins=1
+[CORS] debug origin http://localhost:8100
+```
+
+**[PS]** Contrôle de la pré-requête depuis l'origine de débogage (même forme que le contrôle de l'admin, étape 7) :
+
+```powershell
+$r = Invoke-WebRequest https://api.mentorapp.fr/api/v1/auth/otp/request -Method Options -UseBasicParsing -Headers @{ Origin = "http://localhost:8100"; "Access-Control-Request-Method" = "POST"; "Access-Control-Request-Headers" = "content-type" }; "$($r.StatusCode) $($r.Headers['Access-Control-Allow-Origin'])"
+```
+
+Attendu : `204 http://localhost:8100`.
+
+### api-demo
+
+Rien à ajouter : api-demo tourne en Development, qui accepte déjà `http://localhost:8100`. `[CORS] debugOrigins=0` y est normal.
+
+### Retour arrière
+
+Retirer la ligne `Cors__DebugOrigins` du compose et recréer `api-prod` : plus aucune origine localhost n'est acceptée.
