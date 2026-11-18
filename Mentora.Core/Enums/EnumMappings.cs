@@ -544,4 +544,25 @@ public static class EnumMappings
             throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown QuizSessionStatus enum value.");
         }
     }
+
+    /// <summary>Lot 13.2: MESSAGE_TYPE (VARCHAR(10)).</summary>
+    public static class MessageTypeMapping
+    {
+        public static readonly ReadOnlyCollection<string> WireValues =
+            new(["TEXT", "AUDIO"]);
+
+        public static MessageType Parse(string value)
+        {
+            if (value == "TEXT")  return MessageType.Text;
+            if (value == "AUDIO") return MessageType.Audio;
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MessageType wire value.");
+        }
+
+        public static string ToWire(MessageType value)
+        {
+            if (value == MessageType.Text)  return "TEXT";
+            if (value == MessageType.Audio) return "AUDIO";
+            throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown MessageType enum value.");
+        }
+    }
 }

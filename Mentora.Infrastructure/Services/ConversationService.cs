@@ -5,6 +5,7 @@ using Mentora.Core.Entities;
 using Mentora.Core.Enums;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
+using Mentora.Core.Messaging;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -57,10 +58,13 @@ public class ConversationService(
         if (before.HasValue)
             query = query.Where(m => m.MessageSentDate < before.Value);
 
-        var page = await query
+        // One SQL query selecting the stored columns; MediaUrl and DurationSeconds are computed in
+        // memory by ToMessageDto (never stored).
+        var rows = await query
             .OrderByDescending(m => m.MessageSentDate)
             .Take(limit + 1)
-            .Select(m => new MessageDto(
+            .Select(m => new
+            {
                 m.MessageId,
                 m.ConversationId,
                 m.MessageContent,
@@ -68,8 +72,27 @@ public class ConversationService(
                 m.MessageSenderId,
                 m.MessageIsRead,
                 m.MessageSentDate,
-                m.MessageReadDate))
+                m.MessageReadDate,
+                m.MessageType,
+                m.MessageAudioDurationMs,
+                m.MessageAudioWaveform
+            })
             .ToListAsync(ct);
+
+        var page = rows
+            .Select(m => ToMessageDto(
+                m.MessageId,
+                m.ConversationId,
+                m.MessageContent,
+                m.MessageSenderType,
+                m.MessageSenderId,
+                m.MessageIsRead,
+                m.MessageSentDate,
+                m.MessageReadDate,
+                m.MessageType,
+                m.MessageAudioDurationMs,
+                m.MessageAudioWaveform))
+            .ToList();
 
         DateTime? nextCursor = null;
         if (page.Count > limit)
@@ -100,7 +123,9 @@ public class ConversationService(
             MessageSenderId   = senderId,
             MessageIsRead     = false,
             MessageSentDate   = DateTime.UtcNow,
-            MessageReadDate   = null
+            MessageReadDate   = null,
+            // Lot 13.2: this path stays text only (the voice upload is a separate route from 13.3).
+            MessageType       = MessageType.Text
         };
 
         db.Messages.Add(message);
@@ -111,7 +136,7 @@ public class ConversationService(
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
-        return new MessageDto(
+        return ToMessageDto(
             message.MessageId,
             message.ConversationId,
             message.MessageContent,
@@ -119,7 +144,10 @@ public class ConversationService(
             message.MessageSenderId,
             message.MessageIsRead,
             message.MessageSentDate,
-            message.MessageReadDate);
+            message.MessageReadDate,
+            message.MessageType,
+            message.MessageAudioDurationMs,
+            message.MessageAudioWaveform);
     }
 
     public async Task<int> MarkMessagesAsReadAsync(
@@ -176,10 +204,13 @@ public class ConversationService(
                     .Select(m => new
                     {
                         m.MessageId,
+                        m.ConversationId,
                         m.MessageContent,
                         m.MessageSenderType,
                         m.MessageSentDate,
-                        m.MessageIsRead
+                        m.MessageIsRead,
+                        m.MessageType,
+                        m.MessageAudioDurationMs
                     })
                     .FirstOrDefault(),
                 // Unread = sent BY THE MEMBER (MessageSenderType.Member) and MESSAGE_IS_READ is false.
@@ -196,12 +227,15 @@ public class ConversationService(
                 MemberFirstName:  r.MemberFirstName,
                 MemberLastName:   r.MemberLastName,
                 UnreadCount:      r.UnreadCount,
-                LastMessage:      r.LastMessage is null ? null : new LastMessageDto(
+                LastMessage:      r.LastMessage is null ? null : ToLastMessageDto(
                                        r.LastMessage.MessageId,
+                                       r.LastMessage.ConversationId,
                                        r.LastMessage.MessageContent,
                                        r.LastMessage.MessageSenderType,
                                        r.LastMessage.MessageSentDate,
-                                       r.LastMessage.MessageIsRead),
+                                       r.LastMessage.MessageIsRead,
+                                       r.LastMessage.MessageType,
+                                       r.LastMessage.MessageAudioDurationMs),
                 LastMessageDate:  r.LastMessageDate))
             // Nullable DateTime's default comparer treats null as the smallest value, so members
             // with no message sink to the end under a descending sort.
@@ -263,10 +297,13 @@ public class ConversationService(
                     .Select(m => new
                     {
                         m.MessageId,
+                        m.ConversationId,
                         m.MessageContent,
                         m.MessageSenderType,
                         m.MessageSentDate,
-                        m.MessageIsRead
+                        m.MessageIsRead,
+                        m.MessageType,
+                        m.MessageAudioDurationMs
                     })
                     .FirstOrDefault()
             })
@@ -274,12 +311,15 @@ public class ConversationService(
 
         if (row is not null)
         {
-            var last = row.LastMessage is null ? null : new LastMessageDto(
-                MessageId:  row.LastMessage.MessageId,
-                Content:    row.LastMessage.MessageContent,
-                SenderType: row.LastMessage.MessageSenderType,
-                SentDate:   row.LastMessage.MessageSentDate,
-                IsRead:     row.LastMessage.MessageIsRead);
+            var last = row.LastMessage is null ? null : ToLastMessageDto(
+                row.LastMessage.MessageId,
+                row.LastMessage.ConversationId,
+                row.LastMessage.MessageContent,
+                row.LastMessage.MessageSenderType,
+                row.LastMessage.MessageSentDate,
+                row.LastMessage.MessageIsRead,
+                row.LastMessage.MessageType,
+                row.LastMessage.MessageAudioDurationMs);
             return Map(row.Conversation, last);
         }
 
@@ -311,21 +351,27 @@ public class ConversationService(
                         .Select(m => new
                         {
                             m.MessageId,
+                            m.ConversationId,
                             m.MessageContent,
                             m.MessageSenderType,
                             m.MessageSentDate,
-                            m.MessageIsRead
+                            m.MessageIsRead,
+                            m.MessageType,
+                            m.MessageAudioDurationMs
                         })
                         .FirstOrDefault()
                 })
                 .FirstAsync(ct);
 
-            var last = existing.LastMessage is null ? null : new LastMessageDto(
-                MessageId:  existing.LastMessage.MessageId,
-                Content:    existing.LastMessage.MessageContent,
-                SenderType: existing.LastMessage.MessageSenderType,
-                SentDate:   existing.LastMessage.MessageSentDate,
-                IsRead:     existing.LastMessage.MessageIsRead);
+            var last = existing.LastMessage is null ? null : ToLastMessageDto(
+                existing.LastMessage.MessageId,
+                existing.LastMessage.ConversationId,
+                existing.LastMessage.MessageContent,
+                existing.LastMessage.MessageSenderType,
+                existing.LastMessage.MessageSentDate,
+                existing.LastMessage.MessageIsRead,
+                existing.LastMessage.MessageType,
+                existing.LastMessage.MessageAudioDurationMs);
             return Map(existing.Conversation, last);
         }
 
@@ -342,5 +388,44 @@ public class ConversationService(
             CreatedDate:     c.ConversationCreatedDate,
             LastMessageDate: c.ConversationLastMessageDate,
             LastMessage:     lastMessage);
+    }
+
+    // Lot 13.2: builds the wire fields of a message from its stored columns. For AUDIO, MediaUrl and
+    // DurationSeconds are computed here (VoiceMessageRules), never stored; for TEXT they stay null.
+    private static MessageDto ToMessageDto(
+        Guid messageId, Guid conversationId, string content, MessageSenderType senderType, Guid senderId,
+        bool isRead, DateTime sentDate, DateTime? readDate,
+        MessageType messageType, int? audioDurationMs, List<int>? audioWaveform)
+    {
+        var isAudio = messageType == MessageType.Audio;
+        return new MessageDto(
+            messageId,
+            conversationId,
+            content,
+            senderType,
+            senderId,
+            isRead,
+            sentDate,
+            readDate,
+            messageType,
+            isAudio ? VoiceMessageRules.MediaUrl(conversationId, messageId) : null,
+            isAudio && audioDurationMs.HasValue ? VoiceMessageRules.DurationSeconds(audioDurationMs.Value) : null,
+            isAudio ? audioWaveform : null);
+    }
+
+    private static LastMessageDto ToLastMessageDto(
+        Guid messageId, Guid conversationId, string content, MessageSenderType senderType,
+        DateTime sentDate, bool isRead, MessageType messageType, int? audioDurationMs)
+    {
+        var isAudio = messageType == MessageType.Audio;
+        return new LastMessageDto(
+            messageId,
+            content,
+            senderType,
+            sentDate,
+            isRead,
+            messageType,
+            isAudio ? VoiceMessageRules.MediaUrl(conversationId, messageId) : null,
+            isAudio && audioDurationMs.HasValue ? VoiceMessageRules.DurationSeconds(audioDurationMs.Value) : null);
     }
 }

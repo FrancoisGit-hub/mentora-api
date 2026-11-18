@@ -25,10 +25,23 @@ public sealed record ConversationDto(
     LastMessageDto? LastMessage
 );
 
+/// <param name="MessageId">Unique identifier of the message.</param>
+/// <param name="Content">Text of the message; always an empty string for an AUDIO message.</param>
+/// <param name="SenderType">Side that sent the message (MEMBER or COACH).</param>
+/// <param name="SentDate">Date the message was sent (UTC).</param>
+/// <param name="IsRead">True once the other side has marked the message as read.</param>
+/// <param name="MessageType">Lot 13.2: TEXT or AUDIO.</param>
+/// <param name="MediaUrl">
+/// Lot 13.2: relative URL of the audio listening route for an AUDIO message, null for a TEXT message.
+/// </param>
+/// <param name="DurationSeconds">Lot 13.2: audio duration in whole seconds (at least 1), null for a TEXT message.</param>
 public sealed record LastMessageDto(
     Guid MessageId,
     string Content,
     MessageSenderType SenderType,
     DateTime SentDate,
-    bool IsRead
+    bool IsRead,
+    MessageType MessageType,
+    string? MediaUrl,
+    int? DurationSeconds
 );

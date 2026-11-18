@@ -1427,6 +1427,28 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("CONVERSATION_ID");
 
+                    b.Property<string>("MessageAudioContentType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("MESSAGE_AUDIO_CONTENT_TYPE");
+
+                    b.Property<int?>("MessageAudioDurationMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("MESSAGE_AUDIO_DURATION_MS");
+
+                    b.Property<string>("MessageAudioPath")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("MESSAGE_AUDIO_PATH");
+
+                    b.Property<int?>("MessageAudioSizeBytes")
+                        .HasColumnType("integer")
+                        .HasColumnName("MESSAGE_AUDIO_SIZE_BYTES");
+
+                    b.Property<List<int>>("MessageAudioWaveform")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("MESSAGE_AUDIO_WAVEFORM");
+
                     b.Property<string>("MessageContent")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1457,6 +1479,14 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("MESSAGE_SENT_DATE")
                         .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("MESSAGE_TYPE")
+                        .HasDefaultValueSql("'TEXT'");
 
                     b.HasKey("MessageId");
 
