@@ -162,7 +162,7 @@ The "last message" is selected by three separate anonymous-type projections (:17
 | PATCH | `/api/v1/coach/members/{memberId:guid}/conversation/messages/read` | same file :62-73 | CoachOnly | coach | 200, 403, 404 | `Ok(...)` (:72) | `coachId` claim (:70) |
 | GET | `/api/v1/coach/conversations` | `Mentora.API/Controllers/Coach/CoachConversationsController.cs:9,20-28` | CoachOnly (:10) | coach (:11) | 200 List&lt;CoachConversationSummaryDto&gt;, 403 | `Ok(...)` (:27) | `coachId` claim (:25) |
 
-Tags: "Member — Conversation" / "Coach — Conversation". The routes declare 403 but the service never throws ForbiddenException (404 only, see 5). 422 (validation) is never declared on the POST routes. A `coachId` claim missing on a CoachOnly token would throw a NullReferenceException at `User.FindFirst("coachId")!` → 500 (no guard).
+Tags: "Member, Conversation" / "Coach, Conversation". The routes declare 403 but the service never throws ForbiddenException (404 only, see 5). 422 (validation) is never declared on the POST routes. A `coachId` claim missing on a CoachOnly token would throw a NullReferenceException at `User.FindFirst("coachId")!` → 500 (no guard).
 
 ### 4.2 Response envelope
 

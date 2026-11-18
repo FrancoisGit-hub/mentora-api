@@ -568,3 +568,386 @@ Rien à ajouter : api-demo tourne en Development, qui accepte déjà `http://loc
 ### Retour arrière
 
 Retirer la ligne `Cors__DebugOrigins` du compose et recréer `api-prod` : plus aucune origine localhost n'est acceptée.
+
+---
+
+## Lot 13 : messages vocaux (stockage audio, taille des requêtes, origine de débogage)
+
+But : déployer le lot 13 (13.1 à 13.4) sur api-demo puis sur api-prod. Le code exige `Audio__StoragePath`, un dossier absolu, existant et accessible en écriture. Hors Development (api-prod), l'API refuse de démarrer sans lui. En Development (api-demo), elle démarre avec `[AUDIO] configured=False` et chaque envoi ou écoute répond 503 `AUDIO_NOT_CONFIGURED`. Le dossier doit être un dossier de l'hôte monté dans le conteneur : sinon les fichiers sont perdus au prochain `--force-recreate` et les messages restent sans fichier (404 à l'écoute).
+
+Étiquette de l'image : `mentora-api:lot13`. Aucune valeur de secret dans cette section. Ne jamais afficher les lignes de log contenant le marqueur OTP ou le marqueur d'envoi d'email.
+
+### 1. Prérequis : place disque, image compressée, chargement
+
+1.1 Place disque sur le VPS **[SSH]**, avant d'envoyer l'image :
+
+```bash
+df -h /
+```
+
+Attendu : au moins 3 Go libres (archive d'environ 0,4 Go, image chargée d'environ 1 Go, marge pour la base et les fichiers audio). Sinon, ne pas continuer.
+
+1.2 Construire, exporter et compresser l'image **[PS]**. `docker save | gzip` n'existe pas dans Windows PowerShell 5.1 : l'image est d'abord exportée en `.tar`, puis compressée avec la classe .NET `GZipStream` (présente dans PowerShell 5.1). L'archive est faite dans `$env:TEMP`, hors du dépôt (synchronisé par OneDrive, et jamais commitée par erreur) :
+
+```powershell
+git --no-optional-locks status --short
+git --no-optional-locks log --oneline -1
+docker build --platform linux/amd64 -f Mentora.API/Dockerfile -t mentora-api:lot13 .
+docker save -o "$env:TEMP\mentora-api-lot13.tar" mentora-api:lot13
+$t = "$env:TEMP\mentora-api-lot13.tar"; $i = [IO.File]::OpenRead($t); $o = [IO.File]::Create("$t.gz"); $g = New-Object IO.Compression.GZipStream($o, [IO.Compression.CompressionLevel]::Optimal); $i.CopyTo($g); $g.Dispose(); $o.Dispose(); $i.Dispose()
+Remove-Item "$env:TEMP\mentora-api-lot13.tar"; Get-Item "$env:TEMP\mentora-api-lot13.tar.gz" | Select-Object Name, Length
+Push-Location $env:TEMP; scp mentora-api-lot13.tar.gz mentora@87.106.108.91:~/; Pop-Location
+```
+
+Attendu : arbre propre, dernier commit de la branche, puis une seule archive `.tar.gz` (environ 0,4 Go). Si la compression échoue, envoyer le `.tar` tel quel (plus long à transférer, `docker load` le lit aussi).
+
+1.3 Charger l'image sur le VPS **[SSH]**. `docker load` lit directement une archive compressée en gzip :
+
+```bash
+docker load -i ~/mentora-api-lot13.tar.gz && docker images mentora-api --format '{{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.CreatedAt}}'
+```
+
+Attendu : `mentora-api:lot13` dans la liste. L'archive est supprimée à l'étape 12, après le déploiement.
+
+### 2. Sauvegardes avant la migration **[SSH]**
+
+Base api-demo (étape 2 du runbook), puis base PROD :
+
+```bash
+cd ~/mentora && docker exec mentora-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > ~/backup-$(date +%Y%m%d-%H%M).dump && ls -lht ~/backup-*.dump | head -3
+cd ~/mentora && docker exec mentora-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d mentora_prod -Fc' > ~/backup-prod-$(date +%Y%m%d-%H%M).dump && ls -lht ~/backup-prod-*.dump | head -3
+```
+
+Attendu : deux fichiers `.dump` de taille cohérente avec les précédents.
+
+À partir du deuxième déploiement (les dossiers audio existent alors), sauvegarder aussi chaque dossier audio, en même temps que les `pg_dump` (une base restaurée sans ses fichiers donne des messages vocaux sans fichier) :
+
+```bash
+tar czf ~/backup-media-demo-$(date +%Y%m%d-%H%M).tgz -C ~/mentora media-demo && ls -lh ~/backup-media-demo-*.tgz | tail -1
+tar czf ~/backup-media-prod-$(date +%Y%m%d-%H%M).tgz -C ~/mentora media-prod && ls -lh ~/backup-media-prod-*.tgz | tail -1
+```
+
+Les fichiers créés par le conteneur sont lisibles par tous (644, dossiers 755) : `tar` fonctionne sans `sudo`.
+
+### 3. Contrôle de la base avant la migration (lecture seule) **[SSH]**
+
+La migration `20261117234001_Lot13_2_VoiceMessages` s'applique au démarrage de la nouvelle image. Avant de démarrer, sur api-demo (`mentora_db`, ici `$POSTGRES_DB`) :
+
+```bash
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' <<'SQL'
+BEGIN READ ONLY;
+SELECT "MigrationId" FROM "__EFMigrationsHistory" ORDER BY "MigrationId" DESC LIMIT 3;
+SELECT column_name FROM information_schema.columns
+ WHERE table_schema = current_schema() AND table_name = 'MESSAGES'
+   AND column_name IN ('MESSAGE_TYPE','MESSAGE_AUDIO_PATH','MESSAGE_AUDIO_CONTENT_TYPE',
+                       'MESSAGE_AUDIO_DURATION_MS','MESSAGE_AUDIO_SIZE_BYTES','MESSAGE_AUDIO_WAVEFORM');
+SELECT conname FROM pg_constraint WHERE conname IN ('CK_MESSAGES_TYPE','CK_MESSAGES_AUDIO_FIELDS');
+SELECT count(*) AS total_rows,
+       count(*) FILTER (WHERE NOT (v.t IN ('TEXT','AUDIO'))) AS ck_type_violations,
+       count(*) FILTER (WHERE NOT (
+           (v.t = 'TEXT' AND v.p IS NULL AND v.c IS NULL AND v.d IS NULL AND v.s IS NULL AND v.w IS NULL)
+           OR
+           (v.t = 'AUDIO' AND m."MESSAGE_CONTENT" = '' AND v.p IS NOT NULL)
+       )) AS ck_audio_violations,
+       count(*) FILTER (WHERE m."MESSAGE_CONTENT" IS NULL) AS null_content,
+       count(*) FILTER (WHERE m."MESSAGE_CONTENT" = '') AS empty_content_info_only
+FROM "MESSAGES" m
+CROSS JOIN LATERAL (SELECT 'TEXT'::varchar(10) AS t, NULL::varchar AS p, NULL::varchar AS c,
+                           NULL::int AS d, NULL::int AS s, NULL::jsonb AS w) v;
+SELECT pg_size_pretty(pg_total_relation_size('"MESSAGES"'));
+ROLLBACK;
+SQL
+```
+
+Puis la même commande sur PROD, en remplaçant seulement `-d "$POSTGRES_DB"` par `-d mentora_prod`.
+
+Attendu, sur chaque base :
+- première requête : la ligne du haut est `20261110104601_Lot12_3a_MuxVideos` (dernière migration appliquée, lot 13 pas encore appliqué) ;
+- deuxième et troisième requêtes : `(0 rows)` ;
+- quatrième requête : `ck_type_violations = 0`, `ck_audio_violations = 0`, `null_content = 0` (`empty_content_info_only` est pour information : un contenu vide est accepté pour un message texte) ;
+- dernière requête : la taille de la table (la vérification des contraintes pose un verrou exclusif bref, proportionnel à cette taille).
+
+Sinon, ne pas déployer : comprendre d'abord.
+
+### 4. Dossiers audio sur l'hôte **[SSH]**
+
+Un dossier par environnement, jamais partagé :
+
+```bash
+mkdir -p ~/mentora/media-demo ~/mentora/media-prod
+chmod 750 ~/mentora/media-demo ~/mentora/media-prod && ls -ld ~/mentora/media-demo ~/mentora/media-prod
+```
+
+Attendu : `drwxr-x---`, propriétaire `mentora`. Pourquoi 750 : le conteneur de l'API tourne en root (accepté, déjà le cas avant le lot 13), et root écrit dans le dossier quels que soient ses droits ; aucun autre compte de l'hôte n'a à lire les messages vocaux (rien pour « autres ») ; le compte `mentora` garde la lecture pour les sauvegardes `tar`. La preuve d'écriture est la ligne de démarrage `storage=True` (étape 8), qui vient d'un fichier d'essai créé puis supprimé par l'API. Si un jour l'image ajoute `USER app`, il faudra `sudo chown 1654:1654` sur les deux dossiers.
+
+Les sous-dossiers et fichiers créés par le conteneur appartiennent à root : pour supprimer un fichier audio, passer par le conteneur (`docker exec mentora-api rm ...`, voir l'étape 10).
+
+### 5. Compose **[SSH]**
+
+Sauvegarde nommée, puis édition :
+
+```bash
+cd ~/mentora && cp docker-compose.yml docker-compose.yml.pre-lot13 && ls -l docker-compose.yml*
+docker inspect --format '{{.Config.Image}}' mentora-api-prod
+nano docker-compose.yml
+```
+
+Noter l'image affichée par `docker inspect` : c'est l'étiquette de retour arrière d'api-prod (étape 11).
+
+Dans le service `api` (api-demo) : sous la dernière ligne de `environment:` (six espaces devant) :
+
+```yaml
+      - Audio__StoragePath=/app/media
+```
+
+et, au même niveau que `environment:` (quatre espaces devant ; si le service a déjà une clé `volumes:`, ajouter seulement la ligne du dessous) :
+
+```yaml
+    volumes:
+      - ./media-demo:/app/media
+```
+
+Dans le service `api-prod` : remplacer la ligne `image:` par `    image: mentora-api:lot13`, ajouter sous la dernière ligne de `environment:` :
+
+```yaml
+      - Audio__StoragePath=/app/media
+      - Cors__DebugOrigins=http://localhost:8100
+```
+
+(règles de `Cors__DebugOrigins` : section « Lot 13.1 » ci-dessus ; si la ligne y a déjà été ajoutée, ne pas la doubler), et au même niveau que `environment:` :
+
+```yaml
+    volumes:
+      - ./media-prod:/app/media
+```
+
+Dans nano : Ctrl+O, puis **Entrée**, puis Ctrl+X. Puis :
+
+```bash
+docker compose config --quiet && echo "compose valide"
+docker compose config | grep -E 'media|Audio__StoragePath|Cors__DebugOrigins|image: mentora-api'
+```
+
+Attendu : `compose valide`, puis les deux montages (`media-demo` et `media-prod` vers `/app/media`), deux `Audio__StoragePath: /app/media`, un `Cors__DebugOrigins: http://localhost:8100` et l'image `mentora-api:lot13` pour api-prod. Le filtre ne montre aucune ligne de secret ; ne jamais lancer `docker compose config` sans filtre.
+
+### 6. nginx : taille maximale des requêtes **[SSH]**
+
+L'API accepte une requête d'envoi de 8 Mo au plus (fichier de 5 Mo au plus) : `client_max_body_size 8m;` dans le bloc serveur HTTPS des deux confs de l'API, `mentora.conf` (api-demo) et `mentora-prod.conf` (api). Au delà de 8 Mo, nginx répond lui-même 413 (page HTML sans en-tête CORS : l'app mobile native voit le 413, un navigateur de débogage voit une erreur CORS) ; entre 5 et 8 Mo, l'API répond 422.
+
+Sauvegarde hors de `conf.d`, remplacement, contrôle :
+
+```bash
+cd ~/mentora && cp nginx/conf.d/mentora.conf ~/mentora.conf.pre-lot13 && cp nginx/conf.d/mentora-prod.conf ~/mentora-prod.conf.pre-lot13
+sed -i 's/client_max_body_size 25M;/client_max_body_size 8m;/' nginx/conf.d/mentora.conf nginx/conf.d/mentora-prod.conf
+grep -n client_max_body_size nginx/conf.d/mentora.conf nginx/conf.d/mentora-prod.conf
+```
+
+Attendu : une ligne `client_max_body_size 8m;` par fichier. Si une autre valeur apparaît (le fichier du VPS diffère du dépôt), corriger dans nano avant de continuer.
+
+```bash
+docker exec mentora-nginx nginx -t && docker exec mentora-nginx nginx -s reload
+```
+
+Attendu : `syntax is ok`, `test is successful`. Si `nginx -t` échoue, remettre les deux fichiers et ne pas recharger :
+
+```bash
+cp ~/mentora.conf.pre-lot13 nginx/conf.d/mentora.conf && cp ~/mentora-prod.conf.pre-lot13 nginx/conf.d/mentora-prod.conf && docker exec mentora-nginx nginx -t
+```
+
+Les fichiers d'exemple du dépôt (`nginx/conf.d/mentora.conf`, `nginx/conf.d/mentora-prod.conf.example`) portent déjà `8m`.
+
+### 7. Bascule des images **[SSH]**
+
+api-demo d'abord ; contrôles des étapes 8 et 9 pour api-demo ; api-prod seulement si tout est bon.
+
+api-demo (l'ancienne image est gardée sous `pre-lot13`) :
+
+```bash
+cd ~/mentora && docker tag mentora-api:latest mentora-api:pre-lot13 && docker tag mentora-api:lot13 mentora-api:latest && docker compose up -d --no-deps --force-recreate api && sleep 25 && docker logs mentora-api 2>&1 | grep -c "Applying migration"
+```
+
+api-prod (l'image `mentora-api:lot13` est déjà dans le compose depuis l'étape 5) :
+
+```bash
+cd ~/mentora && docker compose up -d --no-deps --force-recreate api-prod && sleep 25 && docker logs mentora-api-prod 2>&1 | grep -c "Applying migration"
+```
+
+Attendu : `1` pour chaque service (une seule migration par base).
+
+### 8. Lignes de démarrage attendues **[SSH]**
+
+```bash
+docker logs mentora-api 2>&1 | grep -E '\[AUDIO\]|\[CORS\]|\[MUX\]|\[EMAIL\] routing|\[ADMIN\]|Applying migration|Application started|fail:|crit:|Exception' | grep -v -E 'OTP|EMAIL-LOG'
+```
+
+Puis la même commande avec `mentora-api-prod`.
+
+Attendu sur les deux :
+- `[AUDIO] configured=True ffmpeg=True ffprobe=True storage=True maxConcurrent=2 timeoutSeconds=10` ;
+- `Applying migration '20261117234001_Lot13_2_VoiceMessages'`, une fois par base ;
+- `Application started`, aucune ligne `fail:` ni `crit:`.
+
+En plus, sur PROD : `[CORS] origins=1 localhost=False`, `[CORS] origin https://admin.mentorapp.fr`, `[CORS] debugOrigins=1`, `[CORS] debug origin http://localhost:8100`. Sur api-demo : `[CORS] origins=0 localhost=True` et `[CORS] debugOrigins=0`.
+
+Sur api-demo, `configured=False` arrête le déploiement (retour arrière, étape 11), même si l'API a démarré.
+
+Après la migration, sur chaque base (même commande `docker exec -i mentora-postgres ...` qu'à l'étape 3) :
+
+```sql
+SELECT "MESSAGE_TYPE", count(*) FROM "MESSAGES" GROUP BY 1;
+```
+
+Attendu : `TEXT` seulement.
+
+### 9. Contrôles sans jeton **[PS]**
+
+Pour chaque hôte, d'abord api-demo puis PROD :
+
+```powershell
+$B = "https://api-demo.mentorapp.fr"; $z = "00000000-0000-0000-0000-000000000000"
+(Invoke-WebRequest "$B/api/v1/health" -UseBasicParsing).StatusCode
+foreach ($u in "$B/api/v1/member/coaches/$z/conversation/messages/audio", "$B/api/v1/coach/members/$z/conversation/messages/audio") { try { Invoke-WebRequest $u -Method Post -UseBasicParsing | Out-Null } catch { [int]$_.Exception.Response.StatusCode } }
+try { Invoke-WebRequest "$B/api/v1/conversations/$z/messages/$z/audio" -UseBasicParsing | Out-Null } catch { [int]$_.Exception.Response.StatusCode }
+$r = Invoke-WebRequest "$B/api/v1/member/coaches/$z/conversation/messages/audio" -Method Options -UseBasicParsing -Headers @{ Origin = "http://localhost:8100"; "Access-Control-Request-Method" = "POST"; "Access-Control-Request-Headers" = "authorization" }; "$($r.StatusCode) [$($r.Headers['Access-Control-Allow-Origin'])]"
+```
+
+Puis les mêmes lignes avec `$B = "https://api.mentorapp.fr"`.
+
+Attendu, sur les deux : `200`, puis `401` et `401` (les deux routes d'envoi), puis `401` (route d'écoute), puis `204 [http://localhost:8100]`. Sur PROD, c'est `Cors__DebugOrigins` qui autorise l'origine. Sur api-demo, c'est le mode Development, qui accepte déjà `http://localhost:8100` (section « Lot 13.1 ») : un `204 []` sur PROD veut dire que `Cors__DebugOrigins` n'est pas pris en compte.
+
+### 10. Preuve fonctionnelle sur api-demo
+
+Sur api-demo seulement, avec le compte membre des données de démo (pas une vraie boîte mail : le code de connexion est lu dans les logs, jamais affiché). Choisir un couple membre et coach dont la conversation existe déjà et contient des messages. En mode TEST, le code part aussi par email aux destinataires de test.
+
+10.1 Envoyer le fichier d'essai **[PS]** (fichier AAC de 3 secondes produit et validé en 13.4 ; s'il manque, en produire un avec ffmpeg, AAC ADTS, entre 0,3 et 120 secondes, moins de 5 Mo) :
+
+```powershell
+Test-Path "$env:TEMP\mentora-lot13-audio\tone-3s.aac"
+Push-Location "$env:TEMP\mentora-lot13-audio"; scp tone-3s.aac mentora@87.106.108.91:~/tone-3s.aac; Pop-Location
+```
+
+10.2 Tout le reste dans une seule session **[SSH]** (les variables restent en mémoire, rien de secret n'est affiché). Adresse du compte, tapée au clavier :
+
+```bash
+read -r -p "Adresse du membre de démo : " EM
+```
+
+Membre, coach lié et conversation (lecture seule) :
+
+```bash
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -v em="$1"' sh "$EM" <<'SQL'
+BEGIN READ ONLY;
+SELECT mc."COACH_ID", mc."IS_PRIMARY", c."CONVERSATION_ID", c."CONVERSATION_LAST_MESSAGE_DATE",
+       (SELECT count(*) FROM "MESSAGES" x WHERE x."CONVERSATION_ID" = c."CONVERSATION_ID") AS nb_messages
+FROM "USERS" u
+JOIN "MEMBERS" m ON m."USER_ID" = u."USER_ID"
+JOIN "MEMBER_COACHES" mc ON mc."MEMBER_ID" = m."MEMBER_ID"
+LEFT JOIN "CONVERSATIONS" c ON c."MEMBER_ID" = m."MEMBER_ID" AND c."COACH_ID" = mc."COACH_ID"
+WHERE lower(u."USER_EMAIL") = lower(:'em');
+ROLLBACK;
+SQL
+```
+
+Prendre une ligne où `CONVERSATION_ID` n'est pas vide et `nb_messages` est supérieur à 0 :
+
+```bash
+read -r -p "COACH_ID : " COACH; read -r -p "CONVERSATION_ID : " CONV
+```
+
+Code de connexion lu dans les logs, jeton gardé en mémoire :
+
+```bash
+B=https://api-demo.mentorapp.fr; curl -s -o /dev/null -w '%{http_code}\n' -X POST "$B/api/v1/auth/otp/request" -H 'Content-Type: application/json' -d "{\"email\":\"$EM\"}"
+CODE=$(docker logs --since 2m mentora-api 2>&1 | grep -E '\[OTP\] ' | grep -iF "$EM" | tail -1 | grep -oE '[0-9]{6}$'); echo "code lu=${#CODE} chiffres"
+TOKEN=$(curl -s -X POST "$B/api/v1/auth/otp/verify" -H 'Content-Type: application/json' -d "{\"email\":\"$EM\",\"code\":\"$CODE\"}" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4); unset CODE; echo "jeton lu=$([ -n "$TOKEN" ] && echo oui || echo non)"
+```
+
+Attendu : `200`, `code lu=6 chiffres`, `jeton lu=oui`.
+
+Envoi du message vocal, puis écoute :
+
+```bash
+R=$(curl -s -w '\n%{http_code}' -X POST "$B/api/v1/member/coaches/$COACH/conversation/messages/audio" -H "Authorization: Bearer $TOKEN" -F "file=@$HOME/tone-3s.aac;type=audio/aac"); echo "$R" | tail -1; echo "$R" | head -1 | grep -oE '"(messageId|conversationId|messageType|mediaUrl|durationSeconds)":[^,]*'
+MSG=$(echo "$R" | head -1 | grep -o '"messageId":"[^"]*"' | cut -d'"' -f4); MEDIA=$(echo "$R" | head -1 | grep -o '"mediaUrl":"[^"]*"' | cut -d'"' -f4)
+curl -s -o ~/listen.aac -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" "$B$MEDIA"; sha256sum ~/tone-3s.aac ~/listen.aac
+ls -l ~/mentora/media-demo/$CONV/
+```
+
+Attendu : `201`, `conversationId` égal à `$CONV`, `messageType` `AUDIO`, `durationSeconds` 3 ; puis `200` et deux empreintes SHA256 identiques ; le fichier `<messageId>.aac` est bien dans le dossier de l'hôte.
+
+10.3 Nettoyage du message d'essai **[SSH]**. Un seul fichier SQL ; essai à blanc terminé par `ROLLBACK`, puis la même chose terminée par `COMMIT` (seule la dernière ligne diffère) :
+
+```bash
+cat > ~/cleanup-voice-test.sql <<'SQL'
+\set ON_ERROR_STOP on
+BEGIN;
+SELECT "MESSAGE_ID", "MESSAGE_TYPE", "MESSAGE_AUDIO_PATH" FROM "MESSAGES" WHERE "MESSAGE_ID" = :'msg' AND "CONVERSATION_ID" = :'conv';
+DELETE FROM "MESSAGES" WHERE "MESSAGE_ID" = :'msg' AND "CONVERSATION_ID" = :'conv' AND "MESSAGE_TYPE" = 'AUDIO';
+UPDATE "CONVERSATIONS" SET "CONVERSATION_LAST_MESSAGE_DATE" = (SELECT max(x."MESSAGE_SENT_DATE") FROM "MESSAGES" x WHERE x."CONVERSATION_ID" = :'conv') WHERE "CONVERSATION_ID" = :'conv';
+SELECT count(*) AS audio_restant FROM "MESSAGES" WHERE "MESSAGE_ID" = :'msg';
+SQL
+{ cat ~/cleanup-voice-test.sql; echo 'ROLLBACK;'; } | docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v msg="$1" -v conv="$2"' sh "$MSG" "$CONV"
+```
+
+Attendu : une ligne `AUDIO` avec le chemin `<CONVERSATION_ID>/<messageId>.aac`, `DELETE 1`, `UPDATE 1`, `audio_restant = 0`, `ROLLBACK`. Seulement si c'est le cas :
+
+```bash
+{ cat ~/cleanup-voice-test.sql; echo 'COMMIT;'; } | docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v msg="$1" -v conv="$2"' sh "$MSG" "$CONV"
+```
+
+Puis le fichier, supprimé par le conteneur (il appartient à root), et la preuve :
+
+```bash
+docker exec mentora-api sh -c 'rm -v "/app/media/$1/$2.aac"' sh "$CONV" "$MSG"
+docker exec mentora-api sh -c 'test -e "/app/media/$1/$2.aac" && echo PRESENT || echo ABSENT' sh "$CONV" "$MSG"; ls -l ~/mentora/media-demo/$CONV/
+curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" "$B$MEDIA"
+rm ~/tone-3s.aac ~/listen.aac ~/cleanup-voice-test.sql; unset TOKEN EM R MSG MEDIA COACH CONV B
+```
+
+Attendu : `removed ...`, `ABSENT`, le fichier n'apparaît plus, l'écoute répond `404`. Les lignes de connexion créées (code et session) restent dans la base, comme lors des essais locaux.
+
+Sur PROD : nous n'envoyons aucun message vocal. Seuls les contrôles de l'étape 9. Les essais fonctionnels sur PROD sont faits par PJ avec ses propres comptes.
+
+### 11. Retour arrière
+
+Par service, l'image précédente :
+
+```bash
+cd ~/mentora && docker tag mentora-api:pre-lot13 mentora-api:latest && docker compose up -d --no-deps --force-recreate api
+```
+
+Pour api-prod : `nano docker-compose.yml`, remettre la ligne `image:` d'api-prod à l'étiquette notée à l'étape 5, puis :
+
+```bash
+cd ~/mentora && docker compose config --quiet && docker compose up -d --no-deps --force-recreate api-prod
+```
+
+Les lignes `Audio__StoragePath`, `Cors__DebugOrigins` et les volumes peuvent rester : l'ancien code ne les lit pas. Retour arrière de nginx (facultatif, 8m convient aussi à l'ancien code) : copier les fichiers `~/mentora*.conf.pre-lot13`, `nginx -t`, reload.
+
+L'ancienne image fonctionne sur la base migrée (vérifié dans le code de `origin/main`, `git show origin/main:<fichier>`) :
+- `Mentora.Core/Entities/Message.cs` et `MessageConfiguration.cs` de main ne connaissent aucune des six nouvelles colonnes : EF ne les lit pas et ne les écrit pas.
+- Un message texte inséré par l'ancien code n'envoie pas `MESSAGE_TYPE` : la base met la valeur par défaut `'TEXT'`, et les cinq colonnes audio restent NULL. Les deux contraintes passent (`CK_MESSAGES_TYPE` : `TEXT` ; `CK_MESSAGES_AUDIO_FIELDS` : branche TEXT, cinq colonnes NULL, contenu non testé).
+- Au démarrage, `MigrateAsync` (EF Core 8.0.0 sur main) n'applique que les migrations de l'assemblage absentes de l'historique : la ligne `20261117234001_Lot13_2_VoiceMessages` de l'historique, inconnue de l'ancien code, est ignorée.
+- Effet visible : un message vocal déjà envoyé apparaît comme un message texte vide dans l'ancienne version.
+
+La migration `Down` n'est donc jamais nécessaire pour revenir à l'image précédente (elle est refusée dès qu'un message vocal existe, c'est voulu). Pour revenir à l'état exact d'avant, restaurer les sauvegardes de l'étape 2 (avec François, après avoir arrêté le service).
+
+### 12. Après le déploiement
+
+Supprimer les archives **[SSH]** :
+
+```bash
+rm ~/mentora-api-lot13.tar.gz; ls ~/mentora-api-lot13.tar.gz
+```
+
+Attendu : `No such file or directory`.
+
+**[PS]** :
+
+```powershell
+Remove-Item "$env:TEMP\mentora-api-lot13.tar.gz"; Test-Path "$env:TEMP\mentora-api-lot13.tar.gz"; Test-Path "$env:TEMP\mentora-api-lot13.tar"
+```
+
+Attendu : `False` et `False`.
+
+Garder `mentora-api:pre-lot13` (api-demo) et l'ancienne étiquette d'api-prod notée à l'étape 5 jusqu'au merge du lot 13 dans main.
