@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.Results;
 using Mentora.Core.DTOs.Coach;
 using Mentora.Core.DTOs.Conversation;
 using Mentora.Core.Entities;
@@ -6,6 +7,7 @@ using Mentora.Core.Enums;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Messaging;
+using Mentora.Core.Validators.Conversation;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -15,8 +17,12 @@ namespace Mentora.Infrastructure.Services;
 public class ConversationService(
     MentoraDbContext db,
     IValidator<SendMessageRequestDto> sendMessageValidator,
-    IVisioUrlGenerator visioUrlGenerator) : IConversationService
+    IValidator<SendAudioMessageRequest> sendAudioMessageValidator,
+    IVisioUrlGenerator visioUrlGenerator,
+    IVoiceAudioProcessor audioProcessor,
+    IVoiceMessageStorage audioStorage) : IConversationService
 {
+    private const int CopyBufferBytes = 81_920;
     public async Task<ConversationDto> GetOrCreateForMemberAsync(Guid memberId, Guid coachId, CancellationToken ct)
     {
         // 404, never 403 — same pattern as GetOrCreateForCoachAsync: a member on an unrelated
@@ -150,6 +156,120 @@ public class ConversationService(
             message.MessageAudioWaveform);
     }
 
+    public async Task<MessageDto> SendAudioMessageAsync(
+        Guid memberId, Guid coachId, MessageSenderType senderType, Guid senderId,
+        Stream? content, long? length, CancellationToken ct)
+    {
+        // 13.J order: link (404), declared length (422), storage (503), copied bytes (422), analysis (503 / 422).
+        await ValidateAsync(memberId, coachId, ct);
+        await sendAudioMessageValidator.ValidateAndThrowAsync(
+            new SendAudioMessageRequest(content is null ? null : length), ct);
+
+        var incomingPath = audioStorage.CreateIncomingFilePath();
+        try
+        {
+            // Never trust the declared length alone: copy at most MaxSizeBytes + 1 bytes.
+            var copiedBytes = await CopyCappedAsync(content!, incomingPath, VoiceMessageRules.MaxSizeBytes + 1L, ct);
+            if (copiedBytes > VoiceMessageRules.MaxSizeBytes)
+            {
+                audioStorage.DeleteIncoming(incomingPath);
+                throw FileValidationError(SendAudioMessageRequestValidator.FileTooLargeMessage);
+            }
+
+            var analysis = await audioProcessor.AnalyzeAsync(incomingPath, ct);
+            if (analysis.Outcome != AudioAnalysisOutcome.Ok)
+            {
+                audioStorage.DeleteIncoming(incomingPath);
+                throw FileValidationError(AnalysisFailureMessage(analysis.Outcome));
+            }
+
+            var conversation = await GetOrCreateConversationEntityAsync(memberId, coachId, ct);
+            var messageId = Guid.NewGuid();
+            var relativePath = audioStorage.RelativePathFor(conversation.ConversationId, messageId);
+            await audioStorage.CommitAsync(incomingPath, relativePath, ct);
+
+            var message = new Message
+            {
+                MessageId               = messageId,
+                ConversationId          = conversation.ConversationId,
+                MessageContent          = "",
+                MessageSenderType       = senderType,
+                MessageSenderId         = senderId,
+                MessageIsRead           = false,
+                MessageSentDate         = DateTime.UtcNow,
+                MessageReadDate         = null,
+                MessageType             = MessageType.Audio,
+                MessageAudioPath        = relativePath,
+                MessageAudioContentType = analysis.ContentType,
+                MessageAudioDurationMs  = analysis.DurationMs,
+                MessageAudioSizeBytes   = (int)copiedBytes,
+                MessageAudioWaveform    = analysis.Waveform!.ToList()
+            };
+
+            try
+            {
+                using var tx = await db.Database.BeginTransactionAsync(ct);
+
+                db.Messages.Add(message);
+                conversation.ConversationLastMessageDate = message.MessageSentDate;
+                db.Conversations.Update(conversation);
+
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+            catch
+            {
+                // 13.J: the committed file never outlives a failed insert.
+                audioStorage.Delete(relativePath);
+                throw;
+            }
+
+            return ToMessageDto(
+                message.MessageId,
+                message.ConversationId,
+                message.MessageContent,
+                message.MessageSenderType,
+                message.MessageSenderId,
+                message.MessageIsRead,
+                message.MessageSentDate,
+                message.MessageReadDate,
+                message.MessageType,
+                message.MessageAudioDurationMs,
+                message.MessageAudioWaveform);
+        }
+        finally
+        {
+            // Every path: the incoming file is gone after the call (moved by the commit, or deleted here).
+            if (File.Exists(incomingPath))
+                audioStorage.DeleteIncoming(incomingPath);
+        }
+    }
+
+    public async Task<(string RelativePath, string ContentType)?> GetAudioFileForParticipantAsync(
+        Guid conversationId, Guid messageId, Guid? callerMemberId, Guid? callerCoachId, CancellationToken ct)
+    {
+        if (callerMemberId is null && callerCoachId is null)
+            return null;
+
+        // One query: message in that conversation, type AUDIO, caller is its member or its coach,
+        // and the MEMBER_COACHES link of the conversation still exists.
+        var row = await db.Messages
+            .Where(m => m.MessageId == messageId
+                     && m.ConversationId == conversationId
+                     && m.MessageType == MessageType.Audio)
+            .Where(m => (callerMemberId != null && m.Conversation.MemberId == callerMemberId)
+                     || (callerCoachId != null && m.Conversation.CoachId == callerCoachId))
+            .Where(m => db.MemberCoaches.Any(mc => mc.MemberId == m.Conversation.MemberId
+                                                && mc.CoachId == m.Conversation.CoachId))
+            .Select(m => new { m.MessageAudioPath, m.MessageAudioContentType })
+            .FirstOrDefaultAsync(ct);
+
+        if (row?.MessageAudioPath is null || row.MessageAudioContentType is null)
+            return null;
+
+        return (row.MessageAudioPath, row.MessageAudioContentType);
+    }
+
     public async Task<int> MarkMessagesAsReadAsync(
         Guid memberId, Guid coachId, MessageSenderType readerType, CancellationToken ct)
     {
@@ -244,6 +364,39 @@ public class ConversationService(
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────
+
+    /// <summary>Copies at most <paramref name="cap"/> bytes into a new file; returns the bytes written.</summary>
+    private static async Task<long> CopyCappedAsync(Stream source, string targetPath, long cap, CancellationToken ct)
+    {
+        var buffer = new byte[CopyBufferBytes];
+        long total = 0;
+        await using var target = new FileStream(targetPath, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+            CopyBufferBytes, FileOptions.Asynchronous);
+        while (total < cap)
+        {
+            var toRead = (int)Math.Min(buffer.Length, cap - total);
+            var read = await source.ReadAsync(buffer.AsMemory(0, toRead), ct);
+            if (read == 0)
+                break;
+            await target.WriteAsync(buffer.AsMemory(0, read), ct);
+            total += read;
+        }
+        return total;
+    }
+
+    private static ValidationException FileValidationError(string message)
+        => new(new[] { new ValidationFailure(SendAudioMessageRequestValidator.FilePropertyName, message) });
+
+    private static string AnalysisFailureMessage(AudioAnalysisOutcome outcome)
+    {
+        if (outcome == AudioAnalysisOutcome.UnsupportedFormat)
+            return "Unsupported audio format (AAC in ADTS or M4A only).";
+        if (outcome == AudioAnalysisOutcome.TooShort)
+            return "Audio is too short (minimum 0.3 s).";
+        if (outcome == AudioAnalysisOutcome.TooLong)
+            return "Audio is too long (maximum 120 s).";
+        return "Audio file could not be decoded.";
+    }
 
     private async Task ValidateAsync(Guid memberId, Guid coachId, CancellationToken ct)
     {

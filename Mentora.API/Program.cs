@@ -383,6 +383,7 @@ builder.Services.AddRateLimiter(o =>
 {
     o.AddQuizPolicy();
     o.AddAdminAuthPolicy(); // Lot 12.1 — shares the 429 envelope set by AddQuizPolicy
+    o.AddVoiceUploadPolicy(); // Lot 13.4: per user on the voice upload routes, same 429 envelope
 });
 
 // Lot 3.3 — SignalR (enum serialization mirrors the REST JSON convention)

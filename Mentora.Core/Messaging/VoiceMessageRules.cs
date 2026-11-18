@@ -21,6 +21,19 @@ public static class VoiceMessageRules
     /// <summary>Maximum value of a waveform bar (bars range from 0 to this value).</summary>
     public const int WaveformMax = 100;
 
+    /// <summary>
+    /// Lot 13.4: maximum size of the whole multipart upload request, in bytes (8 MB). A file between
+    /// <see cref="MaxSizeBytes"/> and this value reaches the service and gets a 422; a bigger body is
+    /// refused by the server with 413.
+    /// </summary>
+    public const int MaxRequestBytes = 8 * 1024 * 1024;
+
+    /// <summary>Lot 13.4: voice uploads allowed per authenticated user and per window.</summary>
+    public const int VoiceUploadPermitLimit = 30;
+
+    /// <summary>Lot 13.4: length of the voice upload rate limit window, in minutes.</summary>
+    public const int VoiceUploadWindowMinutes = 10;
+
     /// <summary>Content type of an AAC ADTS audio file.</summary>
     public const string ContentTypeAdts = "audio/aac";
 

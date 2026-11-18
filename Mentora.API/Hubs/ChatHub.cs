@@ -81,7 +81,7 @@ public sealed class ChatHub : Hub
 
     // ── Private helpers ────────────────────────────────────────────────────────
 
-    private static string GroupName(Guid conversationId) => $"conversation:{conversationId}";
+    public static string GroupName(Guid conversationId) => $"conversation:{conversationId}";
 
     private async Task EnsureCallerHasAccessAsync(Guid conversationId)
     {
