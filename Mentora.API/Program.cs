@@ -17,6 +17,7 @@ using Mentora.Infrastructure.Persistence;
 using Mentora.Infrastructure.Seeding;
 using Mentora.Infrastructure.Services;
 using Mentora.Infrastructure.Services.Admin;
+using Mentora.Infrastructure.Services.Audio;
 using Mentora.Infrastructure.Services.Email;
 using Mentora.Infrastructure.Services.Mux;
 using Mentora.Infrastructure.Services.Quiz;
@@ -279,6 +280,17 @@ builder.Services.AddHttpClient<IMuxClient, MuxClient>((sp, client) =>
 builder.Services.AddScoped<IAdminExerciseVideoService, AdminExerciseVideoService>();
 builder.Services.AddScoped<IMuxWebhookService, MuxWebhookService>();
 
+// Lot 13.3: voice message audio. Settings from the environment variables Audio__* only; .Value and the
+// [AUDIO] probe run before the migrations (below). In Development the API starts without ffmpeg or storage
+// and the audio services throw AudioNotConfiguredException (503 AUDIO_NOT_CONFIGURED).
+builder.Services.AddOptions<AudioOptions>()
+    .Bind(builder.Configuration.GetSection(AudioOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<AudioOptions>, AudioOptionsValidator>();
+builder.Services.AddSingleton<IAudioAvailability, AudioAvailability>();
+builder.Services.AddSingleton<IVoiceAudioProcessor, FfmpegVoiceAudioProcessor>();
+builder.Services.AddSingleton<IVoiceMessageStorage, DiskVoiceMessageStorage>();
+
 // Lot 2.1
 builder.Services.AddScoped<ICoachParameterService, CoachParameterService>();
 builder.Services.AddScoped<ICoachSessionPreferencesService, CoachSessionPreferencesService>();
@@ -512,6 +524,21 @@ var app = builder.Build();
         muxOpts.IsConfigured,
         muxOpts.IsConfigured ? muxOpts.NormalizedCorsOrigin : "none",
         new Uri(muxOpts.ApiBaseUrl).Host);
+}
+
+// Lot 13.3: .Value runs AudioOptionsValidator now, then the probe checks ffmpeg, ffprobe and the storage
+// directory. Outside Development an unavailable audio setup stops the API before migrations (13.E).
+// The line and the refusal message never print a path.
+{
+    var audioOpts = app.Services.GetRequiredService<IOptions<AudioOptions>>().Value;
+    var audioAvailability = app.Services.GetRequiredService<IAudioAvailability>();
+    await audioAvailability.ProbeAsync(CancellationToken.None);
+    app.Logger.LogInformation(
+        "[AUDIO] configured={Configured} ffmpeg={Ffmpeg} ffprobe={Ffprobe} storage={Storage} maxConcurrent={MaxConcurrent} timeoutSeconds={TimeoutSeconds}",
+        audioAvailability.IsAvailable, audioAvailability.FfmpegOk, audioAvailability.FfprobeOk,
+        audioAvailability.StorageOk, audioOpts.MaxConcurrentDecodes, audioOpts.DecodeTimeoutSeconds);
+    if (!audioAvailability.IsAvailable && !app.Environment.IsDevelopment())
+        throw new InvalidOperationException(audioAvailability.FailureMessage);
 }
 
 // Lot 12.1 — same for the admin authentication: .Value runs AdminAuthOptionsValidator, then the

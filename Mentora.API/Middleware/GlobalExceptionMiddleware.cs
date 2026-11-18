@@ -65,6 +65,11 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             logger.LogWarning("MUX feature called while MUX is not configured");
             await WriteResponseAsync(context, 503, "MUX_NOT_CONFIGURED");
         }
+        catch (AudioNotConfiguredException)
+        {
+            logger.LogWarning("Audio feature called while audio is not configured");
+            await WriteResponseAsync(context, 503, "AUDIO_NOT_CONFIGURED");
+        }
         catch (InvalidOperationException ex)
         {
             logger.LogWarning(ex, "Bad request: {Message}", ex.Message);
