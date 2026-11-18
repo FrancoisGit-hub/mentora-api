@@ -1,0 +1,162 @@
+Lot 13bis.1 "before" snapshot, local database (mentora-postgres-local), 2026-11-18
+Branch feature/lot_13bis, code of 13bis.1 built but the API not started yet (patch not applied).
+Read only: BEGIN READ ONLY ... ROLLBACK, same SQL file as after.txt.
+
+BEGIN
+== a) MUSCLE_GROUPS
+      name       | sort_order | legacy_code |                  id
+-----------------+------------+-------------+--------------------------------------
+ Pectoraux       |          1 | CHEST       | d6660410-7110-4ac5-8f08-c90ac7f1288d
+ Dos             |          2 | BACK        | 86e32e6b-0656-4d41-b84c-6ac5336fcb98
+ Épaules         |          3 | SHOULDERS   | fc704ef2-1d0d-414e-8a67-5b507721584e
+ Bras            |          4 | BICEPS      | 08d8cdd3-09e7-45ff-8515-7850c6f036ed
+ Avant-bras      |          5 | FOREARMS    | a38a7944-a590-422b-9d2e-5c1edf399170
+ Quadriceps      |          6 | QUADRICEPS  | f784a29d-d802-41b2-b3c9-6b9c8d63b1c3
+ Ischio-jambiers |          7 | HAMSTRINGS  | 987b88ab-faa5-49b2-b1d6-2b119cbc31be
+ Fessiers        |          8 | GLUTES      | 6b391551-06c6-4391-bff2-5f433a13aa29
+ Adducteurs      |          9 | GLUTES      | 092f8cfd-b9a7-4da2-aad4-dfe99454f7bf
+ Mollets         |         10 | CALVES      | 9128049b-2d30-495b-af78-fe84e8a33fa8
+ Tibial          |         11 | CALVES      | da4c2a30-1c59-43d6-bc11-ee383b219fcb
+ Abdominaux      |         12 | ABS         | 9d9a11c3-66c4-4aa9-9d0c-b6bc1486c516
+ Centre du corps |         13 | ABS         | 056295b3-f019-49c7-8079-0e0e4f06bf87
+ Hanche          |         14 | GLUTES      | eef39fc7-58b3-4eaf-8541-5efac238734c
+(14 rows)
+
+== b) Mentora exercises, primary group Bras / Biceps / Triceps
+ primary_group | code  |                      name                      | legacy  | active
+---------------+-------+------------------------------------------------+---------+--------
+ Bras          | EX008 | Curl haltères                                  | BICEPS  | t
+ Bras          | EX009 | Extension triceps à la poulie                  | TRICEPS | t
+ Bras          | EX104 | Curl barre                                     | BICEPS  | t
+ Bras          | EX105 | Curl barre EZ                                  | BICEPS  | t
+ Bras          | EX106 | Curl incliné haltères                          | BICEPS  | t
+ Bras          | EX107 | Curl marteau                                   | BICEPS  | t
+ Bras          | EX108 | Curl marteau alterné                           | BICEPS  | t
+ Bras          | EX109 | Curl concentration                             | BICEPS  | t
+ Bras          | EX110 | Curl pupitre barre EZ                          | BICEPS  | t
+ Bras          | EX111 | Curl pupitre haltère                           | BICEPS  | t
+ Bras          | EX112 | Curl poulie basse                              | BICEPS  | t
+ Bras          | EX113 | Curl poulie unilatéral                         | BICEPS  | t
+ Bras          | EX114 | Curl Bayesian                                  | BICEPS  | t
+ Bras          | EX115 | Curl spider                                    | BICEPS  | t
+ Bras          | EX116 | Curl inversé barre                             | BICEPS  | t
+ Bras          | EX117 | Curl Zottman                                   | BICEPS  | t
+ Bras          | EX118 | Dips triceps                                   | TRICEPS | t
+ Bras          | EX119 | Dips assistés                                  | TRICEPS | t
+ Bras          | EX120 | Extension triceps au-dessus de la tête haltère | TRICEPS | t
+ Bras          | EX121 | Extension triceps au-dessus de la tête corde   | TRICEPS | t
+ Bras          | EX122 | Extension triceps poulie unilatérale           | TRICEPS | t
+ Bras          | EX123 | Extension triceps poulie prise inversée        | TRICEPS | t
+ Bras          | EX124 | Barre au front                                 | TRICEPS | t
+ Bras          | EX125 | Extension triceps haltères couchée             | TRICEPS | t
+ Bras          | EX126 | Kickback triceps haltère                       | TRICEPS | t
+ Bras          | EX127 | Kickback triceps poulie                        | TRICEPS | t
+ Bras          | EX128 | Développé couché prise serrée triceps          | TRICEPS | t
+ Bras          | LG15  | Curl biceps barre                              | BICEPS  | t
+ Bras          | LG16  | Curl biceps haltères alterné                   | BICEPS  | t
+ Bras          | LG17  | Curl marteau haltères                          | BICEPS  | t
+ Bras          | LG18  | Dips                                           | TRICEPS | t
+ Bras          | LG19  | Extension triceps poulie haute                 | TRICEPS | t
+(32 rows)
+
+== c) secondary links to Bras / Biceps / Triceps (Mentora exercises)
+ linked_group | code  |                 name                 | primary_group | n_secondary |                       mirror
+--------------+-------+--------------------------------------+---------------+-------------+----------------------------------------------------
+ Bras         | EX001 | Développé couché barre               | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX004 | Rowing barre buste penché            | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX005 | Tractions pronation                  | Dos           |           2 | ["Bras", "Avant-bras"]
+ Bras         | EX012 | Burpee                               | Quadriceps    |           3 | ["Pectoraux", "Épaules", "Bras"]
+ Bras         | EX013 | Rameur                               | Quadriceps    |           2 | ["Dos", "Bras"]
+ Bras         | EX016 | Développé couché haltères            | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX017 | Développé incliné barre              | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX018 | Développé incliné haltères           | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX019 | Développé décliné barre              | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX020 | Développé décliné haltères           | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX021 | Développé couché prise serrée        | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX022 | Développé haltères prise neutre      | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX023 | Développé alterné haltères           | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX024 | Développé unilatéral haltère         | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX025 | Chest press machine                  | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX026 | Chest press unilatérale              | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX027 | Smith machine développé couché       | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX028 | Smith machine développé incliné      | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX029 | Pompes                               | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX030 | Pompes sur genoux                    | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX031 | Pompes inclinées                     | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX032 | Pompes déclinées                     | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX033 | Pompes prise serrée                  | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX034 | Pompes larges                        | Pectoraux     |           2 | ["Épaules", "Bras"]
+ Bras         | EX035 | Pompes avec élastique                | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX036 | Pompes lestées                       | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX037 | Pompes pliométriques                 | Pectoraux     |           3 | ["Épaules", "Bras", "Abdominaux"]
+ Bras         | EX045 | Tirage vertical poulie haute         | Dos           |           1 | ["Bras"]
+ Bras         | EX046 | Tirage vertical prise neutre         | Dos           |           1 | ["Bras"]
+ Bras         | EX047 | Tirage vertical prise supination     | Dos           |           1 | ["Bras"]
+ Bras         | EX048 | Tirage vertical unilatéral           | Dos           |           2 | ["Bras", "Abdominaux"]
+ Bras         | EX049 | Tractions supination                 | Dos           |           2 | ["Bras", "Avant-bras"]
+ Bras         | EX050 | Tractions prise neutre               | Dos           |           2 | ["Bras", "Avant-bras"]
+ Bras         | EX051 | Tractions assistées                  | Dos           |           2 | ["Bras", "Avant-bras"]
+ Bras         | EX052 | Rowing haltère unilatéral            | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX053 | Rowing haltères buste penché         | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX054 | Rowing assis poulie basse            | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX055 | Rowing assis prise large             | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX056 | Rowing poulie basse unilatéral       | Dos           |           2 | ["Bras", "Abdominaux"]
+ Bras         | EX057 | Rowing poitrine appuyée haltères     | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX058 | Rowing T-bar                         | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX059 | Rowing landmine unilatéral           | Dos           |           2 | ["Bras", "Abdominaux"]
+ Bras         | EX060 | Rowing machine assise                | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX061 | Rowing machine unilatéral            | Dos           |           2 | ["Bras", "Abdominaux"]
+ Bras         | EX062 | Rowing inversé                       | Dos           |           2 | ["Épaules", "Bras"]
+ Bras         | EX063 | Rowing inversé aux anneaux           | Dos           |           2 | ["Bras", "Abdominaux"]
+ Bras         | EX064 | Tirage TRX                           | Dos           |           2 | ["Bras", "Abdominaux"]
+ Bras         | EX065 | Pull-over poulie haute bras tendus   | Dos           |           1 | ["Bras"]
+ Bras         | EX066 | Pull-over haltère                    | Dos           |           2 | ["Pectoraux", "Bras"]
+ Bras         | EX067 | Pull-over machine                    | Dos           |           1 | ["Bras"]
+ Bras         | EX075 | Développé militaire barre debout     | Épaules       |           3 | ["Dos", "Bras", "Centre du corps"]
+ Bras         | EX076 | Développé militaire barre assis      | Épaules       |           2 | ["Dos", "Bras"]
+ Bras         | EX077 | Développé épaules haltères assis     | Épaules       |           2 | ["Dos", "Bras"]
+ Bras         | EX078 | Développé épaules haltères debout    | Épaules       |           3 | ["Dos", "Bras", "Centre du corps"]
+ Bras         | EX079 | Développé épaules unilatéral haltère | Épaules       |           3 | ["Dos", "Bras", "Abdominaux"]
+ Bras         | EX080 | Arnold press                         | Épaules       |           2 | ["Dos", "Bras"]
+ Bras         | EX081 | Shoulder press machine               | Épaules       |           2 | ["Dos", "Bras"]
+ Bras         | EX082 | Shoulder press machine unilatérale   | Épaules       |           3 | ["Dos", "Bras", "Abdominaux"]
+ Bras         | EX083 | Smith machine développé épaules      | Épaules       |           2 | ["Dos", "Bras"]
+ Bras         | EX084 | Landmine press unilatéral            | Épaules       |           3 | ["Pectoraux", "Bras", "Abdominaux"]
+ Bras         | EX085 | Landmine press à deux mains          | Épaules       |           2 | ["Pectoraux", "Bras"]
+ Bras         | EX097 | Rowing coudes ouverts haltères       | Épaules       |           2 | ["Dos", "Bras"]
+ Bras         | EX213 | Planche haute                        | Abdominaux    |           2 | ["Épaules", "Bras"]
+ Bras         | EX220 | L-sit                                | Abdominaux    |           2 | ["Bras", "Hanche"]
+ Bras         | EX227 | Air bike                             | Quadriceps    |           4 | ["Épaules", "Bras", "Ischio-jambiers", "Fessiers"]
+ Bras         | EX228 | SkiErg                               | Quadriceps    |           3 | ["Dos", "Bras", "Abdominaux"]
+ Bras         | EX233 | Elliptique                           | Abdominaux    |           4 | ["Épaules", "Bras", "Quadriceps", "Fessiers"]
+ Bras         | EX237 | Battle rope vagues alternées         | Abdominaux    |           3 | ["Épaules", "Bras", "Centre du corps"]
+ Bras         | EX238 | Battle rope vagues simultanées       | Abdominaux    |           3 | ["Épaules", "Bras", "Centre du corps"]
+ Bras         | EX240 | Sled pull                            | Abdominaux    |           3 | ["Dos", "Bras", "Centre du corps"]
+ Bras         | EX245 | Crab walk                            | Abdominaux    |           3 | ["Épaules", "Bras", "Fessiers"]
+(71 rows)
+
+== d) Mentora exercises whose mirror contains Bras / Biceps / Triceps
+ mirror_bras | mirror_biceps | mirror_triceps
+-------------+---------------+----------------
+          71 |             0 |              0
+(1 row)
+
+== e) DATA_PATCHES
+              name
+---------------------------------
+ Lot12_2a_LegacyExerciseCodes
+ Lot12_2a_ReferenceNormalization
+(2 rows)
+
+== f) fingerprints
+                    what                    |  n  |               md5
+--------------------------------------------+-----+----------------------------------
+ MUSCLE_GROUPS (id, name, sort, legacy)     |  14 | 0ff23ffde5b365b3f2789c02a8211eb4
+ EXERCISE_SECONDARY_MUSCLE_GROUPS           | 381 | f01fb0fd8bb7097190647e2796f4600d
+ EXERCISES (id, primary id, legacy, mirror) | 275 | 7eac67415d840559da9357ed24e7086f
+ g) coach exercises (whole row)             |   0 | d41d8cd98f00b204e9800998ecf8427e
+ h) Mentora EXERCISE_UPDATED_DATE           | 275 | f991c6f2dac46dc44a64380832b04d45
+ i) ADMIN_AUDIT_LOG rows                    |  22 | -
+(6 rows)
+
+ROLLBACK

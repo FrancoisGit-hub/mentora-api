@@ -1,0 +1,213 @@
+Lot 13bis.1 "after" snapshot, local database (mentora-postgres-local), 2026-11-18
+Taken after run 1 (patch Lot13bis_SplitArms applied), API stopped.
+Read only: BEGIN READ ONLY ... ROLLBACK, same SQL file as before.txt, then the 3.6 checks.
+
+BEGIN
+== a) MUSCLE_GROUPS
+      name       | sort_order | legacy_code |                  id
+-----------------+------------+-------------+--------------------------------------
+ Pectoraux       |          1 | CHEST       | d6660410-7110-4ac5-8f08-c90ac7f1288d
+ Dos             |          2 | BACK        | 86e32e6b-0656-4d41-b84c-6ac5336fcb98
+ Épaules         |          3 | SHOULDERS   | fc704ef2-1d0d-414e-8a67-5b507721584e
+ Biceps          |          4 | BICEPS      | 08d8cdd3-09e7-45ff-8515-7850c6f036ed
+ Triceps         |          4 | TRICEPS     | a7c1c4aa-bcb3-497f-aca8-724eb8241889
+ Avant-bras      |          5 | FOREARMS    | a38a7944-a590-422b-9d2e-5c1edf399170
+ Quadriceps      |          6 | QUADRICEPS  | f784a29d-d802-41b2-b3c9-6b9c8d63b1c3
+ Ischio-jambiers |          7 | HAMSTRINGS  | 987b88ab-faa5-49b2-b1d6-2b119cbc31be
+ Fessiers        |          8 | GLUTES      | 6b391551-06c6-4391-bff2-5f433a13aa29
+ Adducteurs      |          9 | GLUTES      | 092f8cfd-b9a7-4da2-aad4-dfe99454f7bf
+ Mollets         |         10 | CALVES      | 9128049b-2d30-495b-af78-fe84e8a33fa8
+ Tibial          |         11 | CALVES      | da4c2a30-1c59-43d6-bc11-ee383b219fcb
+ Abdominaux      |         12 | ABS         | 9d9a11c3-66c4-4aa9-9d0c-b6bc1486c516
+ Centre du corps |         13 | ABS         | 056295b3-f019-49c7-8079-0e0e4f06bf87
+ Hanche          |         14 | GLUTES      | eef39fc7-58b3-4eaf-8541-5efac238734c
+(15 rows)
+
+== b) Mentora exercises, primary group Bras / Biceps / Triceps
+ primary_group | code  |                      name                      | legacy  | active
+---------------+-------+------------------------------------------------+---------+--------
+ Biceps        | EX008 | Curl haltères                                  | BICEPS  | t
+ Biceps        | EX104 | Curl barre                                     | BICEPS  | t
+ Biceps        | EX105 | Curl barre EZ                                  | BICEPS  | t
+ Biceps        | EX106 | Curl incliné haltères                          | BICEPS  | t
+ Biceps        | EX107 | Curl marteau                                   | BICEPS  | t
+ Biceps        | EX108 | Curl marteau alterné                           | BICEPS  | t
+ Biceps        | EX109 | Curl concentration                             | BICEPS  | t
+ Biceps        | EX110 | Curl pupitre barre EZ                          | BICEPS  | t
+ Biceps        | EX111 | Curl pupitre haltère                           | BICEPS  | t
+ Biceps        | EX112 | Curl poulie basse                              | BICEPS  | t
+ Biceps        | EX113 | Curl poulie unilatéral                         | BICEPS  | t
+ Biceps        | EX114 | Curl Bayesian                                  | BICEPS  | t
+ Biceps        | EX115 | Curl spider                                    | BICEPS  | t
+ Biceps        | EX116 | Curl inversé barre                             | BICEPS  | t
+ Biceps        | EX117 | Curl Zottman                                   | BICEPS  | t
+ Biceps        | LG15  | Curl biceps barre                              | BICEPS  | t
+ Biceps        | LG16  | Curl biceps haltères alterné                   | BICEPS  | t
+ Biceps        | LG17  | Curl marteau haltères                          | BICEPS  | t
+ Triceps       | EX009 | Extension triceps à la poulie                  | TRICEPS | t
+ Triceps       | EX118 | Dips triceps                                   | TRICEPS | t
+ Triceps       | EX119 | Dips assistés                                  | TRICEPS | t
+ Triceps       | EX120 | Extension triceps au-dessus de la tête haltère | TRICEPS | t
+ Triceps       | EX121 | Extension triceps au-dessus de la tête corde   | TRICEPS | t
+ Triceps       | EX122 | Extension triceps poulie unilatérale           | TRICEPS | t
+ Triceps       | EX123 | Extension triceps poulie prise inversée        | TRICEPS | t
+ Triceps       | EX124 | Barre au front                                 | TRICEPS | t
+ Triceps       | EX125 | Extension triceps haltères couchée             | TRICEPS | t
+ Triceps       | EX126 | Kickback triceps haltère                       | TRICEPS | t
+ Triceps       | EX127 | Kickback triceps poulie                        | TRICEPS | t
+ Triceps       | EX128 | Développé couché prise serrée triceps          | TRICEPS | t
+ Triceps       | LG18  | Dips                                           | TRICEPS | t
+ Triceps       | LG19  | Extension triceps poulie haute                 | TRICEPS | t
+(32 rows)
+
+== c) secondary links to Bras / Biceps / Triceps (Mentora exercises)
+ linked_group | code  |                 name                 | primary_group | n_secondary |                             mirror
+--------------+-------+--------------------------------------+---------------+-------------+-----------------------------------------------------------------
+ Biceps       | EX004 | Rowing barre buste penché            | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX005 | Tractions pronation                  | Dos           |           2 | ["Biceps", "Avant-bras"]
+ Biceps       | EX013 | Rameur                               | Quadriceps    |           3 | ["Dos", "Biceps", "Triceps"]
+ Biceps       | EX045 | Tirage vertical poulie haute         | Dos           |           1 | ["Biceps"]
+ Biceps       | EX046 | Tirage vertical prise neutre         | Dos           |           1 | ["Biceps"]
+ Biceps       | EX047 | Tirage vertical prise supination     | Dos           |           1 | ["Biceps"]
+ Biceps       | EX048 | Tirage vertical unilatéral           | Dos           |           2 | ["Biceps", "Abdominaux"]
+ Biceps       | EX049 | Tractions supination                 | Dos           |           2 | ["Biceps", "Avant-bras"]
+ Biceps       | EX050 | Tractions prise neutre               | Dos           |           2 | ["Biceps", "Avant-bras"]
+ Biceps       | EX051 | Tractions assistées                  | Dos           |           2 | ["Biceps", "Avant-bras"]
+ Biceps       | EX052 | Rowing haltère unilatéral            | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX053 | Rowing haltères buste penché         | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX054 | Rowing assis poulie basse            | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX055 | Rowing assis prise large             | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX056 | Rowing poulie basse unilatéral       | Dos           |           2 | ["Biceps", "Abdominaux"]
+ Biceps       | EX057 | Rowing poitrine appuyée haltères     | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX058 | Rowing T-bar                         | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX059 | Rowing landmine unilatéral           | Dos           |           2 | ["Biceps", "Abdominaux"]
+ Biceps       | EX060 | Rowing machine assise                | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX061 | Rowing machine unilatéral            | Dos           |           2 | ["Biceps", "Abdominaux"]
+ Biceps       | EX062 | Rowing inversé                       | Dos           |           2 | ["Épaules", "Biceps"]
+ Biceps       | EX063 | Rowing inversé aux anneaux           | Dos           |           2 | ["Biceps", "Abdominaux"]
+ Biceps       | EX064 | Tirage TRX                           | Dos           |           2 | ["Biceps", "Abdominaux"]
+ Biceps       | EX097 | Rowing coudes ouverts haltères       | Épaules       |           2 | ["Dos", "Biceps"]
+ Biceps       | EX227 | Air bike                             | Quadriceps    |           5 | ["Épaules", "Biceps", "Triceps", "Ischio-jambiers", "Fessiers"]
+ Biceps       | EX233 | Elliptique                           | Abdominaux    |           5 | ["Épaules", "Biceps", "Triceps", "Quadriceps", "Fessiers"]
+ Biceps       | EX237 | Battle rope vagues alternées         | Abdominaux    |           4 | ["Épaules", "Biceps", "Triceps", "Centre du corps"]
+ Biceps       | EX238 | Battle rope vagues simultanées       | Abdominaux    |           4 | ["Épaules", "Biceps", "Triceps", "Centre du corps"]
+ Biceps       | EX240 | Sled pull                            | Abdominaux    |           3 | ["Dos", "Biceps", "Centre du corps"]
+ Triceps      | EX001 | Développé couché barre               | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX012 | Burpee                               | Quadriceps    |           3 | ["Pectoraux", "Épaules", "Triceps"]
+ Triceps      | EX013 | Rameur                               | Quadriceps    |           3 | ["Dos", "Biceps", "Triceps"]
+ Triceps      | EX016 | Développé couché haltères            | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX017 | Développé incliné barre              | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX018 | Développé incliné haltères           | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX019 | Développé décliné barre              | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX020 | Développé décliné haltères           | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX021 | Développé couché prise serrée        | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX022 | Développé haltères prise neutre      | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX023 | Développé alterné haltères           | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX024 | Développé unilatéral haltère         | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX025 | Chest press machine                  | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX026 | Chest press unilatérale              | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX027 | Smith machine développé couché       | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX028 | Smith machine développé incliné      | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX029 | Pompes                               | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX030 | Pompes sur genoux                    | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX031 | Pompes inclinées                     | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX032 | Pompes déclinées                     | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX033 | Pompes prise serrée                  | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX034 | Pompes larges                        | Pectoraux     |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX035 | Pompes avec élastique                | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX036 | Pompes lestées                       | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX037 | Pompes pliométriques                 | Pectoraux     |           3 | ["Épaules", "Triceps", "Abdominaux"]
+ Triceps      | EX065 | Pull-over poulie haute bras tendus   | Dos           |           1 | ["Triceps"]
+ Triceps      | EX066 | Pull-over haltère                    | Dos           |           2 | ["Pectoraux", "Triceps"]
+ Triceps      | EX067 | Pull-over machine                    | Dos           |           1 | ["Triceps"]
+ Triceps      | EX075 | Développé militaire barre debout     | Épaules       |           3 | ["Dos", "Triceps", "Centre du corps"]
+ Triceps      | EX076 | Développé militaire barre assis      | Épaules       |           2 | ["Dos", "Triceps"]
+ Triceps      | EX077 | Développé épaules haltères assis     | Épaules       |           2 | ["Dos", "Triceps"]
+ Triceps      | EX078 | Développé épaules haltères debout    | Épaules       |           3 | ["Dos", "Triceps", "Centre du corps"]
+ Triceps      | EX079 | Développé épaules unilatéral haltère | Épaules       |           3 | ["Dos", "Triceps", "Abdominaux"]
+ Triceps      | EX080 | Arnold press                         | Épaules       |           2 | ["Dos", "Triceps"]
+ Triceps      | EX081 | Shoulder press machine               | Épaules       |           2 | ["Dos", "Triceps"]
+ Triceps      | EX082 | Shoulder press machine unilatérale   | Épaules       |           3 | ["Dos", "Triceps", "Abdominaux"]
+ Triceps      | EX083 | Smith machine développé épaules      | Épaules       |           2 | ["Dos", "Triceps"]
+ Triceps      | EX084 | Landmine press unilatéral            | Épaules       |           3 | ["Pectoraux", "Triceps", "Abdominaux"]
+ Triceps      | EX085 | Landmine press à deux mains          | Épaules       |           2 | ["Pectoraux", "Triceps"]
+ Triceps      | EX213 | Planche haute                        | Abdominaux    |           2 | ["Épaules", "Triceps"]
+ Triceps      | EX220 | L-sit                                | Abdominaux    |           2 | ["Triceps", "Hanche"]
+ Triceps      | EX227 | Air bike                             | Quadriceps    |           5 | ["Épaules", "Biceps", "Triceps", "Ischio-jambiers", "Fessiers"]
+ Triceps      | EX228 | SkiErg                               | Quadriceps    |           3 | ["Dos", "Triceps", "Abdominaux"]
+ Triceps      | EX233 | Elliptique                           | Abdominaux    |           5 | ["Épaules", "Biceps", "Triceps", "Quadriceps", "Fessiers"]
+ Triceps      | EX237 | Battle rope vagues alternées         | Abdominaux    |           4 | ["Épaules", "Biceps", "Triceps", "Centre du corps"]
+ Triceps      | EX238 | Battle rope vagues simultanées       | Abdominaux    |           4 | ["Épaules", "Biceps", "Triceps", "Centre du corps"]
+ Triceps      | EX245 | Crab walk                            | Abdominaux    |           3 | ["Épaules", "Triceps", "Fessiers"]
+(76 rows)
+
+== d) Mentora exercises whose mirror contains Bras / Biceps / Triceps
+ mirror_bras | mirror_biceps | mirror_triceps
+-------------+---------------+----------------
+           0 |            29 |             47
+(1 row)
+
+== e) DATA_PATCHES
+              name
+---------------------------------
+ Lot12_2a_LegacyExerciseCodes
+ Lot12_2a_ReferenceNormalization
+ Lot13bis_SplitArms
+(3 rows)
+
+== f) fingerprints
+                    what                    |  n  |               md5
+--------------------------------------------+-----+----------------------------------
+ MUSCLE_GROUPS (id, name, sort, legacy)     |  15 | 4495fbdec575c777539d4568c4b1f7d2
+ EXERCISE_SECONDARY_MUSCLE_GROUPS           | 386 | 7b514cdaa52cd099c0fb843eaf48fb72
+ EXERCISES (id, primary id, legacy, mirror) | 275 | c41c3be6f6fb408bc57dbd06e7e06606
+ g) coach exercises (whole row)             |   0 | d41d8cd98f00b204e9800998ecf8427e
+ h) Mentora EXERCISE_UPDATED_DATE           | 275 | f991c6f2dac46dc44a64380832b04d45
+ i) ADMIN_AUDIT_LOG rows                    |  22 | -
+(6 rows)
+
+ROLLBACK
+
+===================== 3.6 checks (read only) =====================
+
+BEGIN
+== check 1: groups
+ bras_rows | biceps_has_former_bras_id | triceps_legacy_sort | biceps_legacy_sort
+-----------+---------------------------+---------------------+--------------------
+         0 | t                         | TRICEPS|4           | BICEPS|4
+(1 row)
+
+== check 2: primary group per source code (13bis.C), mismatches
+ listed | listed_on_triceps_with_triceps | unlisted_on_triceps | left_on_biceps | biceps_with_triceps
+--------+--------------------------------+---------------------+----------------+---------------------
+     14 |                             14 |                   0 |             18 |                   0
+(1 row)
+
+== check 3: secondary links per source code (13bis.D)
+ expected_rule | n  | mismatches | listed_but_absent | codes
+---------------+----+------------+-------------------+------
+ both          |  5 |          0 |                 0 | EX013 EX227 EX233 EX237 EX238
+ moved         | 42 |          0 |                 0 | EX001 EX012 EX016 EX017 EX018 EX019 EX020 EX021 EX022 EX023 EX024 EX025 EX026 EX027 EX028 EX029 EX030 EX031 EX032 EX033 EX034 EX035 EX036 EX037 EX065 EX066 EX067 EX075 EX076 EX077 EX078 EX079 EX080 EX081 EX082 EX083 EX084 EX085 EX213 EX220 EX228 EX245
+ unchanged     | 24 |          0 |                 0 | EX004 EX005 EX045 EX046 EX047 EX048 EX049 EX050 EX051 EX052 EX053 EX054 EX055 EX056 EX057 EX058 EX059 EX060 EX061 EX062 EX063 EX064 EX097 EX240
+(3 rows)
+(skipped: 0, see the run 1 summary line; codes column padding trimmed)
+
+== check 4: mirror consistency over ALL Mentora exercises
+ mentora_exercises | mismatches | mismatch_codes | mirror_with_bras
+-------------------+------------+----------------+------------------
+               275 |          0 |                |                0
+(1 row)
+
+== check 5: link rules
+ secondary_equal_primary | exercises_over_6 | max_secondary
+-------------------------+------------------+---------------
+                       0 |                0 |             5
+(1 row)
+
+== check 6: coach exercises
+ coach_exercises | coach_biceps_triceps | coach_links
+-----------------+----------------------+-------------
+               0 |                    0 |           0
+(1 row)
+
+ROLLBACK
