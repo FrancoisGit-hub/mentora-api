@@ -10,6 +10,7 @@ using Mentora.Core.Messaging;
 using Mentora.Core.Validators.Conversation;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace Mentora.Infrastructure.Services;
@@ -20,7 +21,8 @@ public class ConversationService(
     IValidator<SendAudioMessageRequest> sendAudioMessageValidator,
     IVisioUrlGenerator visioUrlGenerator,
     IVoiceAudioProcessor audioProcessor,
-    IVoiceMessageStorage audioStorage) : IConversationService
+    IVoiceMessageStorage audioStorage,
+    ILogger<ConversationService> logger) : IConversationService
 {
     private const int CopyBufferBytes = 81_920;
     public async Task<ConversationDto> GetOrCreateForMemberAsync(Guid memberId, Guid coachId, CancellationToken ct)
@@ -206,21 +208,51 @@ public class ConversationService(
                 MessageAudioWaveform    = analysis.Waveform!.ToList()
             };
 
+            // Review L2: the file is committed, so the insert must finish or fail on its own, never
+            // because the client went away (CancellationToken.None, not the request token).
             try
             {
-                using var tx = await db.Database.BeginTransactionAsync(ct);
+                using var tx = await db.Database.BeginTransactionAsync(CancellationToken.None);
 
                 db.Messages.Add(message);
                 conversation.ConversationLastMessageDate = message.MessageSentDate;
                 db.Conversations.Update(conversation);
 
-                await db.SaveChangesAsync(ct);
-                await tx.CommitAsync(ct);
+                await db.SaveChangesAsync(CancellationToken.None);
+                await tx.CommitAsync(CancellationToken.None);
             }
             catch
             {
-                // 13.J: the committed file never outlives a failed insert.
-                audioStorage.Delete(relativePath);
+                // 13.J: the committed file never outlives a failed insert. A failure reported during
+                // COMMIT can still leave the row in place: check it on a fresh query first. An orphan
+                // file is harmless, a row without its file is not, so the file is kept unless the row
+                // is known to be absent.
+                bool? rowExists = null;
+                try
+                {
+                    rowExists = await db.Messages
+                        .AsNoTracking()
+                        .AnyAsync(m => m.MessageId == messageId, CancellationToken.None);
+                }
+                catch (Exception checkFailure)
+                {
+                    logger.LogWarning(
+                        "[AUDIO] row existence check failed ({ExceptionType}), file kept for message {MessageId}",
+                        checkFailure.GetType().Name, messageId);
+                }
+
+                if (rowExists == true)
+                {
+                    logger.LogWarning(
+                        "[AUDIO] insert reported a failure but the row exists, file kept for message {MessageId}",
+                        messageId);
+                }
+                else if (rowExists == false)
+                {
+                    audioStorage.Delete(relativePath);
+                }
+
+                // Always the original insert exception.
                 throw;
             }
 
