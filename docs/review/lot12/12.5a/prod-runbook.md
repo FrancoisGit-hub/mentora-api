@@ -748,7 +748,7 @@ Attendu : une ligne `client_max_body_size 8m;` par fichier. Si une autre valeur 
 docker exec mentora-nginx nginx -t && docker exec mentora-nginx nginx -s reload
 ```
 
-Attendu : `syntax is ok`, `test is successful`. Si `nginx -t` échoue, remettre les deux fichiers et ne pas recharger :
+Attendu : `syntax is ok`, `test is successful`. **Seulement si** `nginx -t` échoue (sinon ne pas lancer la commande suivante : elle remettrait 25M sur le disque), remettre les deux fichiers et ne pas recharger :
 
 ```bash
 cp ~/mentora.conf.pre-lot13 nginx/conf.d/mentora.conf && cp ~/mentora-prod.conf.pre-lot13 nginx/conf.d/mentora-prod.conf && docker exec mentora-nginx nginx -t
@@ -799,21 +799,25 @@ SELECT "MESSAGE_TYPE", count(*) FROM "MESSAGES" GROUP BY 1;
 
 Attendu : `TEXT` seulement.
 
-### 9. Contrôles sans jeton **[PS]**
+### 9. Contrôles sans jeton **[SSH]**
 
-Pour chaque hôte, d'abord api-demo puis PROD :
+Depuis le VPS, par l'adresse publique (donc à travers nginx), d'abord api-demo :
 
-```powershell
-$B = "https://api-demo.mentorapp.fr"; $z = "00000000-0000-0000-0000-000000000000"
-(Invoke-WebRequest "$B/api/v1/health" -UseBasicParsing).StatusCode
-foreach ($u in "$B/api/v1/member/coaches/$z/conversation/messages/audio", "$B/api/v1/coach/members/$z/conversation/messages/audio") { try { Invoke-WebRequest $u -Method Post -UseBasicParsing | Out-Null } catch { [int]$_.Exception.Response.StatusCode } }
-try { Invoke-WebRequest "$B/api/v1/conversations/$z/messages/$z/audio" -UseBasicParsing | Out-Null } catch { [int]$_.Exception.Response.StatusCode }
-$r = Invoke-WebRequest "$B/api/v1/member/coaches/$z/conversation/messages/audio" -Method Options -UseBasicParsing -Headers @{ Origin = "http://localhost:8100"; "Access-Control-Request-Method" = "POST"; "Access-Control-Request-Headers" = "authorization" }; "$($r.StatusCode) [$($r.Headers['Access-Control-Allow-Origin'])]"
+```bash
+B=https://api-demo.mentorapp.fr; z=00000000-0000-0000-0000-000000000000
+curl -s -o /dev/null -w 'health %{http_code}\n' "$B/api/v1/health"
+for p in member/coaches coach/members; do curl -s -o /dev/null -w "envoi $p %{http_code}\n" -X POST "$B/api/v1/$p/$z/conversation/messages/audio" -H 'Content-Type: multipart/form-data; boundary=b' --data-binary '--b--'; done
+curl -s -o /dev/null -w 'ecoute %{http_code}\n' "$B/api/v1/conversations/$z/messages/$z/audio"
+echo "preflight 8100 :"; curl -s -o /dev/null -D - -X OPTIONS "$B/api/v1/member/coaches/$z/conversation/messages/audio" -H 'Origin: http://localhost:8100' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: authorization' | grep -iE '^HTTP|^access-control-allow-origin'
+echo "preflight 3000 :"; curl -s -o /dev/null -D - -X OPTIONS "$B/api/v1/health" -H 'Origin: http://localhost:3000' -H 'Access-Control-Request-Method: GET' | grep -iE '^HTTP|^access-control-allow-origin'
+unset B z
 ```
 
-Puis les mêmes lignes avec `$B = "https://api.mentorapp.fr"`.
+Puis le même bloc avec `B=https://api.mentorapp.fr`.
 
-Attendu, sur les deux : `200`, puis `401` et `401` (les deux routes d'envoi), puis `401` (route d'écoute), puis `204 [http://localhost:8100]`. Sur PROD, c'est `Cors__DebugOrigins` qui autorise l'origine. Sur api-demo, c'est le mode Development, qui accepte déjà `http://localhost:8100` (section « Lot 13.1 ») : un `204 []` sur PROD veut dire que `Cors__DebugOrigins` n'est pas pris en compte.
+Attendu, sur les deux : `health 200`, `envoi member/coaches 401`, `envoi coach/members 401`, `ecoute 401`, `preflight 8100` avec `HTTP/2 204` et `access-control-allow-origin: http://localhost:8100`, `preflight 3000` avec `HTTP/2 204` seul. Sur PROD, c'est `Cors__DebugOrigins` qui autorise l'origine 8100 ; sur api-demo, c'est le mode Development (section « Lot 13.1 »). Un `preflight 8100` sans en-tête sur PROD veut dire que `Cors__DebugOrigins` n'est pas pris en compte.
+
+Les routes d'envoi sont testées avec un corps multipart : sans ce format, elles répondent 415 avant le contrôle du jeton (le format est vérifié au moment du choix de la route, avant l'autorisation). Ce 415 n'est pas une erreur et ne donne aucun accès.
 
 ### 10. Preuve fonctionnelle sur api-demo
 
@@ -901,10 +905,11 @@ Puis le fichier, supprimé par le conteneur (il appartient à root), et la preuv
 docker exec mentora-api sh -c 'rm -v "/app/media/$1/$2.aac"' sh "$CONV" "$MSG"
 docker exec mentora-api sh -c 'test -e "/app/media/$1/$2.aac" && echo PRESENT || echo ABSENT' sh "$CONV" "$MSG"; ls -l ~/mentora/media-demo/$CONV/
 curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" "$B$MEDIA"
+docker exec mentora-api sh -c 'rmdir -v "/app/media/$1"' sh "$CONV"; ls -la ~/mentora/media-demo/
 rm ~/tone-3s.aac ~/listen.aac ~/cleanup-voice-test.sql; unset TOKEN EM R MSG MEDIA COACH CONV B
 ```
 
-Attendu : `removed ...`, `ABSENT`, le fichier n'apparaît plus, l'écoute répond `404`. Les lignes de connexion créées (code et session) restent dans la base, comme lors des essais locaux.
+Attendu : `removed ...`, `ABSENT`, le fichier n'apparaît plus, l'écoute répond `404`, `rmdir: removing directory ...` (dossier de la conversation, vide, qui appartient à root), puis `media-demo` ne contient plus que `.incoming`. Les lignes de connexion créées (code et session) restent dans la base, comme lors des essais locaux.
 
 Sur PROD : nous n'envoyons aucun message vocal. Seuls les contrôles de l'étape 9. Les essais fonctionnels sur PROD sont faits par PJ avec ses propres comptes.
 
