@@ -36,8 +36,29 @@ else
     <form @onsubmit="SaveAsync" @onsubmit:preventDefault novalidate>
         <div class="pagehead">
             <button type="button" class="btn btn-sm" @onclick="GoBack">Retour aux exercices</button>
-            <button type="submit" class="btn btn-primary" disabled="@_saving">Enregistrer l'exercice</button>
+            <div class="editbar-state">
+                @if (_detail is not null)
+                {
+                    <button type="button" class="btn" disabled="@(_saving || _activating)" @onclick="Duplicate">Dupliquer</button>
+                }
+                <button type="submit" class="btn btn-primary" disabled="@_saving">Enregistrer l'exercice</button>
+            </div>
         </div>
+
+        @if (!string.IsNullOrEmpty(_copyError))
+        {
+            <div class="alert" role="alert">@_copyError</div>
+        }
+        @if (_copySource is { } copy)
+        {
+            <div class="info" role="status">
+                <div>Copie de @copy.Code « @copy.Name ». Changez le nom si besoin, vérifiez les champs, puis enregistrez. La vidéo n'est pas copiée.</div>
+                @if (_copySkipped.Count > 0)
+                {
+                    <div>Valeurs non reprises car désactivées : @string.Join(", ", _copySkipped).</div>
+                }
+            </div>
+        }
 
         @if (IncompleteLabels().Count > 0)
         {
@@ -449,6 +470,22 @@ else
 
     [Parameter] public Guid ExerciseId { get; set; }
 
+    // Duplication : /exercices/nouveau?depuis={id}. Lu en texte puis analysé (comme List.razor) :
+    // une valeur mal formée est ignorée, jamais une exception.
+    [SupplyParameterFromQuery(Name = "depuis")] public string? Depuis { get; set; }
+
+    private static Guid? ParseGuid(string? value) =>
+        Guid.TryParse(value, out var g) && g != Guid.Empty ? g : null;
+
+    // Longueur maximale du nom : 120 (AdminExerciseRequestValidator, Name.Trim().Length <= 120).
+    private const int NameMaxLength = 120;
+    private const string CopySuffix = " (copie)";
+
+    private Guid? _currentFrom;
+    private (string? Code, string Name)? _copySource;
+    private readonly List<string> _copySkipped = [];
+    private string? _copyError;
+
     private ExerciseReferences? _refs;
     private ExerciseDetail? _detail;
     private FormModel _m = new();
@@ -505,12 +542,15 @@ else
         if (UiState.TakeFlash() is { } flash)
             _flash = flash;
 
-        if (_initialized && create == _currentIsCreate && id == _currentId)
+        Guid? from = create ? ParseGuid(Depuis) : null;
+
+        if (_initialized && create == _currentIsCreate && id == _currentId && from == _currentFrom)
             return;
 
         _initialized = true;
         _currentIsCreate = create;
         _currentId = id;
+        _currentFrom = from;
         _flash = UiState.TakeFlash() ?? _flash;
         await LoadAsync();
     }
@@ -525,10 +565,14 @@ else
         _notFound = false;
         _loadError = null;
         ClearMessages();
+        _copySource = null;
+        _copySkipped.Clear();
+        _copyError = null;
         StateHasChanged();
 
         var refsTask = RefCache.GetAsync();
-        var detailTask = _currentId is { } id ? Api.GetAsync(id) : null;
+        var sourceId = _currentId ?? _currentFrom;
+        var detailTask = sourceId is { } id ? Api.GetAsync(id) : null;
         var refs = await refsTask;
         var detail = detailTask is null ? null : await detailTask;
         if (token != _loadToken)
@@ -545,6 +589,23 @@ else
         if (detail is null)
         {
             InitCreate();
+        }
+        else if (_currentId is null)
+        {
+            // Duplication : le formulaire reste en création. La base de comparaison est celle
+            // d'un formulaire vide, donc quitter une copie non enregistrée demande confirmation.
+            InitCreate();
+            var empty = Snapshot();
+            if (detail.IsSuccess && detail.Data is { } source)
+            {
+                ApplyCopy(source);
+            }
+            else
+            {
+                _copyError = "Exercice à dupliquer introuvable.";
+            }
+            _baseline = empty;
+            return;
         }
         else if (detail.Status == 404)
         {
@@ -578,6 +639,68 @@ else
     }
 
     private static string IdText(Guid? id) => id?.ToString() ?? "";
+
+    private void Duplicate()
+    {
+        if (_detail is { } d)
+            Nav.NavigateTo("exercices/nouveau?depuis=" + d.ExerciseId);
+    }
+
+    // Copie d'un exercice dans le formulaire de création, avec la même correspondance que Fill.
+    // Non copiés : vidéo, état, code, textes d'origine, valeur de liste désactivée (aucune valeur
+    // conservée en création) ; ces dernières sont listées dans le bandeau.
+    private void ApplyCopy(ExerciseDetail d)
+    {
+        var skipped = _copySkipped;
+        skipped.Clear();
+
+        string Pick(string label, IReadOnlyList<RefItem> items, CodedRef? value)
+        {
+            if (value is null)
+                return "";
+            var item = items.FirstOrDefault(i => i.Id == value.Id);
+            if (item is null || !item.IsActive)
+            {
+                skipped.Add($"{label} « {value.Label} »");
+                return "";
+            }
+            return value.Id.ToString();
+        }
+
+        var baseName = d.Name.Trim();
+        var room = NameMaxLength - CopySuffix.Length;
+        if (baseName.Length > room)
+            baseName = baseName[..room].TrimEnd();
+
+        _m = new FormModel
+        {
+            Name = baseName + CopySuffix,
+            NameEn = d.NameEn ?? "",
+            Description = d.Description ?? "",
+            Instructions = d.Instructions ?? "",
+            CategoryId = Pick("Catégorie", _refs!.Categories, d.Category),
+            TypeId = Pick("Type", _refs.Types, d.Type),
+            LateralityId = Pick("Latéralité", _refs.Lateralities, d.Laterality),
+            PatternId = Pick("Schéma de mouvement", _refs.MovementPatterns, d.MovementPattern),
+            PositionId = Pick("Position de départ", _refs.StartingPositions, d.StartingPosition),
+            GripId = Pick("Prise", _refs.GripTypes, d.GripType),
+            PrimaryGroupId = IdText(d.PrimaryMuscleGroup?.Id),
+            PrimaryEquipmentId = IdText(d.PrimaryEquipment?.Id),
+            SecondaryEquipmentId = IdText(d.SecondaryEquipment?.Id),
+            Level = d.Level ?? "",
+            Breathing = d.Breathing ?? "",
+            MistakesText = string.Join("\n", d.CommonMistakes),
+            Precautions = d.Precautions ?? "",
+            CoachTip = d.CoachTip ?? "",
+            SearchTags = d.SearchTags ?? ""
+        };
+        foreach (var g in d.SecondaryMuscleGroups)
+            _m.Secondary.Add(g.Id);
+        foreach (var o in d.Objectives)
+            _m.Objectives.Add(o.Id);
+
+        _copySource = (d.SourceCode, d.Name);
+    }
 
     private void Fill(ExerciseDetail d)
     {
@@ -889,8 +1012,12 @@ else
         {
             Fill(saved);
             _baseline = Snapshot();
+            _copySource = null;
+            _copySkipped.Clear();
+            _copyError = null;
             if (_currentIsCreate)
             {
+                _currentFrom = null;
                 UiState.Flash = $"Exercice enregistré (code {saved.SourceCode}).";
                 _currentIsCreate = false;
                 _currentId = saved.ExerciseId;
