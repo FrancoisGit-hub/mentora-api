@@ -571,6 +571,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await CatalogSeeder.SeedAsync(scope.ServiceProvider);
     await ExerciseSeeder.SeedAsync(scope.ServiceProvider);
     await ReferenceNormalizationPatch.RunAsync(scope.ServiceProvider);
+    await SplitArmsPatch.RunAsync(scope.ServiceProvider); // Lot 13bis.1, after the normalization (same state on new and existing databases)
     await ProgramTemplateSeeder.SeedAsync(scope.ServiceProvider);
     await QuizQuestionSeeder.SeedAsync(scope.ServiceProvider);
     await AdminUserSeeder.SeedAsync(scope.ServiceProvider); // Lot 12.1

@@ -42,6 +42,10 @@ public static class MuscleGroupSeeder
             .Select(m => m.MuscleGroupName)
             .ToListAsync()).ToHashSet();
 
+        // Lot 13bis.1: once SplitArmsPatch has run, "Bras" is never recreated. On a new database the
+        // marker is absent here, so "Bras" is created, the catalogue is seeded with it, then the patch splits it.
+        var armsSplit = await db.DataPatches.AnyAsync(p => p.DataPatchName == SplitArmsPatch.Name);
+
         var now = DateTime.UtcNow;
         var created = 0;
 
@@ -49,6 +53,8 @@ public static class MuscleGroupSeeder
         {
             var item = DefaultMuscleGroups[i];
             if (existingNames.Contains(item.Name))
+                continue;
+            if (armsSplit && item.Name == SplitArmsPatch.ArmsName)
                 continue;
 
             db.MuscleGroups.Add(new MuscleGroupItem
