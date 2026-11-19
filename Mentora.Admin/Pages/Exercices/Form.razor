@@ -539,19 +539,22 @@ else
         var create = path.EndsWith("/nouveau", StringComparison.OrdinalIgnoreCase);
         Guid? id = create ? null : ExerciseId;
 
-        if (UiState.TakeFlash() is { } flash)
-            _flash = flash;
+        var pendingFlash = UiState.TakeFlash();
 
         Guid? from = create ? ParseGuid(Depuis) : null;
 
         if (_initialized && create == _currentIsCreate && id == _currentId && from == _currentFrom)
+        {
+            if (pendingFlash is not null)
+                _flash = pendingFlash;
             return;
+        }
 
         _initialized = true;
         _currentIsCreate = create;
         _currentId = id;
         _currentFrom = from;
-        _flash = UiState.TakeFlash() ?? _flash;
+        _flash = pendingFlash;
         await LoadAsync();
     }
 
