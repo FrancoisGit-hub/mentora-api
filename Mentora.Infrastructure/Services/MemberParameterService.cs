@@ -82,11 +82,7 @@ public class MemberParameterService(
         };
     }
 
-    private static string? NormalizePhone(string? phone)
-    {
-        var trimmed = phone?.Trim();
-        return string.IsNullOrEmpty(trimmed) ? null : trimmed;
-    }
+    private static string? NormalizePhone(string? phone) => Mentora.Core.PhoneNormalizer.Normalize(phone);
 
     private static MemberParameterDto ToDto(Member m)
     {

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Mentora.Core.DTOs.Coach;
+using Mentora.Core.Validators.Parameters;
 
 namespace Mentora.Core.Validators.Coach;
 
@@ -30,6 +31,21 @@ public class AddMemberRequestValidator : AbstractValidator<AddMemberRequest>
             .Must(n => !string.IsNullOrWhiteSpace(n)).WithMessage("'Last Name' must not be empty.")
             .Must(n => n!.Trim().Length <= MaxNameLength)
                 .WithMessage($"'Last Name' must be {MaxNameLength} characters or fewer.");
+
+        // Lot 14.1b (14.B2): optional fields, same rules and messages as UpdateMemberParameterRequestValidator.
+        RuleFor(x => x.Phone)
+            .Matches(UpdateMemberParameterRequestValidator.PhonePattern)
+            .When(x => !string.IsNullOrWhiteSpace(x.Phone))
+            .WithMessage(UpdateMemberParameterRequestValidator.PhoneMessage);
+
+        RuleFor(x => x.HeightCm)
+            .InclusiveBetween((short)50, (short)280)
+            .When(x => x.HeightCm.HasValue);
+
+        RuleFor(x => x.BirthDate)
+            .Must(UpdateMemberParameterRequestValidator.BeAPlausibleBirthDate)
+            .When(x => x.BirthDate.HasValue)
+            .WithMessage(UpdateMemberParameterRequestValidator.BirthDateMessage);
     }
 
     /// <summary>One "@", non-empty local part, a dotted domain, no whitespace or control character anywhere.</summary>

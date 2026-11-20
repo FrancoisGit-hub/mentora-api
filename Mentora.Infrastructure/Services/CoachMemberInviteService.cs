@@ -39,6 +39,7 @@ public class CoachMemberInviteService(
         var email = EmailNormalizer.Normalize(request.Email);
         var firstName = request.FirstName!.Trim();
         var lastName = request.LastName!.Trim();
+        var phone = PhoneNormalizer.Normalize(request.Phone);
 
         AddMemberResponse response;
         await using (var tx = await db.Database.BeginTransactionAsync(ct))
@@ -74,7 +75,11 @@ public class CoachMemberInviteService(
                     MemberCreatedDate = now,
                     MemberIsActive = true,
                     MemberHasActivated = false,
-                    MemberActivationDate = null
+                    MemberActivationDate = null,
+                    MemberPhone = phone,
+                    MemberGender = request.Gender,
+                    MemberHeightCm = request.HeightCm,
+                    MemberBirthDate = request.BirthDate
                 });
                 db.MemberCoaches.Add(new MemberCoach
                 {
@@ -85,7 +90,9 @@ public class CoachMemberInviteService(
                     StartedAt = now
                 });
                 await db.SaveChangesAsync(ct);
-                response = new AddMemberResponse(memberId, email, firstName, lastName, IsNewAccount: true, IsPrimary: true);
+                response = new AddMemberResponse(
+                    memberId, email, firstName, lastName, IsNewAccount: true, IsPrimary: true,
+                    phone, request.Gender, request.HeightCm, request.BirthDate);
             }
             else
             {
@@ -116,7 +123,8 @@ public class CoachMemberInviteService(
                 await db.SaveChangesAsync(ct);
                 response = new AddMemberResponse(
                     member.MemberId, user.UserEmail, member.MemberFirstName, member.MemberLastName,
-                    IsNewAccount: false, IsPrimary: isPrimary);
+                    IsNewAccount: false, IsPrimary: isPrimary,
+                    member.MemberPhone, member.MemberGender, member.MemberHeightCm, member.MemberBirthDate);
             }
 
             await tx.CommitAsync(ct);
