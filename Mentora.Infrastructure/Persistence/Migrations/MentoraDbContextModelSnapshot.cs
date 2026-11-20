@@ -243,6 +243,12 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .HasColumnName("AUTH_OTP_ID")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<int>("AuthOtpAttemptCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("AUTH_OTP_ATTEMPT_COUNT");
+
                     b.Property<string>("AuthOtpCodeHash")
                         .IsRequired()
                         .HasMaxLength(255)

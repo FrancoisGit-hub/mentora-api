@@ -3,6 +3,8 @@ using Mentora.Core.DTOs.Auth;
 using Mentora.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Mentora.API.Authorization;
 
 namespace Mentora.API.Controllers.Auth;
 
@@ -13,6 +15,7 @@ namespace Mentora.API.Controllers.Auth;
 public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("otp/request")]
+    [EnableRateLimiting(AuthOtpRateLimiting.PolicyName)]
     public async Task<IActionResult> RequestOtp([FromBody] RequestOtpRequest request)
     {
         try
@@ -27,6 +30,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("otp/verify")]
+    [EnableRateLimiting(AuthOtpRateLimiting.PolicyName)]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
     {
         try

@@ -28,6 +28,9 @@ public class AuthService(
     // Single source for the OTP expiry and for the "expires in N minutes" text of the OTP mail.
     private const int OtpLifetimeMinutes = 10;
 
+    // Lot 14.2 (14.C2): failed verifications after which a code is no longer a candidate.
+    internal const int OtpMaxAttempts = 5;
+
     private readonly JwtSettings _jwt = jwtOptions.Value;
 
     public async Task RequestOtpAsync(string email, bool? isCoach)
@@ -104,19 +107,43 @@ public class AuthService(
             .FirstOrDefaultAsync(u => u.UserEmail.ToLower() == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
 
-        // Load candidates into memory — BCrypt.Verify cannot be translated to SQL
+        // Load candidates into memory: BCrypt.Verify cannot be translated to SQL.
+        // Lot 14.2 (14.C2): a code that reached OtpMaxAttempts failures is not a candidate any more.
         var candidates = await db.AuthOtps
-            .Where(o => o.UserId == user.UserId && !o.AuthOtpIsUsed && o.AuthOtpExpirationDate > DateTime.UtcNow)
+            .AsNoTracking()
+            .Where(o => o.UserId == user.UserId && !o.AuthOtpIsUsed && o.AuthOtpExpirationDate > DateTime.UtcNow
+                        && o.AuthOtpAttemptCount < OtpMaxAttempts)
             .OrderByDescending(o => o.AuthOtpCreatedDate)
             .ToListAsync();
 
-        var validOtp = candidates.FirstOrDefault(o => BCrypt.Net.BCrypt.Verify(code, o.AuthOtpCodeHash))
-            ?? throw new InvalidOperationException("Invalid or expired OTP.");
+        var validOtp = candidates.FirstOrDefault(o => BCrypt.Net.BCrypt.Verify(code, o.AuthOtpCodeHash));
+        if (validOtp == null)
+        {
+            // Lot 14.2 (14.C3): wrong code, one atomic statement counts the failure on every loaded
+            // candidate (no read-modify-write: concurrent failures cannot be lost nor pass the cap).
+            if (candidates.Count > 0)
+            {
+                var ids = candidates.Select(o => o.AuthOtpId).ToList();
+                await db.AuthOtps
+                    .Where(o => ids.Contains(o.AuthOtpId) && !o.AuthOtpIsUsed && o.AuthOtpAttemptCount < OtpMaxAttempts)
+                    .ExecuteUpdateAsync(s => s.SetProperty(o => o.AuthOtpAttemptCount, o => o.AuthOtpAttemptCount + 1));
+            }
+            throw new InvalidOperationException("Invalid or expired OTP.");
+        }
 
         var effectiveIsCoach = ResolveEffectiveIsCoach(user, isCoach, email);
         var role = effectiveIsCoach ? UserRole.Coach : UserRole.Member;
 
-        validOtp.AuthOtpIsUsed = true;
+        // Lot 14.2 (14.C4): consumption, activation and refresh token in ONE transaction. Disposed without
+        // commit (exception), everything rolls back: the code is not consumed if the save fails.
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var consumed = await db.AuthOtps
+            .Where(o => o.AuthOtpId == validOtp.AuthOtpId && !o.AuthOtpIsUsed
+                        && o.AuthOtpAttemptCount < OtpMaxAttempts && o.AuthOtpExpirationDate > DateTime.UtcNow)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.AuthOtpIsUsed, true));
+        if (consumed == 0)
+            throw new InvalidOperationException("Invalid or expired OTP."); // lost the race: same answer as a wrong code
 
         // Lot 14.1 (14.A10): first member login marks the account as activated, in the same save as the
         // OTP consumption (CreateRefreshTokenAsync flushes every tracked change). Coach login unchanged.
@@ -128,6 +155,7 @@ public class AuthService(
 
         var (clientToken, _) = await CreateRefreshTokenAsync(user.UserId, role);
         await db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return new AuthResponse(
             AccessToken: effectiveIsCoach

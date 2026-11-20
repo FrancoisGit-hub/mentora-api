@@ -19,6 +19,7 @@ public class AuthOtpConfiguration : IEntityTypeConfiguration<AuthOtp>
         builder.Property(e => e.AuthOtpExpirationDate).HasColumnName("AUTH_OTP_EXPIRATION_DATE").IsRequired();
         builder.Property(e => e.AuthOtpIsUsed).HasColumnName("AUTH_OTP_IS_USED").IsRequired();
         builder.Property(e => e.AuthOtpCreatedDate).HasColumnName("AUTH_OTP_CREATED_DATE").IsRequired();
+        builder.Property(e => e.AuthOtpAttemptCount).HasColumnName("AUTH_OTP_ATTEMPT_COUNT").IsRequired().HasDefaultValue(0);
         builder.Property(e => e.UserId).HasColumnName("USER_ID").IsRequired();
     }
 }

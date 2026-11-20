@@ -385,7 +385,14 @@ builder.Services.AddRateLimiter(o =>
     o.AddAdminAuthPolicy(); // Lot 12.1 — shares the 429 envelope set by AddQuizPolicy
     o.AddVoiceUploadPolicy(); // Lot 13.4: per user on the voice upload routes, same 429 envelope
     o.AddMemberInvitePolicy(); // Lot 14.1: per coach on POST coach/members, same 429 envelope
+    o.AddAuthOtpPolicy(); // Lot 14.2: per IP on POST auth/otp/request and auth/otp/verify, same 429 envelope
 });
+
+// Lot 14.2: IP rate limit of the app OTP routes; .Value and the [AUTH] line run before the migrations (below).
+builder.Services.AddOptions<AuthRateLimitOptions>()
+    .Bind(builder.Configuration.GetSection(AuthRateLimitOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<AuthRateLimitOptions>, AuthRateLimitOptionsValidator>();
 
 // Lot 14.1: coach adds a member by email. MemberInvite__InstallUrl is optional (absolute https);
 // .Value and the [INVITE] line run before the migrations (below).
@@ -517,6 +524,14 @@ var app = builder.Build();
     app.Logger.LogInformation(
         "[INVITE] installUrl={InstallUrl} permitLimit={PermitLimit} windowMinutes={WindowMinutes}",
         inviteOpts.HasInstallUrl, inviteOpts.PermitLimit, inviteOpts.WindowMinutes);
+}
+
+// Lot 14.2: .Value runs AuthRateLimitOptionsValidator now (before migrations).
+{
+    var authRateOpts = app.Services.GetRequiredService<IOptions<AuthRateLimitOptions>>().Value;
+    app.Logger.LogInformation(
+        "[AUTH] otpRateLimit permitLimit={PermitLimit} windowMinutes={WindowMinutes}",
+        authRateOpts.PermitLimit, authRateOpts.WindowMinutes);
 }
 
 // Lot 12.5a: .Value runs CorsOptionsValidator now (before migrations). The line prints counts and
