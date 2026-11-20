@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
+using Mentora.Core;
 using Mentora.Core.DTOs.Auth;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
@@ -31,11 +32,15 @@ public class AuthService(
 
     public async Task RequestOtpAsync(string email, bool? isCoach)
     {
+        // Lot 14.1 (14.A3): trim + lower invariant; the lookup compares lower("USER_EMAIL"), so rows
+        // stored with capitals still match.
+        email = EmailNormalizer.Normalize(email);
+
         // Any enabled user (member or coach) can request an OTP
         var user = await db.Users
             .Include(u => u.Coach)
             .Include(u => u.Member)
-            .FirstOrDefaultAsync(u => u.UserEmail == email && u.UserIsEnabled)
+            .FirstOrDefaultAsync(u => u.UserEmail.ToLower() == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
 
         var effectiveIsCoach = ResolveEffectiveIsCoach(user, isCoach, email);
@@ -79,7 +84,7 @@ public class AuthService(
     /// Trims, drops control characters (CR, LF, tab, any char.IsControl), caps at 50 characters.
     /// Returns null when nothing is left (first name unknown).
     /// </summary>
-    private static string? SanitizeFirstName(string? firstName)
+    internal static string? SanitizeFirstName(string? firstName)
     {
         if (firstName == null)
             return null;
@@ -91,10 +96,12 @@ public class AuthService(
 
     public async Task<AuthResponse> VerifyOtpAsync(string email, string code, bool? isCoach)
     {
+        email = EmailNormalizer.Normalize(email); // Lot 14.1 (14.A3), same rule as the request
+
         var user = await db.Users
             .Include(u => u.Member)
             .Include(u => u.Coach)
-            .FirstOrDefaultAsync(u => u.UserEmail == email && u.UserIsEnabled)
+            .FirstOrDefaultAsync(u => u.UserEmail.ToLower() == email && u.UserIsEnabled)
             ?? throw new InvalidOperationException("User not found or account is disabled.");
 
         // Load candidates into memory — BCrypt.Verify cannot be translated to SQL
@@ -110,6 +117,14 @@ public class AuthService(
         var role = effectiveIsCoach ? UserRole.Coach : UserRole.Member;
 
         validOtp.AuthOtpIsUsed = true;
+
+        // Lot 14.1 (14.A10): first member login marks the account as activated, in the same save as the
+        // OTP consumption (CreateRefreshTokenAsync flushes every tracked change). Coach login unchanged.
+        if (!effectiveIsCoach && !user.Member!.MemberHasActivated)
+        {
+            user.Member.MemberHasActivated = true;
+            user.Member.MemberActivationDate = DateTime.UtcNow;
+        }
 
         var (clientToken, _) = await CreateRefreshTokenAsync(user.UserId, role);
         await db.SaveChangesAsync();
