@@ -1,0 +1,7 @@
+request existing member (exact case) -> 200 body={"success":true,"data":null,"error":null,"statusCode":200}
+request member isCoach=true (no coach profile) -> 400 body={"success":false,"data":null,"error":"No coach account for this email.","statusCode":400}
+request unknown email -> 400 body={"success":false,"data":null,"error":"User not found or account is disabled.","statusCode":400}
+request CAPITALS (variant) -> 200 body={"success":true,"data":null,"error":null,"statusCode":200}
+verify wrong code -> 400 body={"success":false,"data":null,"error":"Invalid or expired OTP.","statusCode":400}
+verify unknown email -> 400 body={"success":false,"data":null,"error":"User not found or account is disabled.","statusCode":400}
+verify good code -> 200 keys=success,data,error,statusCode / data:accessToken,refreshToken,expiresIn,isCoach isCoach=False expiresIn=3600
