@@ -956,3 +956,128 @@ Remove-Item "$env:TEMP\mentora-api-lot13.tar.gz"; Test-Path "$env:TEMP\mentora-a
 Attendu : `False` et `False`.
 
 Garder `mentora-api:pre-lot13` (api-demo) et l'ancienne étiquette d'api-prod notée à l'étape 5 jusqu'au merge du lot 13 dans main.
+
+---
+
+## Lot 14 vague 1 (21/11)
+
+Contenu : 14.1 (invitation d'un membre par le coach, e-mail unique sans casse), 14.1b (champs facultatifs à l'ajout d'un membre), 14.2 (protection des codes de connexion), 14.3 (la ligne console `[OTP]` n'existe plus qu'en Development).
+
+### a. Avant de déployer **[SSH]**
+
+1. Sauvegardes des deux bases, comme à l'étape 2 du lot 13 : `mentora_prod` et `mentora_db` (api-demo).
+2. Contrôles en lecture seule, sur les deux bases (même commande `docker exec -i mentora-postgres ...` qu'à l'étape 3 du lot 13) :
+   - `docs/review/lot14/14.1/precheck.sql` : la requête 1 doit être vide, sinon **arrêter** le déploiement (des e-mails ne différant que par la casse empêcheraient l'index unique) ;
+   - `docs/review/lot14/14.2/precheck.sql`.
+
+### b. Variables facultatives (aucune n'est obligatoire)
+
+- `MemberInvite__InstallUrl` : URL absolue en `https`. Ne pas la définir tant que PJ n'a pas donné le lien. Sans elle, le mail d'invitation dit que le coach enverra le lien.
+- `MemberInvite__PermitLimit` et `MemberInvite__WindowMinutes` : limite d'invitations, défaut 30 par 60 minutes.
+- `AuthRateLimit__PermitLimit` et `AuthRateLimit__WindowMinutes` : limite des demandes de code, défaut 30 par 15 minutes.
+
+Les valeurs par défaut conviennent : aucune variable à ajouter.
+
+### c. Lignes de démarrage attendues **[SSH]**
+
+Sur api-prod et sur api-demo, une fois par base : `Applying migration` pour `Lot14_1_UserEmailCi` et `Lot14_2_OtpAttempts`. Puis :
+
+```
+[INVITE] installUrl=False permitLimit=30 windowMinutes=60
+[AUTH] otpRateLimit permitLimit=30 windowMinutes=15
+```
+
+en plus des lignes habituelles (`[EMAIL] routing`, `[CORS]`, `[AUDIO]`, `[MUX]`, `Application started`), sans ligne `fail:` ni `crit:`.
+
+### d. Preuve que les logs de PROD ne contiennent aucun code **[SSH]**
+
+Faire une demande de code pour un compte de l'équipe, puis compter (jamais afficher) :
+
+```bash
+cd ~/mentora && docker compose logs --since 5m api-prod | grep -c "\[OTP\]"
+cd ~/mentora && docker compose logs --since 5m api | grep -c "\[OTP\]"
+```
+
+Attendu : `0` pour api-prod ; `1` ou plus pour api (demo, Development). Ne jamais afficher les lignes `[OTP]`.
+
+### e. Retour arrière
+
+Image précédente, comme à l'étape 11 du lot 13. Aucune migration `Down` : les deux migrations sont additives (un index unique sur `lower(email)`, et une colonne avec la valeur par défaut 0). L'image précédente continue de fonctionner avec elles. Les variables ci-dessus peuvent rester : l'ancien code ne les lit pas.
+
+---
+
+## Bascule des mails en Production (24/11)
+
+À faire seulement quand la vague 1 est déployée et contrôlée. api-demo reste en mode TEST (tous les mails vers les seules adresses de test). Seul api-prod passe en Production : le vrai destinataire reçoit le mail, et les deux adresses en copie cachée (Bcc) en reçoivent une copie.
+
+### 1. Secret dans `~/mentora/.env` **[SSH]**
+
+Variable : `EMAIL_ROUTING_PRODUCTION_BCC` (adresses séparées par une virgule). Saisie masquée, jamais affichée, contrôlée par sa longueur.
+
+Avant d'ajouter la ligne, vérifier que `.env` se termine par un retour à la ligne :
+
+```bash
+cd ~/mentora && tail -c1 .env | wc -l
+```
+
+Attendu : `1`. Si `0`, ajouter d'abord le retour à la ligne avec `echo >> .env`.
+
+```bash
+cd ~/mentora && read -rs BCC && printf 'EMAIL_ROUTING_PRODUCTION_BCC=%s\n' "$BCC" >> .env && unset BCC
+grep '^EMAIL_ROUTING_PRODUCTION_BCC=' .env | cut -d= -f2- | tr -d '\n' | wc -c
+```
+
+Coller la valeur une seule fois (Ctrl+V OU clic droit dans le terminal de VS Code, jamais les deux).
+
+Attendu : une longueur cohérente avec les deux adresses. Ne jamais faire `cat .env`.
+
+### 2. Compose, api-prod uniquement **[SSH]**
+
+Sauvegarde du compose avant modification :
+
+```bash
+cd ~/mentora && cp docker-compose.yml docker-compose.yml.pre-mail-prod
+```
+
+Avec `nano docker-compose.yml`, dans `environment` d'`api-prod` seulement (six espaces d'indentation) :
+
+```yaml
+      - EmailRouting__Mode=Production
+      - EmailRouting__ProductionBcc=${EMAIL_ROUTING_PRODUCTION_BCC}
+```
+
+Ne rien ajouter à api-demo. Puis :
+
+```bash
+cd ~/mentora && docker compose config --quiet && docker compose up -d --no-deps --force-recreate api-prod
+```
+
+`config --quiet` ne doit rien afficher (ne jamais lancer `docker compose config` sans `--quiet` : il écrit les secrets).
+
+### 3. Ligne de démarrage attendue **[SSH]**
+
+```bash
+cd ~/mentora && docker compose logs --since 5m api-prod | grep -E "\[EMAIL\]|warn:|fail:"
+```
+
+Attendu : `[EMAIL] routing mode=PRODUCTION provider=Smtp testRecipients=4 productionBcc=2`. Ne jamais filtrer sur `[EMAIL-LOG]` ni sur `[OTP]`.
+
+Un refus au démarrage (`EmailRouting:ProductionBcc ...`) nomme le réglage et le numéro de l'élément, jamais l'adresse : corriger la variable, recréer api-prod.
+
+### 4. Preuve avec un vrai mail
+
+Demander un code de connexion pour un compte de l'équipe, depuis l'app. Vérifier :
+
+- le mail arrive chez le vrai destinataire, sans préfixe `[TEST pour ...]` dans le sujet ;
+- une copie arrive dans chacune des deux boîtes en copie cachée ;
+- l'en-tête `Bcc` n'apparaît **pas** dans le source du message reçu par le destinataire.
+
+### 5. Retour arrière
+
+Retirer les deux lignes `EmailRouting__Mode` et `EmailRouting__ProductionBcc` du compose d'api-prod (ou remettre `docker-compose.yml.pre-mail-prod`), puis :
+
+```bash
+cd ~/mentora && docker compose config --quiet && docker compose up -d --no-deps --force-recreate api-prod
+```
+
+Attendu : `[EMAIL] routing mode=TEST ... productionBcc=0`. La variable du `.env` peut rester.

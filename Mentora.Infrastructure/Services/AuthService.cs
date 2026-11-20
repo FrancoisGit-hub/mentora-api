@@ -12,6 +12,7 @@ using Mentora.Core.Interfaces;
 using Mentora.Core.Settings;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -23,7 +24,8 @@ public class AuthService(
     IOptions<JwtSettings> jwtOptions,
     IEmailSender emailSender,
     IValidator<LogoutRequest> logoutValidator,
-    ILogger<AuthService> logger) : IAuthService
+    ILogger<AuthService> logger,
+    IHostEnvironment environment) : IAuthService
 {
     // Single source for the OTP expiry and for the "expires in N minutes" text of the OTP mail.
     private const int OtpLifetimeMinutes = 10;
@@ -66,7 +68,9 @@ public class AuthService(
         });
         await db.SaveChangesAsync();
 
-        Console.WriteLine($"[OTP] {email} → {plainOtp}");
+        // Lot 14.3: the login code is written to the console only in Development; nowhere else.
+        if (environment.IsDevelopment())
+            Console.WriteLine($"[OTP] {email} → {plainOtp}");
 
         var firstName = SanitizeFirstName(effectiveIsCoach
             ? user.Coach?.CoachFirstName
