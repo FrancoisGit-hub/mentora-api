@@ -1,0 +1,15 @@
+Lot 14.1 precheck on the LOCAL database (mentora_db, port 5433), 2026-11-19.
+Run as: BEGIN READ ONLY; <precheck.sql>; ROLLBACK; through docker exec -i mentora-postgres-local psql (ON_ERROR_STOP=1).
+
+BEGIN
+ normalized_email | rows_count | user_ids | stored_values
+------------------+------------+----------+---------------
+(0 rows)
+
+ USER_ID | USER_EMAIL
+---------+------------
+(0 rows)
+
+ROLLBACK
+
+Result: query 1 returns zero rows (no email duplicated case-insensitively), query 2 returns zero rows.

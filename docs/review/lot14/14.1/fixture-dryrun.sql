@@ -1,0 +1,33 @@
+-- Lot 14.1 fixture (local DB only). Fixed ids 14100000-...-b1..b5, prefix l141-.
+-- b1/b2: coach B (user + coach profile, so the startup seeders create its parameters and programs).
+-- b3/b4: disabled user with a member profile (case ACCOUNT_DISABLED).
+-- b5: enabled user with no coach and no member profile (case NO_MEMBER_PROFILE).
+-- Member-style users follow the existing member row: USER_LOGIN and USER_PSW NULL, role 'MEMBER'.
+BEGIN;
+
+INSERT INTO "USERS"
+  ("USER_ID", "USER_CREATED_DATE", "USER_EMAIL", "USER_LOGIN", "USER_IS_ENABLED", "USER_ROLE")
+VALUES
+  ('14100000-0000-4000-8000-0000000000b1', now(), 'l141-coachb@mentora.local', 'l141-coachb@mentora.local', true, 'Coach');
+
+INSERT INTO "USERS"
+  ("USER_ID", "USER_CREATED_DATE", "USER_EMAIL", "USER_IS_ENABLED", "USER_ROLE")
+VALUES
+  ('14100000-0000-4000-8000-0000000000b3', now(), 'l141-disabled@mentora.local', false, 'MEMBER'),
+  ('14100000-0000-4000-8000-0000000000b5', now(), 'l141-noprofile@mentora.local', true, 'MEMBER');
+
+INSERT INTO "COACHES"
+  ("COACH_ID", "COACH_FIRST_NAME", "COACH_LAST_NAME", "COACH_CREATED_DATE", "COACH_IS_ACTIVE", "USER_ID")
+VALUES
+  ('14100000-0000-4000-8000-0000000000b2', 'l141-Coach', 'l141-B', now(), true, '14100000-0000-4000-8000-0000000000b1');
+
+INSERT INTO "MEMBERS"
+  ("MEMBER_ID", "MEMBER_FIRST_NAME", "MEMBER_LAST_NAME", "MEMBER_CREATED_DATE", "MEMBER_IS_ACTIVE", "MEMBER_HAS_ACTIVATED", "USER_ID")
+VALUES
+  ('14100000-0000-4000-8000-0000000000b4', 'l141-Disabled', 'l141-User', now(), true, false, '14100000-0000-4000-8000-0000000000b3');
+
+SELECT 'USERS' AS tbl, count(*) FROM "USERS" WHERE "USER_ID" IN ('14100000-0000-4000-8000-0000000000b1', '14100000-0000-4000-8000-0000000000b3', '14100000-0000-4000-8000-0000000000b5')
+UNION ALL SELECT 'COACHES', count(*) FROM "COACHES" WHERE "COACH_ID" = '14100000-0000-4000-8000-0000000000b2'
+UNION ALL SELECT 'MEMBERS', count(*) FROM "MEMBERS" WHERE "MEMBER_ID" = '14100000-0000-4000-8000-0000000000b4';
+
+ROLLBACK;
