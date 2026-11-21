@@ -120,20 +120,28 @@ public class AuthService(
             .OrderByDescending(o => o.AuthOtpCreatedDate)
             .ToListAsync();
 
-        var validOtp = candidates.FirstOrDefault(o => BCrypt.Net.BCrypt.Verify(code, o.AuthOtpCodeHash));
-        if (validOtp == null)
+        // Review wave 1 (W2): an attempt is claimed BEFORE the guess is checked, so parallel requests cannot
+        // evaluate more than OtpMaxAttempts guesses per code, whatever their result. Each claim is one
+        // conditional statement, committed on its own (no transaction is open here): a wrong guess keeps
+        // its attempt. The count only grows and never passes OtpMaxAttempts (CK_AUTH_OTPS_ATTEMPT_COUNT is >= 0).
+        AuthOtp? validOtp = null;
+        foreach (var candidate in candidates)
         {
-            // Lot 14.2 (14.C3): wrong code, one atomic statement counts the failure on every loaded
-            // candidate (no read-modify-write: concurrent failures cannot be lost nor pass the cap).
-            if (candidates.Count > 0)
+            var claimed = await db.AuthOtps
+                .Where(o => o.AuthOtpId == candidate.AuthOtpId && !o.AuthOtpIsUsed
+                            && o.AuthOtpAttemptCount < OtpMaxAttempts && o.AuthOtpExpirationDate > DateTime.UtcNow)
+                .ExecuteUpdateAsync(s => s.SetProperty(o => o.AuthOtpAttemptCount, o => o.AuthOtpAttemptCount + 1));
+            if (claimed == 0)
+                continue; // no attempt left (or consumed, or expired meanwhile): not evaluated
+
+            if (BCrypt.Net.BCrypt.Verify(code, candidate.AuthOtpCodeHash))
             {
-                var ids = candidates.Select(o => o.AuthOtpId).ToList();
-                await db.AuthOtps
-                    .Where(o => ids.Contains(o.AuthOtpId) && !o.AuthOtpIsUsed && o.AuthOtpAttemptCount < OtpMaxAttempts)
-                    .ExecuteUpdateAsync(s => s.SetProperty(o => o.AuthOtpAttemptCount, o => o.AuthOtpAttemptCount + 1));
+                validOtp = candidate;
+                break;
             }
-            throw new InvalidOperationException("Invalid or expired OTP.");
         }
+        if (validOtp == null)
+            throw new InvalidOperationException("Invalid or expired OTP.");
 
         var effectiveIsCoach = ResolveEffectiveIsCoach(user, isCoach, email);
         var role = effectiveIsCoach ? UserRole.Coach : UserRole.Member;
@@ -142,9 +150,10 @@ public class AuthService(
         // commit (exception), everything rolls back: the code is not consumed if the save fails.
         await using var tx = await db.Database.BeginTransactionAsync();
 
+        // W2: this attempt is already counted, so the bound is <= (the claimed 5th attempt may still succeed).
         var consumed = await db.AuthOtps
             .Where(o => o.AuthOtpId == validOtp.AuthOtpId && !o.AuthOtpIsUsed
-                        && o.AuthOtpAttemptCount < OtpMaxAttempts && o.AuthOtpExpirationDate > DateTime.UtcNow)
+                        && o.AuthOtpAttemptCount <= OtpMaxAttempts && o.AuthOtpExpirationDate > DateTime.UtcNow)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.AuthOtpIsUsed, true));
         if (consumed == 0)
             throw new InvalidOperationException("Invalid or expired OTP."); // lost the race: same answer as a wrong code

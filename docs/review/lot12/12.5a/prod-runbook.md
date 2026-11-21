@@ -967,8 +967,9 @@ Contenu : 14.1 (invitation d'un membre par le coach, e-mail unique sans casse), 
 
 1. Sauvegardes des deux bases, comme à l'étape 2 du lot 13 : `mentora_prod` et `mentora_db` (api-demo).
 2. Contrôles en lecture seule, sur les deux bases (même commande `docker exec -i mentora-postgres ...` qu'à l'étape 3 du lot 13) :
-   - `docs/review/lot14/14.1/precheck.sql` : la requête 1 doit être vide, sinon **arrêter** le déploiement (des e-mails ne différant que par la casse empêcheraient l'index unique) ;
-   - `docs/review/lot14/14.2/precheck.sql`.
+   - les deux fichiers commencent par la requête 0, la dernière migration appliquée : attendu `20261117234001_Lot13_2_VoiceMessages`, sinon **arrêter** ;
+   - `docs/review/lot14/14.1/precheck.sql` : la requête 1 (`case_collisions`) doit valoir `0`, sinon **arrêter** le déploiement (des e-mails ne différant que par la casse empêcheraient l'index unique). Dans ce cas seulement, lancer la requête 1b (en commentaire dans le fichier), qui liste les seuls `USER_ID` en cause. Aucune requête n'affiche d'adresse e-mail ;
+   - `docs/review/lot14/14.2/precheck.sql` : comptes seulement, `attempt_column_exists` vaut `0` avant la migration.
 
 ### b. Variables facultatives (aucune n'est obligatoire)
 
@@ -989,16 +990,29 @@ Sur api-prod et sur api-demo, une fois par base : `Applying migration` pour `Lot
 
 en plus des lignes habituelles (`[EMAIL] routing`, `[CORS]`, `[AUDIO]`, `[MUX]`, `Application started`), sans ligne `fail:` ni `crit:`.
 
+Sur api-prod, la ligne `[EMAIL] routing` doit contenir `provider=Smtp` (jamais `provider=Logging`, qui écrirait le corps des mails, donc les codes, dans les logs).
+
+Démarrage suivant (tout recreate) : les mêmes lignes `[INVITE]`, `[AUTH]` et `[EMAIL]`, et aucune ligne `Applying migration` pour les deux migrations du lot 14.
+
+Contrôle des ports (W7, déjà vérifié le 10/11) : seul nginx est exposé, les ports des API ne sont pas publiés sur internet.
+
+```bash
+cd ~/mentora && docker compose ps api api-prod --format "{{.Service}} {{.Ports}}"
+```
+
+Attendu : aucun `0.0.0.0:` ni `[::]:` pour api et api-prod (port non publié, ou publié sur `127.0.0.1` seulement).
+
 ### d. Preuve que les logs de PROD ne contiennent aucun code **[SSH]**
 
 Faire une demande de code pour un compte de l'équipe, puis compter (jamais afficher) :
 
 ```bash
 cd ~/mentora && docker compose logs --since 5m api-prod | grep -c "\[OTP\]"
+cd ~/mentora && docker compose logs --since 5m api-prod | grep -c "\[EMAIL-LOG\]"
 cd ~/mentora && docker compose logs --since 5m api | grep -c "\[OTP\]"
 ```
 
-Attendu : `0` pour api-prod ; `1` ou plus pour api (demo, Development). Ne jamais afficher les lignes `[OTP]`.
+Attendu : `0` et `0` pour api-prod (`[OTP]` et `[EMAIL-LOG]`) ; `1` ou plus pour api (demo, Development). Ne jamais afficher les lignes `[OTP]` ni `[EMAIL-LOG]`.
 
 ### e. Retour arrière
 
