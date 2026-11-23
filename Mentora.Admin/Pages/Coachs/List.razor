@@ -1,0 +1,191 @@
+@page "/coachs"
+@layout ShellLayout
+@implements IDisposable
+@using System.Globalization
+@inject CoachesApi Api
+@inject CoachUiState UiState
+@inject NavigationManager Nav
+
+<PageTitle>Coachs · Mentora Admin</PageTitle>
+
+<div class="card pad">
+    <div class="pagehead">
+        <p class="muted">Les coachs de la Bêta sont créés ici. Chacun ajoute ensuite ses élèves depuis l'application.</p>
+        <button type="button" class="btn btn-primary" @onclick="GoCreate">Nouveau coach</button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_flash))
+{
+    <div class="info spaced" role="status">@_flash</div>
+}
+@if (!string.IsNullOrEmpty(_actionAlert))
+{
+    <div class="alert spaced" role="alert">@_actionAlert</div>
+}
+
+<div class="card spaced">
+    @if (_loading && _items.Count == 0)
+    {
+        <div class="tablewrap" aria-busy="true">
+            <p class="muted pad" role="status">Chargement…</p>
+            <table class="t t-list" aria-hidden="true">
+                <tbody>
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        <tr>
+                            <td><div class="skel"></div></td>
+                            <td><div class="skel"></div></td>
+                            <td><div class="skel"></div></td>
+                            <td><div class="skel"></div></td>
+                            <td><div class="skel"></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="pad">
+            <div class="alert" role="alert">@_error</div>
+            <button type="button" class="btn" @onclick="ReloadAsync">Réessayer</button>
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="pad muted">Aucun coach pour l'instant.</p>
+    }
+    else
+    {
+        <div class="tablewrap" role="region" aria-label="Liste des coachs" tabindex="0">
+            <table class="t t-list">
+                <thead>
+                    <tr>
+                        <th scope="col">Coach</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Créé le</th>
+                        <th scope="col">État</th>
+                        <th scope="col">Élèves</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr @key="item.CoachId">
+                            <td>
+                                <div>@item.FirstName @item.LastName</div>
+                                @if (!string.IsNullOrWhiteSpace(item.Phone))
+                                {
+                                    <div class="muted small">@item.Phone</div>
+                                }
+                            </td>
+                            <td>@item.Email</td>
+                            <td>@FormatDate(item.CreatedDate)</td>
+                            <td>
+                                @if (item.IsEnabled && item.IsActive)
+                                {
+                                    <span class="badge">Actif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-muted">Désactivé</span>
+                                }
+                            </td>
+                            <td>@item.MemberCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="listfoot">
+            <span class="muted" role="status">@(_items.Count == 1 ? "1 coach affiché" : $"{_items.Count} coachs affichés")</span>
+            @if (_next is not null)
+            {
+                <button type="button" class="btn btn-sm" disabled="@_loadingMore" @onclick="LoadMoreAsync">
+                    @(_loadingMore ? "Chargement…" : "Afficher plus")
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private const int PageSize = 50;
+
+    private readonly List<CoachListItem> _items = [];
+    private string? _next;
+    private string? _error;
+    private string? _actionAlert;
+    private string? _flash;
+    private bool _loading = true;
+    private bool _loadingMore;
+    private int _request;
+
+    private static string FormatDate(DateTime value) =>
+        value.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _flash = UiState.TakeFlash();
+        await LoadFirstPageAsync();
+    }
+
+    private async Task LoadFirstPageAsync()
+    {
+        var token = ++_request;
+        _loading = true;
+        _error = null;
+        _actionAlert = null;
+        _items.Clear();
+        _next = null;
+        StateHasChanged();
+
+        var list = await Api.ListAsync(null, PageSize);
+        if (token != _request)
+            return;
+
+        _loading = false;
+        if (!list.IsSuccess || list.Data is null)
+        {
+            _error = ExerciseText.Failure(list);
+            return;
+        }
+        _items.AddRange(list.Data.Items);
+        _next = list.Data.NextCursor;
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        if (_loadingMore || _next is null)
+            return;
+
+        var token = _request;
+        _loadingMore = true;
+        _actionAlert = null;
+        try
+        {
+            var list = await Api.ListAsync(_next, PageSize);
+            if (token != _request)
+                return;
+            if (!list.IsSuccess || list.Data is null)
+            {
+                _actionAlert = ExerciseText.Failure(list);
+                return;
+            }
+            var known = _items.Select(i => i.CoachId).ToHashSet();
+            _items.AddRange(list.Data.Items.Where(i => !known.Contains(i.CoachId)));
+            _next = list.Data.NextCursor;
+        }
+        finally
+        {
+            _loadingMore = false;
+        }
+    }
+
+    private Task ReloadAsync() => LoadFirstPageAsync();
+
+    private void GoCreate() => Nav.NavigateTo("coachs/nouveau");
+
+    public void Dispose() => _request++;
+}

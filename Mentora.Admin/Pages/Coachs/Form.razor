@@ -1,0 +1,285 @@
+@page "/coachs/nouveau"
+@layout ShellLayout
+@using System.Text.Json
+@inject CoachesApi Api
+@inject CoachUiState UiState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Nouveau coach · Mentora Admin</PageTitle>
+
+<NavigationLock OnBeforeInternalNavigation="OnBeforeNavigation" ConfirmExternalNavigation="@IsDirty" />
+
+<form @onsubmit="SaveAsync" @onsubmit:preventDefault novalidate>
+    <div class="card pad">
+        <p class="muted">Le coach reçoit un mail d'accueil pour installer l'application et se connecter avec cette adresse email. Ses paramètres par défaut et ses programmes d'offre sont créés en même temps.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_saveError))
+    {
+        <div class="alert spaced" role="alert">@_saveError</div>
+    }
+    @if (_summary)
+    {
+        <div class="alert spaced" role="alert">
+            <div>Certaines valeurs ont été refusées.</div>
+            @if (_unmapped.Count > 0)
+            {
+                <ul class="alert-list">
+                    @foreach (var key in _unmapped)
+                    {
+                        <li>@key</li>
+                    }
+                </ul>
+            }
+        </div>
+    }
+
+    <div class="card pad spaced">
+        <div class="grid2">
+            <div class="field">
+                <label class="label" for="f-firstname">Prénom</label>
+                <input id="f-firstname" class="input" type="text" maxlength="100" aria-required="true"
+                       aria-invalid="@Invalid("f-firstname")" aria-describedby="@Desc("f-firstname")"
+                       @bind="_firstName" @bind:event="oninput" />
+                <FieldError Id="e-f-firstname" Message="@Err("f-firstname")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-lastname">Nom</label>
+                <input id="f-lastname" class="input" type="text" maxlength="100" aria-required="true"
+                       aria-invalid="@Invalid("f-lastname")" aria-describedby="@Desc("f-lastname")"
+                       @bind="_lastName" @bind:event="oninput" />
+                <FieldError Id="e-f-lastname" Message="@Err("f-lastname")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-email">Email</label>
+                <input id="f-email" class="input" type="email" maxlength="255" autocomplete="off" aria-required="true"
+                       aria-invalid="@Invalid("f-email")" aria-describedby="@Desc("f-email")"
+                       @bind="_email" @bind:event="oninput" />
+                <FieldError Id="e-f-email" Message="@Err("f-email")" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="f-phone">Téléphone (facultatif)</label>
+                <input id="f-phone" class="input" type="text" maxlength="20" autocomplete="off"
+                       aria-invalid="@Invalid("f-phone")" aria-describedby="@Desc("f-phone", "h-phone")"
+                       @bind="_phone" @bind:event="oninput" />
+                <div id="h-phone" class="hint">8 à 20 caractères : chiffres, espaces, +, -, . et parenthèses.</div>
+                <FieldError Id="e-f-phone" Message="@Err("f-phone")" />
+            </div>
+        </div>
+
+        <div class="editbar-state">
+            <button type="submit" class="btn btn-primary" disabled="@_saving">Créer le coach</button>
+            <button type="button" class="btn" @onclick="Cancel">Annuler</button>
+        </div>
+    </div>
+</form>
+
+<ConfirmDialog Open="_showLeave" Title="Quitter sans enregistrer ?"
+               Text="Le coach n'a pas été créé."
+               ConfirmLabel="Quitter" CancelLabel="Rester" Danger="true"
+               OnConfirm="ConfirmLeave" OnCancel="CancelLeave" />
+
+@code {
+    // Clé de champ de l'API (casse ignorée) vers l'identifiant du champ dans la page.
+    private static readonly Dictionary<string, string> FieldIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Email"] = "f-email",
+        ["FirstName"] = "f-firstname",
+        ["LastName"] = "f-lastname",
+        ["Phone"] = "f-phone"
+    };
+
+    private static readonly Dictionary<string, string> RejectedMessages = new()
+    {
+        ["f-email"] = "Adresse email invalide.",
+        ["f-firstname"] = "Prénom obligatoire, 100 caractères au plus.",
+        ["f-lastname"] = "Nom obligatoire, 100 caractères au plus.",
+        ["f-phone"] = "Téléphone invalide : 8 à 20 caractères, chiffres, espaces, +, -, . et parenthèses."
+    };
+
+    // Ordre des champs dans la page : le premier champ en erreur reçoit le focus.
+    private static readonly string[] FocusOrder = ["f-firstname", "f-lastname", "f-email", "f-phone"];
+
+    private string _firstName = "";
+    private string _lastName = "";
+    private string _email = "";
+    private string _phone = "";
+
+    private bool _saving;
+    private bool _summary;
+    private string? _saveError;
+    private readonly Dictionary<string, string> _errors = [];
+    private readonly List<string> _unmapped = [];
+
+    private bool _showLeave;
+    private bool _leaving;
+    private string? _pendingTarget;
+
+    private bool IsDirty =>
+        !_leaving
+        && (_firstName.Length > 0 || _lastName.Length > 0 || _email.Length > 0 || _phone.Length > 0);
+
+    private string? Err(string fieldId) => _errors.TryGetValue(fieldId, out var text) ? text : null;
+
+    private string? Invalid(string fieldId) => _errors.ContainsKey(fieldId) ? "true" : null;
+
+    private string? Desc(string fieldId, string? help = null)
+    {
+        var hasError = _errors.ContainsKey(fieldId);
+        if (hasError && help is not null)
+            return $"e-{fieldId} {help}";
+        return hasError ? $"e-{fieldId}" : help;
+    }
+
+    private void ClearMessages()
+    {
+        _errors.Clear();
+        _unmapped.Clear();
+        _summary = false;
+        _saveError = null;
+    }
+
+    // Navigation et modifications non enregistrées
+
+    private void Cancel() => Nav.NavigateTo("coachs");
+
+    private Task OnBeforeNavigation(LocationChangingContext context)
+    {
+        if (!IsDirty)
+            return Task.CompletedTask;
+
+        context.PreventNavigation();
+        _pendingTarget = context.TargetLocation;
+        _showLeave = true;
+        return Task.CompletedTask;
+    }
+
+    private void ConfirmLeave()
+    {
+        _showLeave = false;
+        _leaving = true;
+        if (_pendingTarget is not null)
+            Nav.NavigateTo(_pendingTarget);
+    }
+
+    private void CancelLeave()
+    {
+        _showLeave = false;
+        _pendingTarget = null;
+    }
+
+    // Enregistrement
+
+    private static string? Clean(string value)
+    {
+        var trimmed = value.Trim();
+        return trimmed.Length == 0 ? null : trimmed;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_saving)
+            return;
+
+        ClearMessages();
+
+        var first = Clean(_firstName);
+        var last = Clean(_lastName);
+        var email = Clean(_email);
+        var phone = Clean(_phone);
+
+        if (first is null)
+            _errors["f-firstname"] = "Ce champ est obligatoire.";
+        if (last is null)
+            _errors["f-lastname"] = "Ce champ est obligatoire.";
+        if (email is null)
+            _errors["f-email"] = "Ce champ est obligatoire.";
+
+        if (_errors.Count > 0)
+        {
+            await JS.InvokeVoidAsync("mentoraAdmin.focusById", FocusOrder.First(_errors.ContainsKey));
+            return;
+        }
+
+        _saving = true;
+        ApiResult<CoachListItem> result;
+        try
+        {
+            result = await Api.CreateAsync(new CreateCoachRequest(email!, first!, last!, phone));
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (result.IsSuccess)
+        {
+            UiState.Flash = $"Coach créé : {first} {last} ({email}). Un mail d'accueil lui est envoyé.";
+            _leaving = true;
+            Nav.NavigateTo("coachs", replace: true);
+            return;
+        }
+
+        await ApplyFailureAsync(result);
+    }
+
+    private async Task ApplyFailureAsync(ApiResult<CoachListItem> result)
+    {
+        string? focus = null;
+
+        if (result.Status == 409 && result.Error == "EMAIL_TAKEN")
+        {
+            _errors["f-email"] = EmailTakenMessage(result.Details);
+            focus = "f-email";
+        }
+        else if (result.Status == 422)
+        {
+            foreach (var key in (result.Errors ?? new Dictionary<string, string[]>()).Keys)
+            {
+                // Le message de l'API est en anglais : il n'est jamais affiché tel quel.
+                if (FieldIds.TryGetValue(key, out var fieldId))
+                    _errors[fieldId] = RejectedMessages[fieldId];
+                else if (!_unmapped.Contains(key))
+                    _unmapped.Add(key);
+            }
+            // Le bandeau n'apparaît que pour des clés inconnues.
+            _summary = _unmapped.Count > 0;
+            focus = FocusOrder.FirstOrDefault(_errors.ContainsKey);
+        }
+        else
+        {
+            _saveError = ExerciseText.Failure(result);
+        }
+
+        if (focus is not null)
+            await JS.InvokeVoidAsync("mentoraAdmin.focusById", focus);
+        else
+            await JS.InvokeVoidAsync("mentoraAdmin.scrollTop");
+    }
+
+    private static string EmailTakenMessage(JsonElement? details)
+    {
+        string? account = null;
+        var enabled = true;
+        if (details is { ValueKind: JsonValueKind.Object } d)
+        {
+            if (d.TryGetProperty("existingAccount", out var a) && a.ValueKind == JsonValueKind.String)
+                account = a.GetString();
+            if (d.TryGetProperty("isEnabled", out var e) && e.ValueKind == JsonValueKind.False)
+                enabled = false;
+        }
+
+        var text = account switch
+        {
+            "COACH" => "Cette adresse est déjà celle d'un coach.",
+            "MEMBER" => "Cette adresse est déjà celle d'un élève : un même compte ne peut pas être coach et élève.",
+            "BOTH" => "Cette adresse est déjà utilisée par un compte coach et élève.",
+            _ => "Cette adresse est déjà utilisée."
+        };
+        return enabled ? text : text + " Le compte est désactivé.";
+    }
+}

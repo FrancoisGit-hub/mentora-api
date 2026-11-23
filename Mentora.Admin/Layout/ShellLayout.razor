@@ -23,12 +23,23 @@ else
             <nav aria-label="Menu principal" class="sidenav">
                 @foreach (var item in MenuItems)
                 {
-                    if (item.Active)
+                    if (item.Route is not null)
                     {
-                        <button type="button" class="nav nav-active" aria-current="page" @onclick="GoToExercises">
-                            <span class="nav-label">@item.Label</span>
-                            <span class="count">@item.Step</span>
-                        </button>
+                        var route = item.Route;
+                        if (IsOn(route))
+                        {
+                            <button type="button" class="nav nav-active" aria-current="page" @onclick="() => GoTo(route)">
+                                <span class="nav-label">@item.Label</span>
+                                <span class="count">@item.Step</span>
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="nav" @onclick="() => GoTo(route)">
+                                <span class="nav-label">@item.Label</span>
+                                <span class="count">@item.Step</span>
+                            </button>
+                        }
                     }
                     else
                     {
@@ -71,16 +82,17 @@ else
 }
 
 @code {
-    private sealed record MenuItem(string Label, string Step, bool Active = false);
+    private sealed record MenuItem(string Label, string Step, string? Route = null);
 
     private static readonly MenuItem[] MenuItems =
     [
-        new("Exercices et vidéos", "Étape 1", true),
-        new("Séances types", "Étape 2"),
+        new("Exercices et vidéos", "Étape 1", "exercices"),
+        new("Coachs", "Étape 2", "coachs"),
         new("Questions du quiz", "Étape 3"),
-        new("Utilisateurs", "Étape 4"),
-        new("Fiches coach", "Étape 5"),
-        new("Tableau de bord", "Étape 6"),
+        new("Séances types", "Étape 4"),
+        new("Utilisateurs", "Étape 5"),
+        new("Fiches coach", "Étape 6"),
+        new("Tableau de bord", "Étape 7"),
         new("Journal des actions", "À venir"),
         new("Abonnements", "À venir"),
         new("Journal des mails", "À venir")
@@ -89,20 +101,19 @@ else
     private bool _ready;
     private bool _loggingOut;
 
-    private string Title => IsExercises ? "Exercices et vidéos" : "Mentora Admin";
+    private string Title => IsOn("exercices") ? "Exercices et vidéos" : IsOn("coachs") ? "Coachs" : "Mentora Admin";
 
-    private string Subtitle => IsExercises
+    private string Subtitle => IsOn("exercices")
         ? "Catalogue Mentora : fiches d'exercices et vidéos de démonstration"
-        : "Espace d'administration";
+        : IsOn("coachs")
+            ? "Comptes coach de la Bêta : liste et création"
+            : "Espace d'administration";
 
-    private bool IsExercises
+    private bool IsOn(string route)
     {
-        get
-        {
-            var path = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
-            return path.Equals("/exercices", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWith("/exercices/", StringComparison.OrdinalIgnoreCase);
-        }
+        var path = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
+        return path.Equals("/" + route, StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/" + route + "/", StringComparison.OrdinalIgnoreCase);
     }
 
     protected override async Task OnInitializedAsync()
@@ -129,7 +140,7 @@ else
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
         _ = InvokeAsync(StateHasChanged);
 
-    private void GoToExercises() => Nav.NavigateTo("exercices");
+    private void GoTo(string route) => Nav.NavigateTo(route);
 
     private async Task LogoutAsync()
     {

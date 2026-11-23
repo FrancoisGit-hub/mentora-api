@@ -25,5 +25,7 @@ builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<ExercisesApi>();
 builder.Services.AddScoped<ReferencesCache>();
 builder.Services.AddScoped<ExerciseUiState>();
+builder.Services.AddScoped<CoachesApi>();
+builder.Services.AddScoped<CoachUiState>();
 
 await builder.Build().RunAsync();
