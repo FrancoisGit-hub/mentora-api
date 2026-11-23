@@ -24,8 +24,8 @@ public static class CoachParameterSeeder
         {
             db.CoachParameters.Add(new CoachParameter
             {
-                CoachParameterHourlyRateEuros       = 50.00m,
-                CoachParameterCancellationDelayHours = 24,
+                CoachParameterHourlyRateEuros       = CoachDefaults.HourlyRateEuros,
+                CoachParameterCancellationDelayHours = CoachDefaults.CancellationDelayHours,
                 CoachParameterCreatedDate            = DateTime.UtcNow,
                 CoachParameterUpdatedDate            = DateTime.UtcNow,
                 CoachId                             = coach.CoachId

@@ -9,12 +9,14 @@ public enum AdminAuditAction
     ExerciseDeactivated,
     ExerciseVideoUploadCreated, // Lot 12.3a
     ExerciseVideoRemoved,       // Lot 12.3a
+    CoachCreated,               // Lot 14.8a
 }
 
 /// <summary>Lot 12.2b — kind of row an audit entry is about (ADMIN_AUDIT_LOG_ENTITY_TYPE).</summary>
 public enum AdminAuditEntityType
 {
     Exercise,
+    Coach, // Lot 14.8a
 }
 
 /// <summary>Database values of the audit enums (if chains, no switch).</summary>
@@ -28,6 +30,7 @@ public static class AdminAuditMappings
         if (value == AdminAuditAction.ExerciseDeactivated) return "EXERCISE_DEACTIVATED";
         if (value == AdminAuditAction.ExerciseVideoUploadCreated) return "EXERCISE_VIDEO_UPLOAD_CREATED";
         if (value == AdminAuditAction.ExerciseVideoRemoved)       return "EXERCISE_VIDEO_REMOVED";
+        if (value == AdminAuditAction.CoachCreated)               return "COACH_CREATED";
         throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown AdminAuditAction value.");
     }
 
@@ -39,18 +42,21 @@ public static class AdminAuditMappings
         if (value == "EXERCISE_DEACTIVATED") return AdminAuditAction.ExerciseDeactivated;
         if (value == "EXERCISE_VIDEO_UPLOAD_CREATED") return AdminAuditAction.ExerciseVideoUploadCreated;
         if (value == "EXERCISE_VIDEO_REMOVED")        return AdminAuditAction.ExerciseVideoRemoved;
+        if (value == "COACH_CREATED")                 return AdminAuditAction.CoachCreated;
         throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown AdminAuditAction DB value.");
     }
 
     public static string EntityTypeToDb(AdminAuditEntityType value)
     {
         if (value == AdminAuditEntityType.Exercise) return "EXERCISE";
+        if (value == AdminAuditEntityType.Coach)    return "COACH";
         throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown AdminAuditEntityType value.");
     }
 
     public static AdminAuditEntityType EntityTypeFromDb(string value)
     {
         if (value == "EXERCISE") return AdminAuditEntityType.Exercise;
+        if (value == "COACH")    return AdminAuditEntityType.Coach;
         throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown AdminAuditEntityType DB value.");
     }
 }

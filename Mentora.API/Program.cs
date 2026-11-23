@@ -265,6 +265,9 @@ builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 // Lot 12.2b — admin exercise catalog (validators are registered by AddValidatorsFromAssemblyContaining above)
 builder.Services.AddScoped<IAdminExerciseService, AdminExerciseService>();
 
+// Lot 14.8a: admin coach list and creation
+builder.Services.AddScoped<IAdminCoachService, AdminCoachService>();
+
 // Lot 12.3a — MUX videos. Settings from the environment variables Mux__* only; .Value is read before the
 // migrations (below) so a bad setup stops the API first. Empty settings are allowed in Development only
 // (the admin video routes and the webhook then answer 503 MUX_NOT_CONFIGURED).

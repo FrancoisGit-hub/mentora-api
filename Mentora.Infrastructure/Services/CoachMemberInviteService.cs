@@ -25,9 +25,6 @@ public class CoachMemberInviteService(
     IOptions<MemberInviteOptions> inviteOptions,
     ILogger<CoachMemberInviteService> logger) : ICoachMemberInviteService
 {
-    /// <summary>Fixed key of the advisory lock that serialises every member add.</summary>
-    private const string AddMemberLockSql = "SELECT pg_advisory_xact_lock(7141401)";
-
     // The existing member rows store the role in upper case (scripts/seed-test-members.sql, local data).
     private const string MemberUserRole = "MEMBER";
 
@@ -45,7 +42,7 @@ public class CoachMemberInviteService(
         await using (var tx = await db.Database.BeginTransactionAsync(ct))
         {
             // First statement of the transaction: everything below sees the committed result of any earlier add.
-            await db.Database.ExecuteSqlRawAsync(AddMemberLockSql, ct);
+            await db.Database.ExecuteSqlRawAsync(UserEmailLock.Sql, ct);
 
             var user = await db.Users
                 .Include(u => u.Coach)
