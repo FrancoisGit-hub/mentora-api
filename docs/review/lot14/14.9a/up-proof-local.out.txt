@@ -1,0 +1,22 @@
+BEGIN
+UPDATE 1
+UPDATE 1
+   step    | circuits_standard | session_templates_with_standard_token | session_nature_standard | nature_tokens_rows 
+-----------+-------------------+---------------------------------------+-------------------------+--------------------
+ BEFORE UP |                 1 |                                     1 |                      20 |                  0
+(1 row)
+
+UPDATE 1
+UPDATE 0
+UPDATE 1
+   step   | circuits_standard | session_templates_with_standard_token | session_nature_standard | nature_tokens_rows 
+----------+-------------------+---------------------------------------+-------------------------+--------------------
+ AFTER UP |                 0 |                                     0 |                      20 |                  0
+(1 row)
+
+         check          | circuit_mode | session_template_has_serie_simple_token | session_template_still_libre 
+------------------------+--------------+-----------------------------------------+------------------------------
+ the two rewritten rows | SERIE_SIMPLE | t                                       | f
+(1 row)
+
+ROLLBACK

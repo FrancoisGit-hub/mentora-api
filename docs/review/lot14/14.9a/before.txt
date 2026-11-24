@@ -1,0 +1,16 @@
+BEGIN
+ location | value | n 
+----------+-------+---
+(0 rows)
+
+                  location                  | rows | rows_with_mode_standard | mode_standard_tokens | mode_serie_simple_tokens | mode_interval_tokens | nature_standard_tokens | nature_evaluation_tokens 
+--------------------------------------------+------+-------------------------+----------------------+--------------------------+----------------------+------------------------+--------------------------
+ PROGRAM_TEMPLATES.PROGRAM_TEMPLATE_BODY    |    2 |                       2 |                   28 |                        0 |                    4 |                      0 |                        0
+ SESSION_TEMPLATES.SESSION_TEMPLATE_CONTENT |    0 |                       0 |                      |                          |                      |                        |                         
+(2 rows)
+
+ location | value | n 
+----------+-------+---
+(0 rows)
+
+ROLLBACK

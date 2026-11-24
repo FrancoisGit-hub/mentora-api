@@ -1,0 +1,89 @@
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'MissedSessionBehavior' property 'CoachParameterMissedSessionBehavior' on entity type 'CoachParameter' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Skip', since this is the CLR default for the 'MissedSessionBehavior' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'VideoPlaybackPolicy' property 'ExerciseVideoPlaybackPolicy' on entity type 'ExerciseVideo' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Public', since this is the CLR default for the 'VideoPlaybackPolicy' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'PurchaseOrigin' property 'Origin' on entity type 'Order' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'MemberPurchase', since this is the CLR default for the 'PurchaseOrigin' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'OrderStatus' property 'Status' on entity type 'Order' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Pending', since this is the CLR default for the 'OrderStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'Sport' property 'Sport' on entity type 'OrderItem' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Training', since this is the CLR default for the 'Sport' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'Sport' property 'ProductSport' on entity type 'Product' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Training', since this is the CLR default for the 'Sport' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'ProductStatus' property 'ProductStatus' on entity type 'Product' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Draft', since this is the CLR default for the 'ProductStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'ProductStatus' property 'ProductPackStatus' on entity type 'ProductPack' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Draft', since this is the CLR default for the 'ProductStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'ProgramStatus' property 'ProgramStatus' on entity type 'Program' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Active', since this is the CLR default for the 'ProgramStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'ProgramSessionStatus' property 'ProgramSessionStatus' on entity type 'ProgramSession' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Planned', since this is the CLR default for the 'ProgramSessionStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'SessionStatus' property 'SessionStatus' on entity type 'Session' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Scheduled', since this is the CLR default for the 'SessionStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'SessionParticipantStatus' property 'SessionParticipantStatus' on entity type 'SessionParticipant' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Registered', since this is the CLR default for the 'SessionParticipantStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'Sport' property 'Sport' on entity type 'SessionVoucher' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Training', since this is the CLR default for the 'Sport' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'VoucherStatus' property 'Status' on entity type 'SessionVoucher' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Available', since this is the CLR default for the 'VoucherStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[20601]
+      The 'StripeEventStatus' property 'Status' on entity type 'StripeWebhookEvent' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Received', since this is the CLR default for the 'StripeEventStatus' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (54ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND
+          c.relname='__EFMigrationsHistory'
+)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND
+          c.relname='__EFMigrationsHistory'
+)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND
+          c.relname='__EFMigrationsHistory'
+)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20261124221921_Lot14_9a_CircuitModes'.
+Applying migration '20261124221921_Lot14_9a_CircuitModes'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      UPDATE "PROGRAM_CIRCUITS"
+SET "PROGRAM_CIRCUIT_MODE" = 'SERIE_SIMPLE'
+WHERE "PROGRAM_CIRCUIT_MODE" = 'STANDARD';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      UPDATE "PROGRAM_TEMPLATES"
+SET "PROGRAM_TEMPLATE_BODY" = replace("PROGRAM_TEMPLATE_BODY"::text,
+        '"mode": "STANDARD"', '"mode": "SERIE_SIMPLE"')::jsonb
+WHERE "PROGRAM_TEMPLATE_BODY"::text LIKE '%"mode": "STANDARD"%';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      UPDATE "SESSION_TEMPLATES"
+SET "SESSION_TEMPLATE_CONTENT" = replace("SESSION_TEMPLATE_CONTENT"::text,
+        '"mode": "STANDARD"', '"mode": "SERIE_SIMPLE"')::jsonb
+WHERE "SESSION_TEMPLATE_CONTENT"::text LIKE '%"mode": "STANDARD"%';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+      VALUES ('20261124221921_Lot14_9a_CircuitModes', '8.0.0');
+Done.
