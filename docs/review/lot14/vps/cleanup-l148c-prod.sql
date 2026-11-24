@@ -1,0 +1,75 @@
+BEGIN;
+SET LOCAL TIME ZONE 'UTC';
+SELECT now() AS run_now;
+
+CREATE TEMP TABLE t_target ON COMMIT DROP AS
+SELECT u."USER_ID" AS user_id, c."COACH_ID" AS coach_id
+FROM "USERS" u
+JOIN "COACHES" c ON c."USER_ID" = u."USER_ID"
+WHERE u."USER_EMAIL" = 'l148c-coach1@example.com'
+  AND u."USER_CREATED_DATE" >= '2026-11-24 02:55:00';
+
+DO $$
+BEGIN
+  IF (SELECT count(*) FROM t_target) <> 1 THEN
+    RAISE EXCEPTION 'expected exactly 1 target, found %', (SELECT count(*) FROM t_target);
+  END IF;
+END $$;
+
+SELECT u."USER_EMAIL", u."USER_ROLE", u."USER_IS_ENABLED", u."USER_CREATED_DATE",
+       c."COACH_FIRST_NAME", c."COACH_LAST_NAME", c."COACH_IS_ACTIVE"
+FROM t_target t
+JOIN "USERS" u ON u."USER_ID" = t.user_id
+JOIN "COACHES" c ON c."COACH_ID" = t.coach_id;
+
+SELECT "ADMIN_AUDIT_LOG_ACTION", "ADMIN_AUDIT_LOG_ENTITY_TYPE", "ADMIN_AUDIT_LOG_CREATED_DATE"
+FROM "ADMIN_AUDIT_LOG"
+WHERE "ADMIN_AUDIT_LOG_ENTITY_ID" IN (SELECT coach_id FROM t_target);
+
+SELECT 'before' AS step, 'ADMIN_AUDIT_LOG' AS tbl, count(*) FROM "ADMIN_AUDIT_LOG" WHERE "ADMIN_AUDIT_LOG_ENTITY_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'before', 'OFFER_PROGRAMS', count(*) FROM "OFFER_PROGRAMS" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'before', 'COACH_PARAMETERS', count(*) FROM "COACH_PARAMETERS" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'before', 'MEMBER_COACHES', count(*) FROM "MEMBER_COACHES" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'before', 'AUTH_OTPS', count(*) FROM "AUTH_OTPS" WHERE "USER_ID" IN (SELECT user_id FROM t_target)
+UNION ALL SELECT 'before', 'AUTH_REFRESH_TOKENS', count(*) FROM "AUTH_REFRESH_TOKENS" WHERE "USER_ID" IN (SELECT user_id FROM t_target)
+UNION ALL SELECT 'before', 'USER_DEVICES', count(*) FROM "USER_DEVICES" WHERE "USER_ID" IN (SELECT user_id FROM t_target)
+UNION ALL SELECT 'before', 'COACHES', count(*) FROM "COACHES" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'before', 'USERS', count(*) FROM "USERS" WHERE "USER_ID" IN (SELECT user_id FROM t_target);
+
+DELETE FROM "ADMIN_AUDIT_LOG"
+WHERE "ADMIN_AUDIT_LOG_ENTITY_ID" IN (SELECT coach_id FROM t_target)
+  AND "ADMIN_AUDIT_LOG_ENTITY_TYPE" = 'COACH'
+  AND "ADMIN_AUDIT_LOG_CREATED_DATE" >= '2026-11-24 02:55:00';
+DELETE FROM "OFFER_PROGRAMS" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target);
+DELETE FROM "COACH_PARAMETERS" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target);
+DELETE FROM "AUTH_OTPS" WHERE "USER_ID" IN (SELECT user_id FROM t_target);
+DELETE FROM "AUTH_REFRESH_TOKENS" WHERE "USER_ID" IN (SELECT user_id FROM t_target);
+DELETE FROM "USER_DEVICES" WHERE "USER_ID" IN (SELECT user_id FROM t_target);
+DELETE FROM "COACHES" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target);
+DELETE FROM "USERS" WHERE "USER_ID" IN (SELECT user_id FROM t_target);
+
+SELECT 'after' AS step, 'ADMIN_AUDIT_LOG' AS tbl, count(*) FROM "ADMIN_AUDIT_LOG" WHERE "ADMIN_AUDIT_LOG_ENTITY_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'after', 'OFFER_PROGRAMS', count(*) FROM "OFFER_PROGRAMS" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'after', 'COACH_PARAMETERS', count(*) FROM "COACH_PARAMETERS" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'after', 'MEMBER_COACHES', count(*) FROM "MEMBER_COACHES" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'after', 'AUTH_OTPS', count(*) FROM "AUTH_OTPS" WHERE "USER_ID" IN (SELECT user_id FROM t_target)
+UNION ALL SELECT 'after', 'AUTH_REFRESH_TOKENS', count(*) FROM "AUTH_REFRESH_TOKENS" WHERE "USER_ID" IN (SELECT user_id FROM t_target)
+UNION ALL SELECT 'after', 'USER_DEVICES', count(*) FROM "USER_DEVICES" WHERE "USER_ID" IN (SELECT user_id FROM t_target)
+UNION ALL SELECT 'after', 'COACHES', count(*) FROM "COACHES" WHERE "COACH_ID" IN (SELECT coach_id FROM t_target)
+UNION ALL SELECT 'after', 'USERS', count(*) FROM "USERS" WHERE "USER_ID" IN (SELECT user_id FROM t_target);
+
+SELECT (SELECT count(*) FROM "COACHES") AS coaches_total,
+       (SELECT count(*) FROM "USERS" WHERE "USER_EMAIL" LIKE 'l148c-%') AS l148c_users_left;
+
+DO $$
+DECLARE r record; n bigint;
+BEGIN
+  FOR r IN SELECT table_name, column_name FROM information_schema.columns
+           WHERE table_schema = 'public' AND column_name LIKE '%\_CREATED\_DATE'
+           ORDER BY table_name
+  LOOP
+    EXECUTE format('SELECT count(*) FROM %I WHERE %I >= %L', r.table_name, r.column_name, '2026-11-24 02:55:00') INTO n;
+    IF n > 0 THEN RAISE NOTICE 'since run start: % = %', r.table_name, n; END IF;
+  END LOOP;
+END $$;
+ROLLBACK;

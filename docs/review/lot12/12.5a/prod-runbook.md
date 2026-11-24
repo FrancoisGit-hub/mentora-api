@@ -1020,6 +1020,57 @@ Image précédente, comme à l'étape 11 du lot 13. Aucune migration `Down` : le
 
 ---
 
+## Lot 14 vague 2 (24/11)
+
+Contenu : 14.8a (API admin des coachs : `GET` et `POST /api/v1/admin/coaches`, mail d'accueil du coach) et 14.8b (écran « Coachs » de l'admin : liste et création). Image `mentora-api:lot14w2` et admin republiée. Déployée le 24/11, preuves dans `docs/review/lot14/vps/vps-evidence-wave2.md`.
+
+### a. Avant de déployer **[SSH]**
+
+1. Sauvegardes des deux bases et des deux dossiers audio, comme à l'étape 2 du lot 13. Sauvegarde du compose : `docker-compose.yml.pre-lot14w2`.
+2. Contrôles en lecture seule, sur les deux bases (même commande `docker exec -i mentora-postgres ...` qu'à l'étape 3 du lot 13) :
+   - dernière migration appliquée : attendu `20261120193442_Lot14_2_OtpAttempts`, sinon **arrêter** ;
+   - les contraintes `CK_ADMIN_AUDIT_LOG_ACTION` et `CK_ADMIN_AUDIT_LOG_ENTITY_TYPE` existent : la migration les supprime par leur nom avant de les recréer plus larges, et échoue si l'une manque ;
+   - `ADMIN_AUDIT_LOG` ne contient que des lignes `EXERCISE`.
+
+Pas de fichier precheck.sql : la migration élargit deux contraintes CHECK, sans index unique ni nouvelle colonne.
+
+### b. Variables
+
+Aucune nouvelle variable. Le mail d'accueil du coach reprend `MemberInvite__InstallUrl` (le même lien que pour l'élève). Sans elle, il dit que l'équipe Mentora enverra le lien pour installer l'application.
+
+### c. Bascule et lignes de démarrage attendues **[SSH]**
+
+- api-demo : `docker tag mentora-api:latest mentora-api:pre-lot14w2`, `docker tag mentora-api:lot14w2 mentora-api:latest`, puis `docker compose up -d --no-deps --force-recreate api`.
+- api-prod : ligne `image:` du service passée à `mentora-api:lot14w2`, puis `docker compose up -d --no-deps --force-recreate api-prod`.
+- Sur chaque service, une fois : `Applying migration '20261123042911_Lot14_8_CoachCreatedAudit'.`, puis les mêmes lignes qu'à la vague 1 (`[EMAIL] routing ... provider=Smtp`, `[INVITE]`, `[AUTH]`, `[CORS]`, `[MUX]`, `[AUDIO]`, `[PATCH] ... skipped`, `[ADMIN] accounts listed=4 created=0 reenabled=0 disabled=0`, `Application started`), sans ligne `fail:` ni `crit:`.
+- Sans jeton, `GET https://api.mentorapp.fr/api/v1/admin/coaches` répond `401` : la route existe (un `404` voudrait dire que l'ancienne image tourne encore).
+- Démarrage suivant : aucune ligne `Applying migration`, et les comptes de `COACHES`, `COACH_PARAMETERS` et `OFFER_PROGRAMS` ne bougent pas (les seeders des paramètres et des offres partagent maintenant `CoachDefaults` avec la création d'un coach).
+
+Avertissements connus à chaque démarrage, sans action : 114 lignes des seeders (`[CATALOG]`, `[QUIZ]`), 15 avertissements EF Core 20601 et 2 avertissements de la protection des données ASP.NET Core.
+
+### d. Admin **[PS] puis [SSH]**
+
+Même procédure qu'à la section « Admin (12.5b) » : publication Release dans un dossier vidé, envoi du seul `wwwroot`, ancien dossier gardé en `admin-www.prev`, redémarrage de nginx. Vérifications :
+
+- `index.html` inchangé (même empreinte sha256 dans `admin-www` et `admin-www.prev`), donc le hash de la CSP reste bon ; s'il change, recalculer le hash avant de redémarrer nginx ;
+- nginx sert le nouveau `_framework/blazor.boot.json` (même empreinte sur l'hôte et dans le conteneur `mentora-nginx`) ;
+- `https://admin.mentorapp.fr/coachs` répond `200`.
+
+### e. Preuve fonctionnelle en PROD
+
+Dans le navigateur (Claude in Chrome) : connexion à l'admin, écran « Coachs », création d'un coach de test à adresse fictive (`l148c-coach1@example.com`), bandeau « Coach créé », mail d'accueil reçu en mode TEST. Puis suppression par SQL avec `docs/review/lot14/vps/cleanup-l148c-prod.sql` : passage à blanc (fin en `ROLLBACK`), puis la même copie terminée par `COMMIT` (seule la dernière ligne change, vérifié par `diff`). Le script s'arrête s'il ne trouve pas exactement une cible. Pour un prochain test, changer l'adresse et la date de début dans le script.
+
+Tant que les mails sont en mode TEST, ne créer aucun vrai coach : son mail d'accueil partirait sur les 4 gmails des associés, pas chez lui.
+
+### f. Retour arrière
+
+- api-demo : `docker tag mentora-api:pre-lot14w2 mentora-api:latest`, puis `docker compose up -d --no-deps --force-recreate api`.
+- api-prod : `cp docker-compose.yml.pre-lot14w2 docker-compose.yml`, puis `docker compose up -d --no-deps --force-recreate api-prod`.
+- Admin : remettre `admin-www.prev` (étape K de la section « Admin (12.5b) »), puis redémarrer nginx.
+- Pas de migration `Down` : les contraintes élargies acceptent tout ce qu'écrit l'image précédente. Le `Down` refuse de tourner dès qu'une ligne `COACH` existe dans `ADMIN_AUDIT_LOG`.
+
+---
+
 ## Bascule des mails en Production (24/11)
 
 À faire seulement quand la vague 1 est déployée et contrôlée. api-demo reste en mode TEST (tous les mails vers les seules adresses de test). Seul api-prod passe en Production : le vrai destinataire reçoit le mail, et les deux adresses en copie cachée (Bcc) en reçoivent une copie.
