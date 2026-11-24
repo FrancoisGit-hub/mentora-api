@@ -4,6 +4,7 @@ using Mentora.Core.DTOs.ProgramTemplate;
 using Mentora.Core.DTOs.ProgramTemplate.Body;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
+using Mentora.Core.Programs;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Infrastructure.Persistence;
@@ -65,6 +66,7 @@ public class ProgramTemplateService(
         ProgramTemplateRequest request, Guid coachId, CancellationToken ct)
     {
         await ValidateAsync(request, coachId, ct);
+        CircuitModes.NormalizeAll(request.Body.Blocks);
 
         var now = DateTime.UtcNow;
         var template = new ProgramTemplate
@@ -97,6 +99,7 @@ public class ProgramTemplateService(
             ?? throw new NotFoundException($"Program template {programTemplateId} not found.");
 
         await ValidateAsync(request, coachId, ct);
+        CircuitModes.NormalizeAll(request.Body.Blocks);
 
         template.ProgramTemplateName          = request.Name.Trim();
         template.ProgramTemplateDescription   = request.Description?.Trim();

@@ -8,7 +8,7 @@ public class ProgramTemplateExercise
     /// <summary>KG | BODYWEIGHT. ELASTIC is declared but rejected in V1.</summary>
     public string LoadType { get; set; } = null!;
 
-    /// <summary>STANDARD circuits only.</summary>
+    /// <summary>Required for SERIE_SIMPLE, BISET, TRISET and GEANTE; forbidden for INTERVAL; accepted for the other modes.</summary>
     public int? PrescribedSets { get; set; }
     public int? PrescribedReps { get; set; }
 
@@ -19,7 +19,7 @@ public class ProgramTemplateExercise
     /// </summary>
     public int? RestSecondsAfterSeries { get; set; }
 
-    /// <summary>INTERVAL circuits only.</summary>
+    /// <summary>Required for INTERVAL; forbidden for SERIE_SIMPLE, BISET, TRISET and GEANTE; accepted for the other modes.</summary>
     public int? WorkSeconds { get; set; }
     public int? RestWorkSeconds { get; set; }
 

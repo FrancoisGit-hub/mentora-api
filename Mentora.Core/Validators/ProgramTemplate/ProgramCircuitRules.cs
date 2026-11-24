@@ -1,4 +1,5 @@
 using Mentora.Core.DTOs.ProgramTemplate.Body;
+using Mentora.Core.Programs;
 
 namespace Mentora.Core.Validators.ProgramTemplate;
 
@@ -36,20 +37,20 @@ public static class ProgramCircuitRules
             if (string.IsNullOrWhiteSpace(circuit.Name))
                 fail($"{itemPath}.Name", "Name is required.");
 
-            var isStandard = circuit.Mode == "STANDARD";
-            var isInterval = circuit.Mode == "INTERVAL";
+            // The legacy STANDARD alias is validated as SERIE_SIMPLE (stored normalized by the write paths).
+            var mode = CircuitModes.Normalize(circuit.Mode);
 
-            if (!isStandard && !isInterval)
-                fail($"{itemPath}.Mode", "Mode must be one of: STANDARD, INTERVAL.");
+            if (!CircuitModes.IsValid(mode))
+                fail($"{itemPath}.Mode", $"Mode must be one of: {string.Join(", ", CircuitModes.All)}.");
 
-            if (isInterval && circuit.Rounds is null)
+            if (mode == CircuitModes.Interval && circuit.Rounds is null)
                 fail($"{itemPath}.Rounds", "Rounds is required when Mode is INTERVAL.");
 
             if (circuit.RestSecondsAfterExercices is < 0 or > MaxRestAfterSeconds)
                 fail($"{itemPath}.RestSecondsAfterExercices",
                     $"RestSecondsAfterExercices must be between 0 and {MaxRestAfterSeconds}.");
 
-            ValidateExercises(circuit.Exercises, circuit.Mode, $"{itemPath}.Exercises", fail, onExercise);
+            ValidateExercises(circuit.Exercises, mode, $"{itemPath}.Exercises", fail, onExercise);
         }
     }
 
@@ -77,15 +78,17 @@ public static class ProgramCircuitRules
             else if (exercise.LoadType is null || !ValidLoadTypes.Contains(exercise.LoadType))
                 fail($"{itemPath}.LoadType", $"LoadType must be one of: {string.Join(", ", ValidLoadTypes)}.");
 
-            if (mode == "STANDARD")
+            // SERIE_SIMPLE, BISET, TRISET, GEANTE: the former STANDARD rules. INTERVAL: unchanged.
+            // The other modes carry no exercise-level requirement and forbid nothing.
+            if (mode is not null && CircuitModes.StandardLike.Contains(mode))
             {
                 if (exercise.PrescribedSets is null || exercise.PrescribedReps is null)
-                    fail(itemPath, "STANDARD circuits require PrescribedSets and PrescribedReps on every exercise.");
+                    fail(itemPath, $"{mode} circuits require PrescribedSets and PrescribedReps on every exercise.");
 
                 if (exercise.WorkSeconds is not null || exercise.RestWorkSeconds is not null)
-                    fail(itemPath, "STANDARD circuits must not carry WorkSeconds or RestWorkSeconds.");
+                    fail(itemPath, $"{mode} circuits must not carry WorkSeconds or RestWorkSeconds.");
             }
-            else if (mode == "INTERVAL")
+            else if (mode == CircuitModes.Interval)
             {
                 if (exercise.WorkSeconds is null || exercise.RestWorkSeconds is null)
                     fail(itemPath, "INTERVAL circuits require WorkSeconds and RestWorkSeconds on every exercise.");

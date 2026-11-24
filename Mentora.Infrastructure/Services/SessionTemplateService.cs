@@ -5,6 +5,7 @@ using Mentora.Core.DTOs.ProgramTemplate.Body;
 using Mentora.Core.DTOs.SessionTemplate;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
+using Mentora.Core.Programs;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Text;
@@ -128,6 +129,7 @@ public class SessionTemplateService(
         SessionTemplateRequest request, Guid coachId, CancellationToken ct)
     {
         await ValidateAsync(request, coachId, ct);
+        CircuitModes.NormalizeAll(request.Circuits);
 
         var now = DateTime.UtcNow;
         var template = new SessionTemplate
@@ -158,6 +160,7 @@ public class SessionTemplateService(
         var template = await FindOwnedAsync(id, coachId, ct);
 
         await ValidateAsync(request, coachId, ct);
+        CircuitModes.NormalizeAll(request.Circuits);
 
         template.SessionTemplateName        = request.Name.Trim();
         template.SessionTemplateDescription = NormalizeDescription(request.Description);

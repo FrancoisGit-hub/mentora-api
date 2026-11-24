@@ -2,6 +2,7 @@ using System.Text.Json;
 using Mentora.Core.DTOs.ProgramTemplate.Body;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
+using Mentora.Core.Programs;
 using Mentora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -115,7 +116,7 @@ public static class ProgramTemplateSeeder
                 [
                     new ProgramTemplateCircuit
                     {
-                        Name = "Poussée / tirage", Position = 1, Mode = "STANDARD",
+                        Name = "Poussée / tirage", Position = 1, Mode = CircuitModes.SerieSimple,
                         Exercises =
                         [
                             Std(ex["Développé couché barre"], 1, 4, 8, "KG", 90),
@@ -133,7 +134,7 @@ public static class ProgramTemplateSeeder
                 [
                     new ProgramTemplateCircuit
                     {
-                        Name = "Jambes", Position = 1, Mode = "STANDARD",
+                        Name = "Jambes", Position = 1, Mode = CircuitModes.SerieSimple,
                         Exercises =
                         [
                             Std(ex["Squat"], 1, 4, 8, "KG", 120),
@@ -151,7 +152,7 @@ public static class ProgramTemplateSeeder
                 [
                     new ProgramTemplateCircuit
                     {
-                        Name = "Bras", Position = 1, Mode = "STANDARD",
+                        Name = "Bras", Position = 1, Mode = CircuitModes.SerieSimple,
                         Exercises =
                         [
                             Std(ex["Curl biceps barre"], 1, 3, 10, "KG", 60),
@@ -161,7 +162,7 @@ public static class ProgramTemplateSeeder
                     },
                     new ProgramTemplateCircuit
                     {
-                        Name = "Abdos", Position = 2, Mode = "STANDARD",
+                        Name = "Abdos", Position = 2, Mode = CircuitModes.SerieSimple,
                         Exercises =
                         [
                             Std(ex["Crunch"], 1, 3, 15, "BODYWEIGHT", 45),
@@ -186,7 +187,7 @@ public static class ProgramTemplateSeeder
                 [
                     new ProgramTemplateCircuit
                     {
-                        Name = "Renforcement", Position = 1, Mode = "STANDARD",
+                        Name = "Renforcement", Position = 1, Mode = CircuitModes.SerieSimple,
                         Exercises =
                         [
                             Std(ex["Squat"], 1, 3, 12, "BODYWEIGHT", 60),
@@ -213,7 +214,7 @@ public static class ProgramTemplateSeeder
                 [
                     new ProgramTemplateCircuit
                     {
-                        Name = "Mobilité et gainage", Position = 1, Mode = "STANDARD",
+                        Name = "Mobilité et gainage", Position = 1, Mode = CircuitModes.SerieSimple,
                         Exercises =
                         [
                             Std(ex["Fentes avant"], 1, 3, 10, "BODYWEIGHT", 60),
@@ -229,7 +230,7 @@ public static class ProgramTemplateSeeder
                 [
                     new ProgramTemplateCircuit
                     {
-                        Name = "Full body", Position = 1, Mode = "STANDARD",
+                        Name = "Full body", Position = 1, Mode = CircuitModes.SerieSimple,
                         Exercises =
                         [
                             Std(ex["Kettlebell swing"], 1, 3, 15, "KG", 60),

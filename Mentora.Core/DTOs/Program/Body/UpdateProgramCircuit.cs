@@ -10,7 +10,11 @@ public class UpdateProgramCircuit
     public string Name { get; set; } = null!;
     public int Position { get; set; }
 
-    /// <summary>STANDARD | INTERVAL.</summary>
+    /// <summary>
+    /// SERIE_SIMPLE | BISET | TRISET | GEANTE | CIRCUIT | AMRAP | EMOM | FOR_TIME | INTERVAL | TEMPS_CONTINU |
+    /// DISTANCE | LIBRE (uppercase, exact). STANDARD is a deprecated alias of SERIE_SIMPLE: still accepted
+    /// on write, always stored and returned as SERIE_SIMPLE.
+    /// </summary>
     public string Mode { get; set; } = null!;
 
     /// <summary>Required when <see cref="Mode"/> is INTERVAL.</summary>
@@ -18,7 +22,7 @@ public class UpdateProgramCircuit
 
     public int? RestBetweenRoundsSeconds { get; set; }
 
-    /// <summary>Rest after the whole circuit, before the next circuit. 0 to 600, STANDARD and INTERVAL.</summary>
+    /// <summary>Rest after the whole circuit, before the next circuit. 0 to 600, every mode.</summary>
     public int? RestSecondsAfterExercices { get; set; }
     public string? Note { get; set; }
 

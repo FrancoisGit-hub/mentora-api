@@ -6,6 +6,7 @@ using Mentora.Core.DTOs.Program.Body;
 using Mentora.Core.DTOs.ProgramTemplate.Body;
 using Mentora.Core.Entities;
 using Mentora.Core.Enums;
+using Mentora.Core.Programs;
 using Mentora.Core.Exceptions;
 using Mentora.Core.Interfaces;
 using Mentora.Core.Validators.Program;
@@ -103,6 +104,7 @@ public class ProgramService(
             body          = request.Body;
 
             await ValidateBodyTreeAsync(body, durationWeeks, coachId, ct);
+            CircuitModes.NormalizeAll(body.Blocks);
         }
 
         // b. Inside ONE Serializable transaction: archive the member's current ACTIVE program
@@ -393,7 +395,7 @@ public class ProgramService(
             circuit.ProgramCircuitProgramSessionId         = sessionId;
             circuit.ProgramCircuitName                     = node.Name;
             circuit.ProgramCircuitPosition                 = node.Position;
-            circuit.ProgramCircuitMode                     = node.Mode;
+            circuit.ProgramCircuitMode                     = CircuitModes.Normalize(node.Mode)!;
             circuit.ProgramCircuitRounds                   = node.Rounds;
             circuit.ProgramCircuitRestBetweenRoundsSeconds = node.RestBetweenRoundsSeconds;
             circuit.ProgramCircuitRestAfterSeconds         = node.RestSecondsAfterExercices;

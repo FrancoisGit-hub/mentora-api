@@ -10,7 +10,7 @@ public class ProgramCircuit
 
     public string ProgramCircuitName { get; set; } = null!;
     public int ProgramCircuitPosition { get; set; }
-    public string ProgramCircuitMode { get; set; } = null!;   // STANDARD | INTERVAL
+    public string ProgramCircuitMode { get; set; } = null!;   // one of the 12 modes of Mentora.Core.Programs.CircuitModes
     public int? ProgramCircuitRounds { get; set; }
     public int? ProgramCircuitRestBetweenRoundsSeconds { get; set; }
     public int? ProgramCircuitRestAfterSeconds { get; set; }
