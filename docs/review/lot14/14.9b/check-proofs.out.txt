@@ -1,0 +1,19 @@
+NOTICE:  USER_ID null => sqlstate=23502 constraint= column=NOTIFICATION_USER_ID
+NOTICE:  TYPE null => sqlstate=23502 constraint= column=NOTIFICATION_TYPE
+NOTICE:  TITLE null => sqlstate=23502 constraint= column=NOTIFICATION_TITLE
+NOTICE:  BODY null => sqlstate=23502 constraint= column=NOTIFICATION_BODY
+NOTICE:  DATA null => sqlstate=23502 constraint= column=NOTIFICATION_DATA
+NOTICE:  STATUS null => sqlstate=23502 constraint= column=NOTIFICATION_STATUS
+NOTICE:  ATTEMPT_COUNT null => sqlstate=23502 constraint= column=NOTIFICATION_ATTEMPT_COUNT
+NOTICE:  NEXT_ATTEMPT_DATE null => sqlstate=23502 constraint= column=NOTIFICATION_NEXT_ATTEMPT_DATE
+NOTICE:  CREATED_DATE null => sqlstate=23502 constraint= column=NOTIFICATION_CREATED_DATE
+NOTICE:  UPDATED_DATE null => sqlstate=23502 constraint= column=NOTIFICATION_UPDATED_DATE
+NOTICE:  unknown TYPE => sqlstate=23514 constraint=CK_NOTIFICATIONS_TYPE column=
+NOTICE:  unknown STATUS => sqlstate=23514 constraint=CK_NOTIFICATIONS_STATUS column=
+NOTICE:  ATTEMPT_COUNT 11 => sqlstate=23514 constraint=CK_NOTIFICATIONS_ATTEMPT_COUNT column=
+NOTICE:  ATTEMPT_COUNT -1 => sqlstate=23514 constraint=CK_NOTIFICATIONS_ATTEMPT_COUNT column=
+NOTICE:  DATA json array => sqlstate=23514 constraint=CK_NOTIFICATIONS_DATA column=
+NOTICE:  DATA json string => sqlstate=23514 constraint=CK_NOTIFICATIONS_DATA column=
+NOTICE:  CONTROL valid row => NO ERROR (unexpected)
+ROLLBACK
+notifications_rows_after_rollback=0
