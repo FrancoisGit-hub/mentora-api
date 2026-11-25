@@ -1146,3 +1146,304 @@ cd ~/mentora && docker compose config --quiet && docker compose up -d --no-deps 
 ```
 
 Attendu : `[EMAIL] routing mode=TEST ... productionBcc=0`. La variable du `.env` peut rester.
+
+---
+
+## Lot 14 vague 3 (25/11)
+
+Contenu : 14.9a (les 12 types de blocs de l'app ; STANDARD devient SERIE_SIMPLE dans les données, STANDARD reste accepté à l'écriture) et 14.9b (notifications push : table `NOTIFICATIONS`, envoi FCM, 4 événements). Image `mentora-api:lot14w3`. Deux migrations : `20261124221921_Lot14_9a_CircuitModes` (données seulement) et `20261124234929_Lot14_9b_Notifications` (nouvelle table).
+
+Correctif de revue inclus : N1 (coupe d'un emoji dans un texte de notification). Reporté au lot 16 : N2. Conséquence pendant la Bêta : si l'API s'arrête pendant un tour d'envoi (redémarrage, déploiement), les notifications déjà parties dans ce tour (20 au plus) peuvent être envoyées une deuxième fois. Preuves : `docs/review/lot14/review-fixes-wave3/runtime-evidence.md`.
+
+Nouveauté : le fichier de clé du compte de service Firebase. C'est un secret : jamais dans le dépôt, jamais dans l'image, jamais affiché (`cat`, `head`, `less` interdits). Sur le PC, le garder hors du dossier du dépôt (synchronisé par OneDrive). Dès que `Firebase__ServiceAccountPath` est défini, l'API refuse de démarrer sans un fichier valide, sur api-demo comme sur api-prod ; sans la variable, api-prod (Production) refuse aussi de démarrer. Les messages de refus ne contiennent jamais le chemin.
+
+### a. Image **[PS]**
+
+```powershell
+git --no-optional-locks status --short
+git --no-optional-locks log --oneline -1
+docker build --platform linux/amd64 -f Mentora.API/Dockerfile -t mentora-api:lot14w3 .
+docker run --rm --entrypoint sh mentora-api:lot14w3 -c "find / -xdev \( -name '*firebase-adminsdk*' -o -name 'service-account*' \) 2>/dev/null | wc -l"
+docker save -o "$env:TEMP\mentora-api-lot14w3.tar" mentora-api:lot14w3
+$t = "$env:TEMP\mentora-api-lot14w3.tar"; $i = [IO.File]::OpenRead($t); $o = [IO.File]::Create("$t.gz"); $g = New-Object IO.Compression.GZipStream($o, [IO.Compression.CompressionLevel]::Optimal); $i.CopyTo($g); $g.Dispose(); $o.Dispose(); $i.Dispose()
+Remove-Item "$env:TEMP\mentora-api-lot14w3.tar"; Get-Item "$env:TEMP\mentora-api-lot14w3.tar.gz" | Select-Object Name, Length
+Push-Location $env:TEMP; scp mentora-api-lot14w3.tar.gz mentora@87.106.108.91:~/; Pop-Location
+scp docs/review/lot14/14.9a/precheck.sql mentora@87.106.108.91:~/precheck-149a.sql
+```
+
+Attendu : arbre propre, dernier commit de la branche, `0` pour la recherche de clé dans l'image (sinon **arrêter** : une clé est dans le contexte de build), une archive `.tar.gz`.
+
+### b. Chargement, sauvegardes **[SSH]**
+
+```bash
+docker load -i ~/mentora-api-lot14w3.tar.gz && docker images mentora-api --format '{{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.CreatedAt}}'
+cd ~/mentora && docker exec mentora-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > ~/backup-$(date +%Y%m%d-%H%M).dump && ls -lht ~/backup-*.dump | head -3
+cd ~/mentora && docker exec mentora-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d mentora_prod -Fc' > ~/backup-prod-$(date +%Y%m%d-%H%M).dump && ls -lht ~/backup-prod-*.dump | head -3
+tar czf ~/backup-media-demo-$(date +%Y%m%d-%H%M).tgz -C ~/mentora media-demo && ls -lh ~/backup-media-demo-*.tgz | tail -1
+tar czf ~/backup-media-prod-$(date +%Y%m%d-%H%M).tgz -C ~/mentora media-prod && ls -lh ~/backup-media-prod-*.tgz | tail -1
+cd ~/mentora && cp docker-compose.yml docker-compose.yml.pre-lot14w3 && ls -l docker-compose.yml*
+docker inspect --format '{{.Config.Image}}' mentora-api-prod
+```
+
+Attendu : `mentora-api:lot14w3` listé, deux `.dump` de taille cohérente, deux archives `.tgz` des dossiers audio, la copie du compose, et l'image actuelle d'api-prod (`mentora-api:lot14w2`), à noter pour le retour arrière.
+
+### c. Contrôles en lecture seule, avant **[SSH]**
+
+```bash
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < ~/precheck-149a.sql > ~/w3-precheck-demo-avant.txt; cat ~/w3-precheck-demo-avant.txt
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d mentora_prod -v ON_ERROR_STOP=1' < ~/precheck-149a.sql > ~/w3-precheck-prod-avant.txt; cat ~/w3-precheck-prod-avant.txt
+```
+
+Puis, sur api-demo :
+
+```bash
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' <<'SQL'
+BEGIN READ ONLY;
+SELECT "MigrationId" FROM "__EFMigrationsHistory" ORDER BY "MigrationId" DESC LIMIT 1;
+SELECT to_regclass('"NOTIFICATIONS"') AS table_notifications;
+SHOW idle_in_transaction_session_timeout;
+SELECT count(*) AS appareils FROM "USER_DEVICES";
+SELECT count(*) AS modeles_cle_Mode FROM "PROGRAM_TEMPLATES" WHERE "PROGRAM_TEMPLATE_BODY"::text LIKE '%"Mode":%';
+SELECT count(*) AS seances_cle_Mode FROM "SESSION_TEMPLATES" WHERE "SESSION_TEMPLATE_CONTENT"::text LIKE '%"Mode":%';
+SELECT count(*) AS membres_non_actives_avec_coach FROM "MEMBERS" m WHERE NOT m."MEMBER_HAS_ACTIVATED" AND EXISTS (SELECT 1 FROM "MEMBER_COACHES" mc WHERE mc."MEMBER_ID" = m."MEMBER_ID");
+SELECT max(length("MEMBER_FIRST_NAME") + length("MEMBER_LAST_NAME")) + 1 AS nom_membre_max FROM "MEMBERS";
+SELECT max(length("COACH_FIRST_NAME") + length("COACH_LAST_NAME")) + 1 AS nom_coach_max FROM "COACHES";
+ROLLBACK;
+SQL
+```
+
+Puis la même commande sur PROD, en remplaçant seulement `-d "$POSTGRES_DB"` par `-d mentora_prod`.
+
+Attendu sur chaque base :
+- dernière migration `20261123042911_Lot14_8_CoachCreatedAudit`, sinon **arrêter** ;
+- `table_notifications` vide (la table n'existe pas encore) ;
+- `idle_in_transaction_session_timeout` à `0` ;
+- `modeles_cle_Mode` et `seances_cle_Mode` à `0` (sinon **arrêter** : la migration ne réécrit que la clé `"mode"` en minuscules) ;
+- `appareils` : pour information (sur api-demo, ces téléphones recevront les notifications de la démo) ;
+- `membres_non_actives_avec_coach` : pour information, chacun enverra « vient de se connecter » à ses coachs à sa prochaine connexion ;
+- `nom_membre_max` et `nom_coach_max` : pour information (N1 de la revue corrigé avant le déploiement).
+
+Le fichier precheck donne, par base : les modes de `PROGRAM_CIRCUITS`, les jetons `"mode": "STANDARD"`, `SERIE_SIMPLE`, `INTERVAL` et les jetons de nature des deux colonnes jsonb, et les natures des modèles de séance. Garder les deux fichiers `-avant.txt` pour la comparaison du point h.
+
+### d. Clé Firebase sur le VPS **[SSH] puis [PS] puis [SSH]**
+
+**[SSH]** :
+
+```bash
+mkdir -p ~/mentora/secrets && chmod 700 ~/mentora/secrets && ls -ld ~/mentora/secrets
+```
+
+**[PS]** (le chemin du fichier sur le PC est tapé au clavier, jamais écrit dans un fichier) :
+
+```powershell
+$cle = Read-Host "Chemin complet du fichier de cle Firebase sur le PC"
+scp "$cle" mentora@87.106.108.91:~/mentora/secrets/service-account-firebase.json; Remove-Variable cle
+```
+
+**[SSH]** :
+
+```bash
+chmod 600 ~/mentora/secrets/service-account-firebase.json && ls -l ~/mentora/secrets/
+docker exec mentora-api-prod id -u
+docker info --format '{{.SecurityOptions}}'
+```
+
+Attendu : `drwx------ mentora` pour le dossier, `-rw------- mentora` pour le fichier (environ 2,3 Ko), `0` pour `id -u`, et ni `rootless` ni `userns` dans `SecurityOptions`. Le conteneur tourne en root : il lit le fichier malgré le mode 600. Si `id -u` ne donne pas `0`, faire `sudo chown <ce numéro> ~/mentora/secrets/service-account-firebase.json` (le mode reste 600). Le nom du fichier et le dossier `secrets` sont couverts par `.gitignore` et `.dockerignore`.
+
+### e. Compose **[SSH]**
+
+```bash
+cd ~/mentora && nano docker-compose.yml
+```
+
+Dans le service `api` (api-demo) et dans le service `api-prod`, sous la dernière ligne de `environment:` (six espaces devant) :
+
+```yaml
+      - Firebase__ServiceAccountPath=/etc/mentora/firebase-service-account.json
+```
+
+et sous `volumes:` de chacun des deux services (six espaces devant, à côté de la ligne `media-demo` ou `media-prod`) :
+
+```yaml
+      - ./secrets/service-account-firebase.json:/etc/mentora/firebase-service-account.json:ro
+```
+
+Ne pas changer la ligne `image:` d'api-prod ici : l'image actuelle (`mentora-api:lot14w2`) ignore la variable et le montage. Elle change au point k. Ctrl+O, Entrée, Ctrl+X. Puis :
+
+```bash
+cd ~/mentora && docker compose config --quiet && echo "compose valide"
+cd ~/mentora && docker compose config | grep -E 'Firebase__ServiceAccountPath|firebase-service-account|service-account-firebase|read_only|image: mentora-api'
+```
+
+Attendu : `compose valide`, deux `Firebase__ServiceAccountPath`, deux montages en lecture seule (`read_only: true`), l'image `mentora-api:lot14w2` pour api-prod (inchangée). Ne jamais lancer `docker compose config` sans filtre.
+
+### f. Lignes de démarrage d'avant **[SSH]**
+
+```bash
+docker logs mentora-api 2>&1 | grep -E '\[EMAIL\] routing|\[INVITE\] installUrl|\[AUTH\] otpRateLimit|\[CORS\]|\[MUX\] configured|\[AUDIO\] configured|\[ADMIN\] (auth|accounts)' | grep -v -E 'OTP|EMAIL-LOG' | sort -u > ~/w3-lignes-demo-avant.txt; wc -l ~/w3-lignes-demo-avant.txt
+docker logs mentora-api-prod 2>&1 | grep -E '\[EMAIL\] routing|\[INVITE\] installUrl|\[AUTH\] otpRateLimit|\[CORS\]|\[MUX\] configured|\[AUDIO\] configured|\[ADMIN\] (auth|accounts)' | grep -v -E 'OTP|EMAIL-LOG' | sort -u > ~/w3-lignes-prod-avant.txt; wc -l ~/w3-lignes-prod-avant.txt
+```
+
+### g. Bascule d'api-demo **[SSH]**
+
+```bash
+cd ~/mentora && docker tag mentora-api:latest mentora-api:pre-lot14w3 && docker tag mentora-api:lot14w3 mentora-api:latest && docker compose up -d --no-deps --force-recreate api && sleep 25 && docker logs mentora-api 2>&1 | grep -c "Applying migration"
+docker logs mentora-api 2>&1 | grep -E '\[PUSH\]|Applying migration|Application started|fail:|crit:|Exception' | grep -v -E 'OTP|EMAIL-LOG'
+docker logs mentora-api 2>&1 | grep -E '\[EMAIL\] routing|\[INVITE\] installUrl|\[AUTH\] otpRateLimit|\[CORS\]|\[MUX\] configured|\[AUDIO\] configured|\[ADMIN\] (auth|accounts)|\[PUSH\] configured' | grep -v -E 'OTP|EMAIL-LOG' | sort -u > ~/w3-lignes-demo-apres.txt; diff ~/w3-lignes-demo-avant.txt ~/w3-lignes-demo-apres.txt
+```
+
+Attendu : `2` ; `Applying migration '20261124221921_Lot14_9a_CircuitModes'.`, `Applying migration '20261124234929_Lot14_9b_Notifications'.`, `[PUSH] configured=True projectId=mentora-69209 pollSeconds=3 maxAttempts=3`, `Application started`, aucune ligne `[PUSH] time zone`, `fail:` ni `crit:` ; le `diff` ne montre qu'une ligne ajoutée, `> [PUSH] configured=True ...`.
+
+Si l'API refuse de démarrer :
+
+```bash
+docker logs mentora-api 2>&1 | grep -E 'Firebase|OptionsValidation' | grep -v -E 'OTP|EMAIL-LOG'
+```
+
+Le message dit ce qui ne va pas (variable absente, fichier absent, illisible, mauvais projet), jamais le chemin. Corriger le montage ou la variable, puis recréer. Aucune migration n'est appliquée lors d'un refus (le contrôle Firebase passe avant les migrations).
+
+### h. Contrôles après la migration, api-demo **[SSH]**
+
+```bash
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < ~/precheck-149a.sql > ~/w3-precheck-demo-apres.txt; diff ~/w3-precheck-demo-avant.txt ~/w3-precheck-demo-apres.txt
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' <<'SQL'
+BEGIN READ ONLY;
+SELECT conname FROM pg_constraint WHERE conrelid = '"NOTIFICATIONS"'::regclass ORDER BY 1;
+SELECT indexname FROM pg_indexes WHERE tablename = 'NOTIFICATIONS' ORDER BY 1;
+SELECT "NOTIFICATION_TYPE", "NOTIFICATION_STATUS", count(*) FROM "NOTIFICATIONS" GROUP BY 1, 2 ORDER BY 1, 2;
+ROLLBACK;
+SQL
+```
+
+Attendu : dans le `diff`, les jetons `"mode": "STANDARD"` passent à 0, les jetons `SERIE_SIMPLE` prennent l'ancien nombre de `STANDARD`, la ligne `STANDARD` de `PROGRAM_CIRCUITS` devient `SERIE_SIMPLE` avec le même nombre ; `INTERVAL`, les jetons de nature et les natures des modèles de séance ne changent pas. Contraintes : `CK_NOTIFICATIONS_ATTEMPT_COUNT`, `CK_NOTIFICATIONS_DATA`, `CK_NOTIFICATIONS_STATUS`, `CK_NOTIFICATIONS_TYPE`, `FK_NOTIFICATIONS_USERS`, `PK_NOTIFICATIONS`. Index : `IX_NOTIFICATIONS_STATUS_NEXT_ATTEMPT`, `IX_NOTIFICATIONS_USER_ID`, `PK_NOTIFICATIONS`.
+
+### i. Preuves sur api-demo (avec PJ)
+
+1. Types de blocs : PJ crée depuis l'app un modèle de séance avec un bloc BISET et un bloc AMRAP, le rouvre (mêmes types), puis ouvre et enregistre un programme qui contenait un bloc STANDARD (enregistrement accepté, type affiché SERIE_SIMPLE).
+2. Message vocal : PJ envoie un message vocal à son coach de démo, puis **[SSH]** :
+
+```bash
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' <<'SQL'
+BEGIN READ ONLY;
+SELECT "NOTIFICATION_STATUS", count(*) FROM "NOTIFICATIONS" WHERE "NOTIFICATION_TYPE" = 'CHAT_MESSAGE' AND "NOTIFICATION_BODY" = 'Message vocal' AND "NOTIFICATION_CREATED_DATE" > now() - interval '15 minutes' GROUP BY 1;
+ROLLBACK;
+SQL
+```
+
+Attendu : une ligne, `SENT` si le destinataire a un téléphone enregistré, sinon `NO_DEVICE`. Ne jamais afficher le corps des notifications de type texte (il contient le message).
+
+3. Vraie réception sur Android : PJ se connecte avec l'app Android branchée sur api-demo (le téléphone s'enregistre), son coach de démo lui écrit un message ; la notification s'affiche. **[SSH]** :
+
+```bash
+docker logs --since 10m mentora-api 2>&1 | grep -E '\[PUSH\] (sent|device removed|payload rejected|send )'
+docker logs mentora-api 2>&1 | grep -c 'APA91'
+docker logs mentora-api 2>&1 | grep -c 'sender loop error'
+```
+
+Attendu : `[PUSH] sent notificationId=... type=CHAT_MESSAGE status=SENT devices=1 ok=1 removed=0`, puis `0` (aucun jeton FCM dans les logs) et `0`.
+
+4. Facultatif : PJ désinstalle l'app, on lui écrit de nouveau : `[PUSH] device removed deviceId=... reason=UNREGISTERED` (FCM peut mettre du temps à déclarer le jeton invalide après une désinstallation).
+
+### j. Deuxième démarrage d'api-demo **[SSH]**
+
+```bash
+cd ~/mentora && docker compose up -d --no-deps --force-recreate api && sleep 25 && docker logs mentora-api 2>&1 | grep -c "Applying migration"
+docker logs mentora-api 2>&1 | grep -E '\[PUSH\]|Application started|fail:|crit:' | grep -v -E 'OTP|EMAIL-LOG'
+```
+
+Attendu : `0`, la même ligne `[PUSH] configured=True ...`, `Application started`, sans `fail:` ni `crit:`.
+
+### k. Bascule d'api-prod **[SSH]**
+
+Seulement si les points g à j sont bons. D'abord la ligne `image:` d'api-prod :
+
+```bash
+cd ~/mentora && nano docker-compose.yml
+cd ~/mentora && docker compose config --quiet && echo "compose valide"
+cd ~/mentora && docker compose config | grep -E 'image: mentora-api'
+```
+
+Dans le service `api-prod`, la ligne `image:` devient `    image: mentora-api:lot14w3` (Ctrl+O, Entrée, Ctrl+X). Attendu : `compose valide`, `mentora-api:latest` pour api et `mentora-api:lot14w3` pour api-prod.
+
+```bash
+cd ~/mentora && docker compose up -d --no-deps --force-recreate api-prod && sleep 25 && docker logs mentora-api-prod 2>&1 | grep -c "Applying migration"
+docker logs mentora-api-prod 2>&1 | grep -E '\[PUSH\]|Applying migration|Application started|fail:|crit:|Exception' | grep -v -E 'OTP|EMAIL-LOG'
+docker logs mentora-api-prod 2>&1 | grep -E '\[EMAIL\] routing|\[INVITE\] installUrl|\[AUTH\] otpRateLimit|\[CORS\]|\[MUX\] configured|\[AUDIO\] configured|\[ADMIN\] (auth|accounts)|\[PUSH\] configured' | grep -v -E 'OTP|EMAIL-LOG' | sort -u > ~/w3-lignes-prod-apres.txt; diff ~/w3-lignes-prod-avant.txt ~/w3-lignes-prod-apres.txt
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d mentora_prod -v ON_ERROR_STOP=1' < ~/precheck-149a.sql > ~/w3-precheck-prod-apres.txt; diff ~/w3-precheck-prod-avant.txt ~/w3-precheck-prod-apres.txt
+curl -s -o /dev/null -w 'health %{http_code}\n' https://api.mentorapp.fr/api/v1/health
+```
+
+Attendu : les mêmes résultats qu'aux points g et h, pour PROD (`2`, les deux migrations, `[PUSH] configured=True ...`, le `diff` des lignes ne montre que la ligne `[PUSH]`, le `diff` du precheck seulement STANDARD devenu SERIE_SIMPLE), puis `health 200`. Puis le contrôle de la table du point h avec `-d mentora_prod`, et le deuxième démarrage du point j avec `api-prod` et `mentora-api-prod`.
+
+Sur PROD : aucun message de test. Les jours suivants, compter sans rien afficher d'autre :
+
+```bash
+docker logs --since 24h mentora-api-prod 2>&1 | grep -oE '\[PUSH\] sent .* status=[A-Z_]+' | grep -oE 'status=[A-Z_]+' | sort | uniq -c
+docker logs --since 24h mentora-api-prod 2>&1 | grep -c 'sender loop error'
+```
+
+### l. Retour arrière
+
+Images **[SSH]** :
+
+```bash
+cd ~/mentora && docker tag mentora-api:pre-lot14w3 mentora-api:latest && docker compose up -d --no-deps --force-recreate api
+cd ~/mentora && cp docker-compose.yml.pre-lot14w3 docker-compose.yml && docker compose config --quiet && docker compose up -d --no-deps --force-recreate api-prod
+```
+
+La copie du compose remet aussi l'ancienne image d'api-prod et retire le montage et la variable Firebase (l'ancien code ne les lit pas). La clé peut rester dans `~/mentora/secrets`.
+
+Migration 14.9b : rien à faire. L'ancienne image ignore la table `NOTIFICATIONS` et EF Core 8 ignore la ligne d'historique inconnue.
+
+Migration 14.9a : à défaire, sinon l'ancienne image refuse (422) tout enregistrement d'un programme ou d'un modèle qui contient SERIE_SIMPLE. `dotnet ef` n'existe pas sur le VPS : le même SQL que le `Down`, plus la ligne d'historique. Essai à blanc terminé par `ROLLBACK`, puis la même chose terminée par `COMMIT` (seule la dernière ligne diffère), d'abord sur api-demo :
+
+```bash
+cat > ~/w3-retour-149a.sql <<'SQL'
+\set ON_ERROR_STOP on
+BEGIN;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM "PROGRAM_CIRCUITS" WHERE "PROGRAM_CIRCUIT_MODE" NOT IN ('SERIE_SIMPLE', 'INTERVAL', 'STANDARD'))
+    OR EXISTS (SELECT 1 FROM "PROGRAM_TEMPLATES" t CROSS JOIN LATERAL regexp_matches(t."PROGRAM_TEMPLATE_BODY"::text, '"mode": "([^"]*)"', 'g') AS m(arr) WHERE m.arr[1] NOT IN ('SERIE_SIMPLE', 'INTERVAL', 'STANDARD'))
+    OR EXISTS (SELECT 1 FROM "SESSION_TEMPLATES" s CROSS JOIN LATERAL regexp_matches(s."SESSION_TEMPLATE_CONTENT"::text, '"mode": "([^"]*)"', 'g') AS m(arr) WHERE m.arr[1] NOT IN ('SERIE_SIMPLE', 'INTERVAL', 'STANDARD'))
+    THEN
+        RAISE EXCEPTION 'Retour 14.9a impossible : des blocs utilisent un des 10 nouveaux types.';
+    END IF;
+END
+$$;
+UPDATE "PROGRAM_CIRCUITS" SET "PROGRAM_CIRCUIT_MODE" = 'STANDARD' WHERE "PROGRAM_CIRCUIT_MODE" = 'SERIE_SIMPLE';
+UPDATE "PROGRAM_TEMPLATES" SET "PROGRAM_TEMPLATE_BODY" = replace("PROGRAM_TEMPLATE_BODY"::text, '"mode": "SERIE_SIMPLE"', '"mode": "STANDARD"')::jsonb WHERE "PROGRAM_TEMPLATE_BODY"::text LIKE '%"mode": "SERIE_SIMPLE"%';
+UPDATE "SESSION_TEMPLATES" SET "SESSION_TEMPLATE_CONTENT" = replace("SESSION_TEMPLATE_CONTENT"::text, '"mode": "SERIE_SIMPLE"', '"mode": "STANDARD"')::jsonb WHERE "SESSION_TEMPLATE_CONTENT"::text LIKE '%"mode": "SERIE_SIMPLE"%';
+DELETE FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124221921_Lot14_9a_CircuitModes';
+SQL
+{ cat ~/w3-retour-149a.sql; echo 'ROLLBACK;'; } | docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+Attendu : `DO`, trois `UPDATE n`, `DELETE 1`, `ROLLBACK`. Seulement dans ce cas :
+
+```bash
+{ cat ~/w3-retour-149a.sql; echo 'COMMIT;'; } | docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker exec -i mentora-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < ~/precheck-149a.sql > ~/w3-precheck-demo-retour.txt; diff ~/w3-precheck-demo-avant.txt ~/w3-precheck-demo-retour.txt
+```
+
+Attendu : aucun écart avec l'état d'avant (si aucun programme n'a changé entre-temps). Puis les deux mêmes commandes avec `-d mentora_prod` et les fichiers `prod`.
+
+Si le `DO` lève l'erreur « Retour 14.9a impossible » : ne rien forcer. Un coach a déjà utilisé un nouveau type ; revenir en arrière modifierait ses programmes. Choix avec François : corriger en avançant sur la nouvelle image, ou restaurer la sauvegarde du point b (perte de tout ce qui a été écrit depuis).
+
+Au redéploiement suivant de la nouvelle image, EF rejouera `Lot14_9a_CircuitModes` (la ligne d'historique a été retirée), ce qui réécrit de nouveau STANDARD en SERIE_SIMPLE.
+
+### m. Après le déploiement
+
+**[SSH]** :
+
+```bash
+rm ~/mentora-api-lot14w3.tar.gz ~/precheck-149a.sql; ls ~/mentora-api-lot14w3.tar.gz
+```
+
+**[PS]** :
+
+```powershell
+Remove-Item "$env:TEMP\mentora-api-lot14w3.tar.gz"; Test-Path "$env:TEMP\mentora-api-lot14w3.tar.gz"
+```
+
+Attendu : `No such file or directory`, puis `False`. Garder `mentora-api:pre-lot14w3`, `mentora-api:lot14w2`, les fichiers `~/w3-*.txt` et `docker-compose.yml.pre-lot14w3` jusqu'au merge dans main.
