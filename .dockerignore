@@ -42,3 +42,8 @@ docs/review
 # No JS/Node tooling in this repo today, but excluding defensively in case
 # any project ever adds one - node_modules is always regenerable and huge.
 **/node_modules
+
+# Lot 14.9b: Firebase / Google service account key files are secrets, never part of the build context or the image
+**/*firebase-adminsdk*.json
+**/service-account*.json
+**/secrets/

@@ -502,3 +502,8 @@ deploy.ps1
 docs/review/**/tokens.json
 docs/review/**/*-response.json
 docs/review/**/api.pid
+
+# Lot 14.9b: Firebase / Google service account key files are secrets, kept outside the repository
+**/*firebase-adminsdk*.json
+**/service-account*.json
+**/secrets/

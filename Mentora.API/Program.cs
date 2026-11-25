@@ -20,6 +20,7 @@ using Mentora.Infrastructure.Services.Admin;
 using Mentora.Infrastructure.Services.Audio;
 using Mentora.Infrastructure.Services.Email;
 using Mentora.Infrastructure.Services.Mux;
+using Mentora.Infrastructure.Services.Push;
 using Mentora.Infrastructure.Services.Quiz;
 using Mentora.Infrastructure.Services.Visio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -418,6 +419,18 @@ builder.Services.Configure<RefreshTokenPurgeOptions>(
     builder.Configuration.GetSection(RefreshTokenPurgeOptions.SectionName));
 builder.Services.AddHostedService<RefreshTokenPurgeService>();
 
+// Lot 14.9b: push notifications. Firebase:ProjectId is in appsettings.json, Firebase__ServiceAccountPath comes
+// from the environment only (the key file is a secret kept outside the repository). .Value is read before the
+// migrations (below) so a bad setup stops the API first. An empty path is allowed in Development only.
+builder.Services.AddOptions<FirebaseOptions>()
+    .Bind(builder.Configuration.GetSection(FirebaseOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<FirebaseOptions>, FirebaseOptionsValidator>();
+builder.Services.AddSingleton<FcmAuthState>();
+builder.Services.AddHttpClient<IFcmClient, FcmClient>(client => client.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddScoped<INotificationComposer, NotificationComposer>();
+builder.Services.AddHostedService<PushNotificationSender>();
+
 // Lot 3.0 — Email (OTP delivery)
 // Lot 11.4 — options fail loudly at startup (messages never print a value or an address).
 builder.Services.AddOptions<EmailOptions>()
@@ -562,6 +575,10 @@ var app = builder.Build();
         new Uri(muxOpts.ApiBaseUrl).Host);
 }
 
+// Lot 14.9b: the Firebase options are validated first, so a push setup error is reported ahead of the audio probe
+// (the [PUSH] line itself stays after the [AUDIO] block, below).
+_ = app.Services.GetRequiredService<IOptions<FirebaseOptions>>().Value;
+
 // Lot 13.3: .Value runs AudioOptionsValidator now, then the probe checks ffmpeg, ffprobe and the storage
 // directory. Outside Development an unavailable audio setup stops the API before migrations (13.E).
 // The line and the refusal message never print a path.
@@ -575,6 +592,16 @@ var app = builder.Build();
         audioAvailability.StorageOk, audioOpts.MaxConcurrentDecodes, audioOpts.DecodeTimeoutSeconds);
     if (!audioAvailability.IsAvailable && !app.Environment.IsDevelopment())
         throw new InvalidOperationException(audioAvailability.FailureMessage);
+}
+
+// Lot 14.9b: .Value runs FirebaseOptionsValidator now (before migrations). The line never prints a path or the
+// client_email. Without Europe/Paris the notification texts drop their date part (one warning here).
+{
+    var firebaseOpts = app.Services.GetRequiredService<IOptions<FirebaseOptions>>().Value;
+    app.Logger.LogInformation("[PUSH] configured={Configured} projectId={ProjectId} pollSeconds={PollSeconds} maxAttempts={MaxAttempts}",
+        firebaseOpts.IsConfigured, firebaseOpts.ProjectId, PushNotificationSender.PollSeconds, PushNotificationSender.MaxAttempts);
+    if (Mentora.Core.Notifications.NotificationTexts.ParisTimeZone is null)
+        app.Logger.LogWarning("[PUSH] time zone Europe/Paris not found: notification texts omit the session date");
 }
 
 // Lot 12.1 — same for the admin authentication: .Value runs AdminAuthOptionsValidator, then the

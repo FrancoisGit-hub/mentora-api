@@ -1650,6 +1650,91 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                     b.ToTable("MUX_WEBHOOK_EVENTS", (string)null);
                 });
 
+            modelBuilder.Entity("Mentora.Core.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("NOTIFICATION_ID")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("NotificationAttemptCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("NOTIFICATION_ATTEMPT_COUNT");
+
+                    b.Property<string>("NotificationBody")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("NOTIFICATION_BODY");
+
+                    b.Property<DateTime?>("NotificationClickedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("NOTIFICATION_CLICKED_DATE");
+
+                    b.Property<DateTime>("NotificationCreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("NOTIFICATION_CREATED_DATE");
+
+                    b.Property<string>("NotificationData")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("NOTIFICATION_DATA");
+
+                    b.Property<string>("NotificationError")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("NOTIFICATION_ERROR");
+
+                    b.Property<DateTime>("NotificationNextAttemptDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("NOTIFICATION_NEXT_ATTEMPT_DATE");
+
+                    b.Property<DateTime?>("NotificationSentDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("NOTIFICATION_SENT_DATE");
+
+                    b.Property<string>("NotificationStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("PENDING")
+                        .HasColumnName("NOTIFICATION_STATUS");
+
+                    b.Property<string>("NotificationTitle")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("NOTIFICATION_TITLE");
+
+                    b.Property<string>("NotificationType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("NOTIFICATION_TYPE");
+
+                    b.Property<DateTime>("NotificationUpdatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("NOTIFICATION_UPDATED_DATE");
+
+                    b.Property<Guid>("NotificationUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("NOTIFICATION_USER_ID");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("NotificationUserId")
+                        .HasDatabaseName("IX_NOTIFICATIONS_USER_ID");
+
+                    b.HasIndex("NotificationStatus", "NotificationNextAttemptDate")
+                        .HasDatabaseName("IX_NOTIFICATIONS_STATUS_NEXT_ATTEMPT");
+
+                    b.ToTable("NOTIFICATIONS", (string)null);
+                });
+
             modelBuilder.Entity("Mentora.Core.Entities.Objective", b =>
                 {
                     b.Property<Guid>("ObjectiveId")
@@ -3631,6 +3716,16 @@ namespace Mentora.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Conversation");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Entities.Notification", b =>
+                {
+                    b.HasOne("Mentora.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_NOTIFICATIONS_USERS");
                 });
 
             modelBuilder.Entity("Mentora.Core.Entities.OfferProgram", b =>

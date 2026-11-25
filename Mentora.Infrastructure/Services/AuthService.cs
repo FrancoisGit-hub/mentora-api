@@ -25,7 +25,8 @@ public class AuthService(
     IEmailSender emailSender,
     IValidator<LogoutRequest> logoutValidator,
     ILogger<AuthService> logger,
-    IHostEnvironment environment) : IAuthService
+    IHostEnvironment environment,
+    INotificationComposer notifications) : IAuthService
 {
     // Single source for the OTP expiry and for the "expires in N minutes" text of the OTP mail.
     private const int OtpLifetimeMinutes = 10;
@@ -164,6 +165,11 @@ public class AuthService(
         {
             user.Member.MemberHasActivated = true;
             user.Member.MemberActivationDate = DateTime.UtcNow;
+
+            // Lot 14.9b: MEMBER_JOINED rows for every linked coach, saved with the activation (same transaction).
+            // The flag flips once, so the event fires once per member.
+            await notifications.AddMemberJoinedAsync(
+                user.Member.MemberId, user.Member.MemberFirstName, user.Member.MemberLastName, CancellationToken.None);
         }
 
         var (clientToken, _) = await CreateRefreshTokenAsync(user.UserId, role);

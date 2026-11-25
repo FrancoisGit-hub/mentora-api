@@ -16,6 +16,7 @@ public class SessionService(
     MentoraDbContext db,
     IValidator<ReserveSessionRequest> reserveValidator,
     IValidator<CancelSessionRequest> cancelValidator,
+    INotificationComposer notifications,
     ILogger<SessionService> logger) : ISessionService
 {
     // ── Member-side ─────────────────────────────────────────────────────────────
@@ -123,6 +124,10 @@ public class SessionService(
             // Best-effort convenience link — never blocks the booking (see LinkToProgramSessionAsync).
             await LinkToProgramSessionAsync(memberId, session, ct);
 
+            // Lot 14.9b: SESSION_BOOKED row for the coach, saved and committed with the booking.
+            await notifications.AddSessionBookedForCoachAsync(
+                session.SessionId, memberId, voucher.CoachId, session.SessionScheduledAt, ct);
+
             await db.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
@@ -194,6 +199,10 @@ public class SessionService(
         session.SessionCancelledBy        = CancelledBy.Member;
         session.SessionCancelledAt        = DateTime.UtcNow;
         session.SessionUpdatedDate        = DateTime.UtcNow;
+
+        // Lot 14.9b: SESSION_CANCELLED row for the coach, saved and committed with the cancellation.
+        await notifications.AddSessionCancelledForCoachAsync(
+            sessionId, memberId, session.SessionCoachId, session.SessionScheduledAt, ct);
 
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
@@ -303,6 +312,11 @@ public class SessionService(
         session.SessionCancelledBy        = CancelledBy.Coach;
         session.SessionCancelledAt        = DateTime.UtcNow;
         session.SessionUpdatedDate        = DateTime.UtcNow;
+
+        // Lot 14.9b: SESSION_CANCELLED row for the member (individual session: the member id is never null here,
+        // the group guard above refuses a null SessionMemberId), saved and committed with the cancellation.
+        await notifications.AddSessionCancelledForMemberAsync(
+            sessionId, session.SessionMemberId!.Value, coachId, session.SessionScheduledAt, ct);
 
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
@@ -574,6 +588,10 @@ public class SessionService(
         // Best-effort convenience link — never blocks the registration (see LinkToProgramSessionAsync).
         await LinkToProgramSessionAsync(request.MemberId, session, ct);
 
+        // Lot 14.9b: SESSION_BOOKED row for the member (no preference), saved and committed with the registration.
+        await notifications.AddSessionBookedForMemberAsync(
+            sessionId, request.MemberId, coachId, session.SessionScheduledAt, ct);
+
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
@@ -586,7 +604,7 @@ public class SessionService(
 
     public async Task UnregisterParticipantAsync(Guid coachId, Guid sessionId, Guid memberId, CancellationToken ct)
     {
-        await GetOwnedGroupSessionAsync(coachId, sessionId, ct);
+        var session = await GetOwnedGroupSessionAsync(coachId, sessionId, ct);
 
         var participant = await db.SessionParticipants.FirstOrDefaultAsync(p =>
             p.SessionParticipantSessionId == sessionId &&
@@ -607,6 +625,10 @@ public class SessionService(
             voucher.ReservedSessionId = null;
             voucher.UpdatedDate       = now;
         }
+
+        // Lot 14.9b: SESSION_CANCELLED row for the removed member (no preference), saved and committed with the removal.
+        await notifications.AddSessionCancelledForMemberAsync(
+            sessionId, memberId, coachId, session.SessionScheduledAt, ct);
 
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);

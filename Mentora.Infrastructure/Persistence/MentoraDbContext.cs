@@ -67,6 +67,7 @@ public class MentoraDbContext(DbContextOptions<MentoraDbContext> options) : DbCo
     public DbSet<QuizSession> QuizSessions => Set<QuizSession>();
     public DbSet<QuizSessionQuestion> QuizSessionQuestions => Set<QuizSessionQuestion>();
     public DbSet<QuizDeviceClaim> QuizDeviceClaims => Set<QuizDeviceClaim>();
+    public DbSet<Notification> Notifications => Set<Notification>(); // Lot 14.9b
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

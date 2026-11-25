@@ -22,6 +22,7 @@ public class ConversationService(
     IVisioUrlGenerator visioUrlGenerator,
     IVoiceAudioProcessor audioProcessor,
     IVoiceMessageStorage audioStorage,
+    INotificationComposer notifications,
     ILogger<ConversationService> logger) : IConversationService
 {
     private const int CopyBufferBytes = 81_920;
@@ -141,6 +142,9 @@ public class ConversationService(
         conversation.ConversationLastMessageDate = message.MessageSentDate;
         db.Conversations.Update(conversation);
 
+        // Lot 14.9b: CHAT_MESSAGE row for the other party, saved and committed with the message.
+        await notifications.AddChatMessageAsync(memberId, coachId, senderType, message.MessageContent, ct);
+
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
@@ -217,6 +221,9 @@ public class ConversationService(
                 db.Messages.Add(message);
                 conversation.ConversationLastMessageDate = message.MessageSentDate;
                 db.Conversations.Update(conversation);
+
+                // Lot 14.9b: CHAT_MESSAGE row (body "Message vocal"), same transaction as the message.
+                await notifications.AddChatMessageAsync(memberId, coachId, senderType, null, CancellationToken.None);
 
                 await db.SaveChangesAsync(CancellationToken.None);
                 await tx.CommitAsync(CancellationToken.None);
