@@ -74,9 +74,17 @@ public static class NotificationTexts
     public static (string Title, string Body) MemberJoined(string memberName) =>
         ("Nouvel élève connecté", $"{memberName} vient de se connecter à Mentora.");
 
-    /// <summary>Keeps a text inside a column limit (names are free text).</summary>
-    public static string Fit(string value, int maxLength) =>
-        value.Length <= maxLength ? value : value[..maxLength];
+    /// <summary>Keeps a text inside a column limit (names are free text). Never splits a surrogate pair.</summary>
+    public static string Fit(string value, int maxLength)
+    {
+        if (value.Length <= maxLength)
+            return value;
+
+        var cut = maxLength;
+        if (char.IsHighSurrogate(value[cut - 1]))
+            cut--;
+        return value[..cut];
+    }
 
     private static string Date(string prefix, DateTime scheduledAtUtc)
     {
